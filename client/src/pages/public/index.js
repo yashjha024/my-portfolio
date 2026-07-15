@@ -1,12 +1,10 @@
-import React from 'react';
-
-export const HomePage = () => null;
-export const WorkIndexPage = () => null;
-export const CaseStudyDetailPage = () => null;
-export const ThinkingIndexPage = () => null;
-export const ArticleDetailPage = () => null;
-export const PrdsIndexPage = () => null;
-export const PrdDetailPage = () => null;
-export const AboutPage = () => null;
-export const ResumePage = () => null;
-export const ContactPage = () => null;
+export { Home as HomePage } from './Home.jsx';
+export { WorkIndexPage } from './Work.jsx';
+export { CaseStudyDetailPage } from './CaseStudyDetail.jsx';
+export { ThinkingIndexPage } from './Thinking.jsx';
+export { ArticleDetailPage } from './ArticleDetail.jsx';
+export { PrdsIndexPage } from './Prds.jsx';
+export { PrdDetailPage } from './PrdDetail.jsx';
+export { AboutPage } from './About.jsx';
+export { ResumePage } from './Resume.jsx';
+export { ContactPage } from './Contact.jsx';

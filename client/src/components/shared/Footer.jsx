@@ -1,6 +1,7 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Mail, Linkedin, Github, FileText, Globe } from 'lucide-react';
+import { Mail, FileText, Globe } from 'lucide-react';
+import { Github, Linkedin } from '../ui/Icon.jsx';
 import { Container } from '../layout/Container.jsx';
 
 export const Footer = () => {

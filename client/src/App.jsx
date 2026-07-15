@@ -23,23 +23,26 @@ import {
   ManageMediaPage,
   AdminSettingsPage,
 } from './pages/admin/index.js';
+import { PublicLayout } from './components/layout/PublicLayout.jsx';
 import { ProtectedAdminRoute } from './components/shared/ProtectedAdminRoute.jsx';
 
 export default function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* Public Routes */}
-        <Route path="/" element={<HomePage />} />
-        <Route path="/work" element={<WorkIndexPage />} />
-        <Route path="/work/:slug" element={<CaseStudyDetailPage />} />
-        <Route path="/thinking" element={<ThinkingIndexPage />} />
-        <Route path="/thinking/:slug" element={<ArticleDetailPage />} />
-        <Route path="/prds" element={<PrdsIndexPage />} />
-        <Route path="/prds/:slug" element={<PrdDetailPage />} />
-        <Route path="/about" element={<AboutPage />} />
-        <Route path="/resume" element={<ResumePage />} />
-        <Route path="/contact" element={<ContactPage />} />
+        {/* Public Routes with Shared Header, Footer, and Auto-Scroll */}
+        <Route element={<PublicLayout />}>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/work" element={<WorkIndexPage />} />
+          <Route path="/work/:slug" element={<CaseStudyDetailPage />} />
+          <Route path="/thinking" element={<ThinkingIndexPage />} />
+          <Route path="/thinking/:slug" element={<ArticleDetailPage />} />
+          <Route path="/prds" element={<PrdsIndexPage />} />
+          <Route path="/prds/:slug" element={<PrdDetailPage />} />
+          <Route path="/about" element={<AboutPage />} />
+          <Route path="/resume" element={<ResumePage />} />
+          <Route path="/contact" element={<ContactPage />} />
+        </Route>
 
         {/* Protected Private Admin Routes per PRD Section 4 & 8 */}
         <Route element={<ProtectedAdminRoute />}>
