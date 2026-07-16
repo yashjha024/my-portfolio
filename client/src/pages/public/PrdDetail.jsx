@@ -9,6 +9,9 @@ import { Button } from '../../components/ui/Button.jsx';
 import { Badge } from '../../components/ui/Badge.jsx';
 import { Table, TableHeader, TableBody, TableRow, TableHead, TableCell } from '../../components/ui/Table.jsx';
 import { DetailPageSkeleton } from '../../components/ui/Skeleton.jsx';
+import { SEO } from '../../components/shared/SEO.jsx';
+import { BreadcrumbNav } from '../../components/shared/BreadcrumbNav.jsx';
+import { calculateReadingTime } from '../../utils/calculateReadingTime.js';
 
 export const PrdDetailPage = () => {
   const { slug } = useParams();
@@ -44,11 +47,30 @@ export const PrdDetailPage = () => {
     window.print();
   };
 
+  const sections = prd.sections && typeof prd.sections === 'object' && !Array.isArray(prd.sections) ? prd.sections : {};
+  const requirements = Array.isArray(sections.requirements) ? sections.requirements : [];
+  const goals = Array.isArray(sections.goals) ? sections.goals : [];
+  const nonGoals = Array.isArray(sections.nonGoals) ? sections.nonGoals : [];
+  const metrics = Array.isArray(sections.metrics) ? sections.metrics : [];
+  const releaseGates = Array.isArray(sections.releaseGates) ? sections.releaseGates : [];
+  const allSectionsText = `${prd.context || ''} ${JSON.stringify(sections)}`;
+  const computedReadingTime = calculateReadingTime(allSectionsText).text;
+
+  const breadcrumbs = [
+    { name: 'Home', url: '/' },
+    { name: 'PRDs & Specifications', url: '/prds' },
+    { name: prd.title, url: `/prds/${prd.slug}` },
+  ];
+
   return (
     <>
-      <title>{`${prd.title} | PRD Spec - Yash Jhai`}</title>
-      <meta name="description" content={prd.context} />
-      <meta property="og:title" content={prd.title} />
+      <SEO
+        title={prd.title}
+        description={prd.context?.substring(0, 160)}
+        type="prd"
+        publishedTime={prd.updatedAt || prd.createdAt}
+        breadcrumbs={breadcrumbs}
+      />
 
       {/* Header */}
       <Section className="pt-8 pb-12 md:pt-14 md:pb-16 border-b border-border/60 bg-gradient-to-b from-background to-muted/20 print:bg-white print:border-none">
@@ -57,27 +79,23 @@ export const PrdDetailPage = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="max-w-4xl space-y-6"
+            className="max-w-4xl space-y-5"
           >
             <div className="flex items-center justify-between gap-4 print:hidden">
-              <NavLink
-                to="/prds"
-                className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-              >
-                <ArrowLeft className="w-4 h-4" /> Back to PRD Library
-              </NavLink>
-              <Button variant="outline" size="sm" onClick={handlePrint} className="flex items-center gap-1.5 font-semibold">
+              <BreadcrumbNav items={breadcrumbs} />
+              <Button variant="outline" size="sm" onClick={handlePrint} className="flex items-center gap-1.5 font-semibold shrink-0">
                 <Printer className="w-4 h-4" /> Print / Save PDF
               </Button>
             </div>
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 pt-2">
               <Badge variant={prd.stage === 'Approved' ? 'success' : 'default'} className="uppercase font-mono text-xs">
                 Status: {prd.stage}
               </Badge>
               <Badge variant="outline" className="font-mono text-xs">
                 Visibility: {prd.visibility}
               </Badge>
+              <span className="text-xs font-mono text-muted-foreground">&bull; {computedReadingTime}</span>
             </div>
 
             <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-extrabold text-foreground leading-tight">
@@ -117,7 +135,7 @@ export const PrdDetailPage = () => {
                 Why Are We Building This?
               </h2>
               <p className="text-base text-muted-foreground leading-relaxed">
-                {prd.sections?.problem}
+                {sections.problem || 'No problem statement provided.'}
               </p>
             </div>
 
@@ -136,7 +154,7 @@ export const PrdDetailPage = () => {
                     <CheckCircle className="w-4 h-4 text-success" /> Primary Goals
                   </h3>
                   <ul className="list-disc list-inside space-y-2 text-xs sm:text-sm text-muted-foreground">
-                    {prd.sections?.goals?.map((g, idx) => (
+                    {goals.map((g, idx) => (
                       <li key={idx} className="leading-relaxed">{g}</li>
                     ))}
                   </ul>
@@ -147,7 +165,7 @@ export const PrdDetailPage = () => {
                     <ShieldAlert className="w-4 h-4 text-destructive" /> Explicit Non-Goals
                   </h3>
                   <ul className="list-disc list-inside space-y-2 text-xs sm:text-sm text-muted-foreground">
-                    {prd.sections?.nonGoals?.map((ng, idx) => (
+                    {nonGoals.map((ng, idx) => (
                       <li key={idx} className="leading-relaxed">{ng}</li>
                     ))}
                   </ul>
@@ -174,9 +192,9 @@ export const PrdDetailPage = () => {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {prd.sections?.requirements?.map((req) => (
-                    <TableRow key={req.id}>
-                      <TableCell className="font-mono font-bold text-primary text-xs">{req.id}</TableCell>
+                  {requirements.map((req, index) => (
+                    <TableRow key={req.id || index}>
+                      <TableCell className="font-mono font-bold text-primary text-xs">{req.id || `REQ-${index + 1}`}</TableCell>
                       <TableCell>
                         <Badge
                           variant={req.priority === 'P0' ? 'destructive' : req.priority === 'P1' ? 'warning' : 'secondary'}
@@ -185,8 +203,13 @@ export const PrdDetailPage = () => {
                           {req.priority}
                         </Badge>
                       </TableCell>
-                      <TableCell className="font-semibold text-foreground text-xs sm:text-sm">{req.name}</TableCell>
-                      <TableCell className="text-xs sm:text-sm text-muted-foreground leading-relaxed">{req.desc}</TableCell>
+                      <TableCell className="font-semibold text-foreground text-xs sm:text-sm">{req.name || req.title || 'Requirement'}</TableCell>
+                      <TableCell className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+                        {req.desc || req.userStory || 'No specification provided.'}
+                        {Array.isArray(req.acceptanceCriteria) && req.acceptanceCriteria.length > 0 && (
+                          <ul className="mt-2 list-disc space-y-1 pl-4">{req.acceptanceCriteria.map((criterion, criterionIndex) => <li key={criterionIndex}>{criterion}</li>)}</ul>
+                        )}
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -203,7 +226,7 @@ export const PrdDetailPage = () => {
               </h2>
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                {prd.sections?.metrics?.map((m, idx) => (
+                {metrics.map((m, idx) => (
                   <div key={idx} className="p-5 rounded-xl bg-card border border-border space-y-1 shadow-sm">
                     <span className="block font-heading font-bold text-base text-foreground">{m.name}</span>
                     <span className="text-xs font-mono text-primary font-semibold block">{m.target}</span>
@@ -223,10 +246,10 @@ export const PrdDetailPage = () => {
 
               <div className="p-6 rounded-xl bg-muted/40 border border-border space-y-3">
                 <ul className="space-y-2 text-xs sm:text-sm text-muted-foreground font-medium">
-                  {prd.sections?.releaseGates?.map((gate, idx) => (
+                  {releaseGates.map((gate, idx) => (
                     <li key={idx} className="flex items-start gap-2 leading-relaxed">
                       <CheckCircle className="w-4 h-4 text-primary flex-shrink-0 mt-0.5" />
-                      <span>{gate}</span>
+                      <span>{typeof gate === 'string' ? gate : <><strong>{gate.name || 'Release gate'}{gate.status ? ` — ${gate.status}` : ''}</strong>{gate.criteria ? `: ${gate.criteria}` : ''}</>}</span>
                     </li>
                   ))}
                 </ul>

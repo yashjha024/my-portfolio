@@ -1,44 +1,78 @@
-import jwt from 'jsonwebtoken';
-import { User } from '../models/User.model.js';
-import { generateTokens, setTokenCookies } from '../utils/token.utils.js';
+import { supabase } from '../config/supabase.js';
+import { setTokenCookies } from '../utils/token.utils.js';
 
+/**
+ * Authentication Middleware (`verifyAuth`)
+ * Inspects both HTTP-Only cookies (`sb-access-token`) and `Authorization: Bearer <token>` headers.
+ * Automatically attempts session refresh if access token is expired.
+ */
 export const verifyAuth = async (req, res, next) => {
   try {
-    const accessToken = req.cookies.accessToken;
+    let accessToken = req.cookies['sb-access-token'];
+    let refreshToken = req.cookies['sb-refresh-token'];
+
+    // Check Authorization header if cookie is absent
+    const authHeader = req.headers.authorization;
+    if (!accessToken && authHeader && authHeader.startsWith('Bearer ')) {
+      accessToken = authHeader.split(' ')[1];
+    }
+
+    if (!accessToken && !refreshToken) {
+      return res
+        .status(401)
+        .json({ success: false, error: 'Unauthorized: No authentication tokens found.' });
+    }
+
+    let authUser = null;
 
     if (accessToken) {
-      try {
-        const decoded = jwt.verify(accessToken, process.env.JWT_ACCESS_SECRET || 'access_secret');
-        req.user = await User.findById(decoded.id).select('-refreshToken');
-        if (req.user) return next();
-      } catch (_err) {
-        // Access token expired or invalid, fall through to refresh token verification
+      const { data, error } = await supabase.auth.getUser(accessToken);
+      if (!error && data?.user) {
+        authUser = data.user;
       }
     }
 
-    const refreshToken = req.cookies.refreshToken;
-    if (!refreshToken) {
-      return res.status(401).json({ success: false, error: 'Unauthorized: No valid tokens found' });
+    // If access token failed or expired, attempt token refresh via refresh_token
+    if (!authUser && refreshToken) {
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession({
+        refresh_token: refreshToken,
+      });
+
+      if (!refreshError && refreshData?.session) {
+        authUser = refreshData.session.user;
+        setTokenCookies(res, refreshData.session.access_token, refreshData.session.refresh_token);
+      }
     }
 
-    const decodedRefresh = jwt.verify(
-      refreshToken,
-      process.env.JWT_REFRESH_SECRET || 'refresh_secret'
-    );
-    const user = await User.findById(decodedRefresh.id);
-
-    if (!user || user.refreshToken !== refreshToken) {
-      return res.status(401).json({ success: false, error: 'Unauthorized: Invalid refresh token' });
+    if (!authUser) {
+      return res
+        .status(401)
+        .json({ success: false, error: 'Unauthorized: Invalid or expired session.' });
     }
 
-    const { accessToken: newAccess, refreshToken: newRefresh } = generateTokens(user);
-    user.refreshToken = newRefresh;
-    await user.save();
+    // Query user profile from public users table
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', authUser.id)
+      .single();
 
-    setTokenCookies(res, newAccess, newRefresh);
-    req.user = user;
+    const ownerEmail = process.env.OWNER_EMAIL.toLowerCase();
+    const isOwner = authUser.email?.toLowerCase() === ownerEmail && userProfile?.role === 'owner';
+
+    req.user = userProfile
+      ? { ...userProfile, role: isOwner ? 'owner' : 'visitor' }
+      : {
+          id: authUser.id,
+          email: authUser.email,
+          full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
+          role: 'visitor',
+          avatar_url: authUser.user_metadata?.avatar_url || null,
+        };
+
     next();
-  } catch (_error) {
-    return res.status(401).json({ success: false, error: 'Authentication failed' });
+  } catch (err) {
+    console.error('verifyAuth middleware error:', err);
+    return res.status(401).json({ success: false, error: 'Authentication failed.' });
   }
 };

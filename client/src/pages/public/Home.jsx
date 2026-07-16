@@ -10,6 +10,7 @@ import { Button } from '../../components/ui/Button.jsx';
 import { Badge } from '../../components/ui/Badge.jsx';
 import { InteractiveCard, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card.jsx';
 import { CaseStudyCardSkeleton, ArticleCardSkeleton } from '../../components/ui/Skeleton.jsx';
+import { SEO } from '../../components/shared/SEO.jsx';
 
 export const Home = () => {
   const { data, loading } = usePortfolioData({ delayMs: 350 });
@@ -17,35 +18,35 @@ export const Home = () => {
 
   const howIWorkSteps = [
     {
-      title: 'Discover & De-risk',
+      title: 'Discover & Scoping',
       icon: <Sparkles className="w-5 h-5 text-primary" />,
-      desc: 'Conduct structured customer interviews and 3-day technical spikes to validate value and feasibility before writing code.',
+      desc: 'Conduct structured requirement gathering, user interviews, and workflow analysis to validate value before execution.',
     },
     {
-      title: 'Define & Frame',
+      title: 'Define & Process Map',
       icon: <FileText className="w-5 h-5 text-primary" />,
-      desc: 'Author crisp, verifiable PRDs and architectural RFCs that establish clear trade-offs, non-goals, and success metrics.',
+      desc: 'Author crisp As-Is/To-Be process flows, BRDs, and user stories that establish clear trade-offs and success metrics.',
     },
     {
-      title: 'Deliver & Scale',
+      title: 'Deliver & Collaborate',
       icon: <Layers className="w-5 h-5 text-primary" />,
-      desc: 'Orchestrate cross-functional execution across specialized engineering squads using trunk-based GitOps and zero-downtime rollouts.',
+      desc: 'Orchestrate cross-functional execution across specialized engineering and design teams using Agile/Scrum best practices.',
     },
     {
-      title: 'Learn & Iterate',
+      title: 'Measure & Analytics',
       icon: <BarChart3 className="w-5 h-5 text-primary" />,
-      desc: 'Instrument OpenTelemetry from day one to measure actual customer impact against baseline hypotheses and refine the roadmap.',
+      desc: 'Instrument real-time KPI visibility and data analytics from day one to cut manual reporting effort and refine the product.',
     },
   ];
 
   return (
     <>
-      {/* Native React 19 SEO Hoisting */}
-      <title>{`${profile?.name || 'Yash Jhai'} | Product & Program Management Portfolio`}</title>
-      <meta name="description" content={profile?.elevatorPitch || 'Senior Product Manager & Engineer Portfolio'} />
-      <meta property="og:title" content={`${profile?.name} - Product Management Portfolio`} />
-      <meta property="og:description" content={profile?.elevatorPitch} />
-      <meta property="og:type" content="website" />
+      {/* Universal SEO & Structured Data */}
+      <SEO
+        title={`${profile?.name || 'Yash Jha'} | Product & AI/ML Engineering Portfolio`}
+        description={profile?.elevatorPitch || 'Product Professional & AI/ML Engineer Portfolio'}
+        type="website"
+      />
 
       {/* Block 1: Hero Section */}
       <Section className="pt-12 pb-16 md:pt-20 md:pb-24 overflow-hidden border-b border-border/40 bg-gradient-to-b from-background via-background to-muted/20">
@@ -56,12 +57,12 @@ export const Home = () => {
             transition={{ duration: 0.4, ease: 'easeOut' }}
             className="max-w-4xl space-y-6"
           >
-            <div className="flex items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <Badge variant="outline" className="px-3 py-1 font-mono text-xs bg-muted/60">
-                <Code className="w-3.5 h-3.5 mr-1.5 text-primary" /> Engineering Foundation → Product Leadership
+                <Code className="w-3.5 h-3.5 mr-1.5 text-primary" /> AI &amp; ML Foundation → Product Leadership
               </Badge>
               <Badge variant="success" className="px-3 py-1 text-xs">
-                Open to Senior PM / TPM Roles
+                Open to Product &amp; Technical Roles
               </Badge>
             </div>
 
@@ -93,7 +94,7 @@ export const Home = () => {
               </Button>
               <Button variant="secondary" size="lg" asChild>
                 <NavLink to="/resume">
-                  <FileText className="mr-2 w-4 h-4" /> Download Resume
+                  <FileText className="mr-2 w-4 h-4" /> Interactive Resume
                 </NavLink>
               </Button>
               <Button variant="ghost" size="lg" asChild>
@@ -162,7 +163,6 @@ export const Home = () => {
                 <NavLink key={cs.id} to={`/work/${cs.slug}`} className="block focus-visible:outline-none">
                   <InteractiveCard className="h-full flex flex-col justify-between">
                     <div>
-                      {/* Image Thumbnail */}
                       {cs.coverImage && (
                         <div className="w-full h-44 overflow-hidden bg-muted border-b border-border">
                           <img
@@ -217,10 +217,10 @@ export const Home = () => {
               Operating Philosophy
             </Badge>
             <h2 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
-              How I Work: Discover → Define → Deliver → Learn
+              How I Work: Discover → Define → Deliver → Measure
             </h2>
             <p className="text-muted-foreground mt-2 text-sm sm:text-base">
-              A disciplined, evidence-based workflow crafted over 8+ years of engineering and product leadership.
+              A disciplined, evidence-based workflow crafted at the intersection of business needs and technical execution.
             </p>
           </div>
 
@@ -334,10 +334,10 @@ export const Home = () => {
               My Journey &amp; Story
             </Badge>
             <h3 className="font-heading text-2xl sm:text-3xl font-bold tracking-tight text-foreground mb-4">
-              Why an Engineering Foundation Makes Me a Better Product Manager
+              Why an AI/ML Foundation Makes Me a Better Product Professional
             </h3>
             <p className="text-muted-foreground text-sm sm:text-base leading-relaxed mb-6">
-              When software engineers talk to product managers who don&apos;t understand distributed systems, database indexing, or API rate limits, trust erodes immediately. Having engineered high-concurrency microservices and managed Kubernetes multi-cluster federation for 8 years, I bridge the gap effortlessly. I write PRDs that engineers love to build and executives trust to deliver ROI.
+              When stakeholders talk to product professionals who don&apos;t understand workflows, data analytics, or modern AI architectures, execution bottlenecks immediately. Having hands-on exposure across requirement gathering, process mapping, and building live platforms in learning and commerce environments alongside a B.Tech in AI &amp; ML, I bridge the technical and strategic gap effortlessly. I translate complex workflows into shipped product features.
             </p>
             <div className="flex flex-wrap gap-4">
               <Button asChild size="lg">
@@ -369,7 +369,7 @@ export const Home = () => {
               Building something useful? Let&apos;s talk.
             </h2>
             <p className="text-base sm:text-lg text-muted-foreground max-w-xl mx-auto leading-relaxed">
-              Whether you are hiring for a Senior Product or Program Manager, looking to scale an internal developer platform, or exploring zero-to-one product strategy, I would love to connect.
+              Whether you are hiring for a Product Intern, Associate Product Manager, or exploring technical workflow design, I would love to connect.
             </p>
             <div className="flex flex-wrap items-center justify-center gap-4 pt-2">
               <Button size="lg" asChild className="px-8 shadow-lg">
@@ -378,7 +378,7 @@ export const Home = () => {
                 </NavLink>
               </Button>
               <Button variant="outline" size="lg" asChild>
-                <a href="https://linkedin.com" target="_blank" rel="noopener noreferrer">
+                <a href="https://linkedin.com/in/yashjha024" target="_blank" rel="noopener noreferrer">
                   Connect on LinkedIn
                 </a>
               </Button>

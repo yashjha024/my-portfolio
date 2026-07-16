@@ -9,20 +9,31 @@ import { Grid } from '../../components/layout/Grid.jsx';
 import { Badge } from '../../components/ui/Badge.jsx';
 import { InteractiveCard, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card.jsx';
 import { PrdCardSkeleton } from '../../components/ui/Skeleton.jsx';
+import { SEO } from '../../components/shared/SEO.jsx';
+import { BreadcrumbNav } from '../../components/shared/BreadcrumbNav.jsx';
 
 export const PrdsIndexPage = () => {
   const { data: prds, loading } = usePortfolioData({ type: 'prds', delayMs: 350 });
 
+  const breadcrumbs = [
+    { name: 'Home', url: '/' },
+    { name: 'PRDs & Specifications', url: '/prds' },
+  ];
+
   return (
     <>
-      <title>PRD Library & Specifications | Yash Jhai Portfolio</title>
-      <meta name="description" content="Explore complete, engineering-ready Product Requirements Documents showing structured trade-offs, metrics, and release gates." />
-      <meta property="og:title" content="PRD Library | Yash Jhai Portfolio" />
+      <SEO
+        title="PRD Library & Specifications"
+        description="Explore complete, engineering-ready Product Requirements Documents showing structured trade-offs, non-goals, P0/P1 requirements, and verifiable release gates."
+        type="website"
+        breadcrumbs={breadcrumbs}
+      />
 
       {/* Header */}
       <Section className="pt-10 pb-12 md:pt-16 md:pb-16 border-b border-border/40 bg-gradient-to-b from-background to-muted/20">
         <Container>
           <div className="max-w-3xl space-y-4">
+            <BreadcrumbNav items={breadcrumbs} />
             <Badge variant="outline" className="flex items-center gap-1.5 w-max">
               <FileText className="w-3.5 h-3.5 text-primary" /> Engineering-Ready Specifications
             </Badge>

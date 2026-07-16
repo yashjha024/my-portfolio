@@ -11,20 +11,31 @@ import { Badge } from '../../components/ui/Badge.jsx';
 import { Chip } from '../../components/ui/Chip.jsx';
 import { MarkdownProse } from '../../components/ui/MarkdownProse.jsx';
 import { Timeline, TimelineItem, TimelineDot, TimelineContent } from '../../components/ui/Timeline.jsx';
+import { SEO } from '../../components/shared/SEO.jsx';
+import { BreadcrumbNav } from '../../components/shared/BreadcrumbNav.jsx';
 
 export const AboutPage = () => {
   const { data: about } = usePortfolioData({ type: 'about', delayMs: 350 });
 
+  const breadcrumbs = [
+    { name: 'Home', url: '/' },
+    { name: 'About Me & Principles', url: '/about' },
+  ];
+
   return (
     <>
-      <title>About Me & Career Journey | Yash Jhai Portfolio</title>
-      <meta name="description" content="Learn about my journey from Senior Distributed Systems Engineer to Senior Staff Product & Program Manager." />
-      <meta property="og:title" content="About Yash Jhai - Product Leadership & Systems Engineering" />
+      <SEO
+        title="About Me & Career Journey"
+        description="Learn about my career evolution from Senior Distributed Systems Engineer to Lead Product & Program Manager."
+        type="website"
+        breadcrumbs={breadcrumbs}
+      />
 
       {/* Hero Header */}
       <Section className="pt-10 pb-12 md:pt-16 md:pb-16 border-b border-border/40 bg-gradient-to-b from-background to-muted/20">
         <Container>
           <div className="max-w-3xl space-y-4">
+            <BreadcrumbNav items={breadcrumbs} />
             <Badge variant="outline" className="flex items-center gap-1.5 w-max">
               <Terminal className="w-3.5 h-3.5 text-primary" /> Engineering &amp; Product Narrative
             </Badge>

@@ -9,6 +9,9 @@ import { Button } from '../../components/ui/Button.jsx';
 import { Badge } from '../../components/ui/Badge.jsx';
 import { MarkdownProse } from '../../components/ui/MarkdownProse.jsx';
 import { DetailPageSkeleton } from '../../components/ui/Skeleton.jsx';
+import { SEO } from '../../components/shared/SEO.jsx';
+import { BreadcrumbNav } from '../../components/shared/BreadcrumbNav.jsx';
+import { calculateReadingTime } from '../../utils/calculateReadingTime.js';
 
 export const ArticleDetailPage = () => {
   const { slug } = useParams();
@@ -40,15 +43,26 @@ export const ArticleDetailPage = () => {
     );
   }
 
-  const isTeardown = art.type === 'teardown' || art.currentExperience;
+  const hasStructuredTeardown = Boolean(art.currentExperience || art.targetAudience || art.proposedFeature || art.whyNow);
+  const isTeardown = hasStructuredTeardown;
+  const computedReadingTime = art.readingTime || calculateReadingTime(art.body || art.currentExperience || art.excerpt).text;
+
+  const breadcrumbs = [
+    { name: 'Home', url: '/' },
+    { name: 'Product Thinking', url: '/thinking' },
+    { name: art.title, url: `/thinking/${art.slug}` },
+  ];
 
   return (
     <>
-      <title>{`${art.title} | Product Thinking - Yash Jhai`}</title>
-      <meta name="description" content={art.excerpt} />
-      <meta property="og:title" content={art.title} />
-      <meta property="og:description" content={art.excerpt} />
-      {art.coverImage && <meta property="og:image" content={art.coverImage} />}
+      <SEO
+        title={art.title}
+        description={art.excerpt}
+        image={art.coverImage}
+        type="article"
+        publishedTime={art.publishedAt}
+        breadcrumbs={breadcrumbs}
+      />
 
       {/* Hero Section */}
       <Section className="pt-8 pb-12 md:pt-14 md:pb-16 border-b border-border/60 bg-gradient-to-b from-background via-background to-muted/20">
@@ -57,21 +71,16 @@ export const ArticleDetailPage = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="max-w-4xl space-y-6"
+            className="max-w-4xl space-y-5"
           >
-            <NavLink
-              to="/thinking"
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back to Product Thinking
-            </NavLink>
+            <BreadcrumbNav items={breadcrumbs} />
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 pt-2">
               <Badge variant="default" className="uppercase font-mono text-xs">
                 {art.type?.replace('_', ' ')}
               </Badge>
-              <span className="text-xs font-mono text-muted-foreground">{art.readingTime}</span>
-              <span className="text-xs font-mono text-muted-foreground">&bull; Published {art.publishedAt}</span>
+              <span className="text-xs font-mono text-muted-foreground">{computedReadingTime}</span>
+              <span className="text-xs font-mono text-muted-foreground">&bull; Published {art.publishedAt || 'Recently'}</span>
             </div>
 
             <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-extrabold text-foreground leading-tight">

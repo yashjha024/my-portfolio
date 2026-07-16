@@ -5,6 +5,7 @@ import { Button } from '../ui/Button.jsx';
 import { ThemeToggle } from './ThemeToggle.jsx';
 import { MobileMenu } from './MobileMenu.jsx';
 import { cn } from '../../utils/cn.js';
+import { usePortfolioData } from '../../hooks/usePortfolioData.js';
 
 export const navLinks = [
   { to: '/work', label: 'Work' },
@@ -15,6 +16,7 @@ export const navLinks = [
 
 export const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { data: profile } = usePortfolioData({ type: 'profile' });
 
   return (
     <header className="border-border/80 bg-background/80 sticky top-0 z-50 w-full border-b backdrop-blur-md transition-all">
@@ -25,10 +27,10 @@ export const Header = () => {
           className="font-heading text-foreground flex flex-col gap-1 text-lg font-bold tracking-tight transition-opacity hover:opacity-80 sm:flex-row sm:items-center"
           onClick={() => setMobileMenuOpen(false)}
         >
-          <span>Yash Jhai</span>
+          <span>{profile?.name || 'Portfolio'}</span>
           <span className="text-muted-foreground hidden font-normal sm:inline-block">/</span>
           <span className="text-primary/80 dark:text-primary-foreground/80 text-xs font-medium sm:text-sm">
-            Product Portfolio Platform
+            {profile?.role || 'Product Portfolio'}
           </span>
         </NavLink>
 

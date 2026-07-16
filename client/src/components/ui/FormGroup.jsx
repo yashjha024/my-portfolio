@@ -10,11 +10,12 @@ export const FormGroup = ({
   className,
   children,
 }) => {
+  const inputId = htmlFor || (React.isValidElement(children) ? children.props.id : undefined);
   return (
     <div className={cn('flex flex-col space-y-1.5', className)}>
       {label && (
         <label
-          htmlFor={htmlFor}
+          htmlFor={inputId}
           className="text-foreground text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
         >
           {label}

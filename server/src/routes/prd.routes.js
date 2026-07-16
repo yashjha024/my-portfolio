@@ -8,16 +8,16 @@ import {
   deletePrd,
 } from '../controllers/prd.controller.js';
 import { verifyAuth } from '../middleware/auth.middleware.js';
-import { verifyAdmin } from '../middleware/admin.middleware.js';
+import { verifyOwner } from '../middleware/admin.middleware.js';
 
 const router = express.Router();
 
 router.get('/', getPublicPrds);
-router.get('/:slug', getPrdBySlug);
+router.get('/slug/:slug', getPrdBySlug);
 
-router.get('/admin/all', verifyAuth, verifyAdmin, getAdminPrds);
-router.post('/', verifyAuth, verifyAdmin, createPrd);
-router.put('/:id', verifyAuth, verifyAdmin, updatePrd);
-router.delete('/:id', verifyAuth, verifyAdmin, deletePrd);
+router.get('/admin/all', verifyAuth, verifyOwner, getAdminPrds);
+router.post('/', verifyAuth, verifyOwner, createPrd);
+router.put('/:id', verifyAuth, verifyOwner, updatePrd);
+router.delete('/:id', verifyAuth, verifyOwner, deletePrd);
 
 export default router;

@@ -8,3 +8,4 @@ export { PrdDetailPage } from './PrdDetail.jsx';
 export { AboutPage } from './About.jsx';
 export { ResumePage } from './Resume.jsx';
 export { ContactPage } from './Contact.jsx';
+export { NotFoundPage } from './NotFound.jsx';

@@ -1,31 +1,32 @@
 export const profileData = {
-  name: 'Yash Jhai',
-  role: 'Senior Staff Product / Program Manager & Engineer',
+  name: 'Yash Jha',
+  role: 'Product Professional & AI/ML Engineer',
   elevatorPitch:
-    'I translate technical possibilities into clear customer value, aligned execution, and measurable outcomes.',
-  bio: 'With over 8 years of foundational systems and distributed software engineering experience before transitioning into technical product and program leadership, I specialize in building 0-to-1 enterprise developer platforms, AI infrastructure, and cloud cost governance architectures that scale.',
-  email: 'yash.jhai@example.com',
-  linkedin: 'https://linkedin.com/in/yash-jhai-product',
-  github: 'https://github.com/yashjhai',
-  location: 'San Francisco, CA / Remote (Global)',
+    'Product professional with experience taking digital products from requirement gathering to launch, with hands-on exposure to workflow design, feature scoping, and product analytics.',
+  bio: 'B.Tech in Artificial Intelligence and Machine Learning at Birla Institute of Technology, Mesra (2022–2026). Comfortable working at the intersection of business needs and technical execution, with a proven track record of delivering live platforms in learning (Istockly), industrial commerce (Diptech Technologies), and cross-domain AI research pipelines (NIT Patna).',
+  email: 'yashjha024@gmail.com',
+  phone: '+91-7759831707',
+  linkedin: 'https://linkedin.com/in/yashjha024',
+  github: 'https://github.com/yashjha024',
+  location: 'Delhi, IN / Remote',
   proofPoints: [
     {
-      metric: '$12M ARR',
-      label: 'Platform Scaling',
+      metric: '20–25% Cut',
+      label: 'Operational Friction',
       description:
-        'Scaled internal cloud developer platform from 0 to 1,400+ active enterprise developers.',
+        'Reduced workflow clarity friction & manual documentation effort across production LMS and industrial commerce platforms.',
     },
     {
-      metric: '40% Drop',
-      label: 'Incident Reduction',
+      metric: '5 Core Journeys',
+      label: 'Platform Workflow',
       description:
-        'Led cross-functional zero-downtime API gateway migration across 140 production microservices.',
+        'Owned end-to-end workflow definition covering discovery, ordering, partial payments, loans, and after-sales service.',
     },
     {
-      metric: '3 Days vs 3 Wks',
-      label: 'Onboarding Velocity',
+      metric: '4 Key KPIs',
+      label: 'Analytics Visibility',
       description:
-        'Architected and shipped AI-powered developer onboarding co-pilot saving 1,200 eng hours/mo.',
+        'Architected real-time dashboard visibility cutting manual reporting effort by 25% and accelerating pricing decisions.',
     },
   ],
 };
@@ -60,10 +61,9 @@ export const caseStudies = [
     tags: ['Platform Engineering', 'FinOps', 'Kubernetes', '0-to-1 Launch'],
     coverImage:
       'https://images.unsplash.com/photo-1558494949-ef010cbdcc31?auto=format&fit=crop&w=1200&q=80',
-    liveUrl: 'https://github.com/yashjhai',
-    repoUrl: 'https://github.com/yashjhai',
+    liveUrl: 'https://github.com/yashjha024',
+    repoUrl: 'https://github.com/yashjha024',
     prdUrl: '/prds/real-time-anomaly-detection-pipeline',
-    // 10 Section Template Details
     opportunity:
       'Cloud compute represents our second-highest COGS line item after payroll. By treating infrastructure efficiency as a first-class developer experience rather than a top-down finance mandate, we unlocked millions in runway while accelerating engineering hygiene.',
     roleConstraints:
@@ -131,8 +131,8 @@ export const caseStudies = [
     tags: ['AI/ML Product', 'Developer Experience', 'RAG Architecture', 'Enterprise Security'],
     coverImage:
       'https://images.unsplash.com/photo-1526374965328-7f61d4dc18c5?auto=format&fit=crop&w=1200&q=80',
-    liveUrl: 'https://github.com/yashjhai',
-    repoUrl: 'https://github.com/yashjhai',
+    liveUrl: 'https://github.com/yashjha024',
+    repoUrl: 'https://github.com/yashjha024',
     opportunity:
       'Every week a new engineer spends waiting for environment setup or architecture context costs the company ~$4,000 in unrecovered velocity and degrades employee early-tenure satisfaction.',
     roleConstraints:
@@ -195,8 +195,8 @@ export const caseStudies = [
     ],
     coverImage:
       'https://images.unsplash.com/photo-1544197150-b99a580bb7a8?auto=format&fit=crop&w=1200&q=80',
-    liveUrl: 'https://github.com/yashjhai',
-    repoUrl: 'https://github.com/yashjhai',
+    liveUrl: 'https://github.com/yashjha024',
+    repoUrl: 'https://github.com/yashjha024',
     opportunity:
       'Eliminating single-point-of-failure routing bottlenecks was mandatory to support international multi-region expansion and pass Tier-1 financial compliance audits.',
     roleConstraints:
@@ -244,7 +244,6 @@ export const articles = [
       'https://images.unsplash.com/photo-1611162617213-7d7a39e9b1d7?auto=format&fit=crop&w=1200&q=80',
     disclaimer:
       'Independent product concept & architectural teardown — not affiliated with WhatsApp or Meta.',
-    // 8-Step Teardown Structure
     currentExperience:
       'In active WhatsApp groups of 10+ participants (such as recreational sports leagues, family reunions, or engineering study groups), organizing a simple dinner or weekend hike turns into endless, chaotic message scrolling. Members reply with "+1", "Can we do 7pm instead?", or separate side threads, burying important location details and RSVP counts under dozens of unrelated memes or notifications.',
     targetAudience:
@@ -488,92 +487,100 @@ export const prds = [
 
 export const aboutData = {
   story: `
-I am a **Senior Staff Product / Program Manager & Technical Builder** who spent the first 8 years of my career in the engineering trenches. Having designed high-concurrency backend services, debugged distributed consensus deadlocks at 3 AM, and managed complex microservice migrations, I intimately understand the engineering realities behind every product requirement.
+Product professional with experience taking digital products from requirement gathering to launch, with hands-on exposure to workflow design, feature scoping, and product analytics. Comfortable working at the intersection of business needs and technical execution, with a proven track record of contributing to live platforms in learning and commerce environments.
 
-In 2021, I made the deliberate transition from Systems Engineering to Product and Program Leadership. Why? Because I realized that the most challenging bottleneck in enterprise software isn't writing algorithms—it's **translating ambiguous strategic vision into precise, technically sound execution across specialized engineering squads.**
+I am pursuing my **B.Tech in Artificial Intelligence and Machine Learning** at **Birla Institute of Technology (BIT), Mesra** (Nov 2022 – June 2026), grounding my product leadership in rigorous technical coursework including **Statistics, Analysis of Algorithms, Data Structures, Machine Learning, and Deep Learning**.
 
-Today, I operate at the intersection of **Product Strategy, Platform Architecture, and Technical Program Execution**. I don't write 40-page theoretical slide decks; I write crisp, evidence-backed PRDs, executable architectural RFCs, and interactive technical roadmaps that earn the immediate trust of senior software engineers and executive leadership alike.
+My experience spans taking 0-to-1 workflows into live production:
+* At **Istockly** (Remote/BLR), I owned the delivery of a production Learning Management System (LMS) for financial education, translating business needs into 4 core workflows across course management, learner onboarding, progress tracking, and certification—reducing operational friction by **20%** and cutting manual reporting effort by **25%** across 4 key KPIs.
+* At **Diptech Technologies** (Patna, BR), I defined workflows for an industrial commerce platform covering 5 core journeys: discovery, ordering, partial payments, loan support, and after-sales service. I enabled high-value purchase workflows via **Razorpay-based partial payments** and auto-generated loan quotations, reducing manual documentation effort by **20–25%**.
+* At **NIT Patna**, I extended a **CVPR 2024** few-shot learning medical imaging pipeline across cross-domain environments.
+* At **Campus-Connect** (Project), I owned the product design and user flows for a student-faculty dashboard platform with role-based profile management and achievement tracking.
   `,
   principles: [
     {
-      title: 'Evidence over Opinion',
+      title: 'Workflow Clarity & Scoping',
       description:
-        'Never debate in a vacuum what you can measure with a 3-day technical spike or structured customer discovery interview. Data ends arguments and aligns teams.',
+        'Translate ambiguous business requirements into structured As-Is/To-Be process mapping, BRD documentation, and clean user stories.',
     },
     {
-      title: 'Own the End-to-End Outcome',
+      title: 'Analytics & Measurable Impact',
       description:
-        'A product manager is not a backlog administrator. I take personal ownership of the entire value lifecycle—from initial discovery and technical trade-offs to sales enablement and P99 reliability.',
+        'Every feature launch must be backed by quantifiable KPI tracking, from learner onboarding conversions to high-value purchase documentation savings.',
     },
     {
-      title: 'Simplify the Architecture',
+      title: 'Intersection of Product & AI/ML',
       description:
-        'The best feature is often the one you decide not to build. I actively prune scope and avoid unnecessary architectural complexity to preserve long-term team velocity.',
+        'Combine strong product instinct with deep technical familiarity across Python, React, Node.js, MongoDB, LangChain, RAG, and LLM pipelines.',
     },
     {
-      title: 'Thick APIs, Thin Interfaces',
+      title: 'Stakeholder & Operational Excellence',
       description:
-        'Whether building internal developer platforms or enterprise B2B SaaS, robust, composable APIs are the true foundation. UI should be an elegant consumer, not the sole entry point.',
+        'Standardize stakeholder-driven feature execution and maintain secure access controls across customer, brand, and administrative roles.',
     },
   ],
   timeline: [
     {
-      date: '2023 - Present',
-      title: 'Senior Staff Product / Program Manager — Enterprise Cloud Platform',
+      date: 'Dec 2025 - Present',
+      title: 'Product Intern — Istockly (Remote/BLR)',
       description:
-        'Leading 0-to-1 product strategy and technical program delivery for autonomous cloud cost governance, AI onboarding co-pilots, and distributed service mesh migrations across 40+ engineering squads ($12M ARR impact).',
+        'Owned delivery of a production LMS for financial education across 4 core workflows (course management, onboarding, progress tracking, certification). Designed experiences for learners & admins reducing operational friction by ~20%, and developed analytics visibility across 4 key KPIs cutting manual reporting effort by ~25%.',
     },
     {
-      date: '2021 - 2023',
-      title: 'Lead Technical Product Manager — Developer Infrastructure',
+      date: 'June 2025 - Dec 2025',
+      title: 'Project Intern — Diptech Technologies (Patna, BR)',
       description:
-        'Owned the core developer experience and API gateway product line. Shipped self-service API key management, GitOps CRD workflows, and reduced P99 latency by 42ms.',
+        'Owned workflow definition for an industrial commerce platform covering 5 core journeys (discovery, ordering, partial payments, loan support, after-sales). Enabled Razorpay partial payments and auto-generated loan quotations reducing manual documentation effort by 20–25%. Integrated technician appointment booking.',
     },
     {
-      date: '2018 - 2021',
-      title: 'Senior Distributed Systems Engineer — Core Backend',
+      date: 'May 2025 - July 2025',
+      title: 'Research Intern — National Institute of Technology (NIT), Patna',
       description:
-        'Architected high-throughput Golang and Node.js microservices handling 50k requests/sec. Designed eBPF telemetry pipelines and managed Kubernetes multi-cluster federation.',
+        'Extended a CVPR 2024 few-shot learning pipeline from 1 dataset family to 2 medical imaging domains, supporting cross-domain experimentation and model evaluation.',
     },
     {
-      date: '2016 - 2018',
-      title: 'Software Systems Engineer',
+      date: 'March 2025 - Present',
+      title: 'Placement Coordinator — Training & Placement Cell, BIT Mesra',
       description:
-        'Built real-time data ingestion pipelines and automated CI/CD deployment infrastructure using Python, Docker, and AWS.',
+        'Managed placement workflows between students and recruiters, aligning scheduling, communication, and logistics across multiple stakeholders while supporting interview readiness.',
+    },
+    {
+      date: 'Nov 2022 - June 2026',
+      title: 'B.Tech in Artificial Intelligence & Machine Learning — BIT Mesra',
+      description:
+        'Coursework: Statistics, Analysis of Algorithms, Data Structures, Machine Learning, Deep Learning. Certifications: Google Advanced Data Analytics (May 2024), Google Business Intelligence (June 2024).',
     },
   ],
   skills: {
-    'Product Strategy & Discovery': [
-      '0-to-1 Product Definition',
-      'PRD & RFC Authoring',
-      'Customer Discovery & Teardowns',
-      'Pricing & FinOps Modeling',
-      'Go-To-Market Alignment',
-      'OKRs & Roadmap Governance',
+    'Analytics & BI': [
+      'SQL & PostgreSQL',
+      'Microsoft Excel & Google Sheets',
+      'Power BI & Tableau',
+      'KPI Tracking & Funnel Analysis',
+      'Data Visualization & Reporting',
     ],
-    'Technical Program Management': [
-      'Cross-Squad Orchestration',
-      'Zero-Downtime Migration Execution',
-      'Risk & Dependency FMEA',
-      'SLO / SLA Definition',
-      'Incident Post-Mortem Leadership',
-      'Agile / GitOps Workflow Optimization',
+    'Product Methods & Agile': [
+      'Requirements Gathering & Scoping',
+      'Process Mapping (As-Is / To-Be)',
+      'BRD Documentation & User Stories',
+      'UAT & Agile / Scrum Ceremonies',
+      'Role-Based Workflow Design',
+      'Troubleshooting & FMEA',
     ],
-    'Architecture & Technologies': [
-      'MERN Stack (MongoDB, Express, React, Node)',
-      'TypeScript & Go',
-      'Kubernetes & Service Mesh (Envoy/Istio)',
-      'eBPF & OpenTelemetry',
-      'RAG & Vector AI Pipelines',
-      'AWS / GCP Cloud FinOps',
+    'Product & Collaboration Tools': [
+      'Figma UX / UI Design',
+      'Jira & Trello Agile Management',
+      'Notion & Google Workspace',
+      'Git & GitHub Version Control',
+      'Razorpay Payment Integration',
+      'n8n Workflow Automation',
     ],
-    'Analytics & Validation': [
-      'SQL & Funnel Analytics',
-      'A/B Experimentation Design',
-      'Prometheus & Datadog Telemetry',
-      'User Journey Mapping',
-      'SOC2 / ISO 27001 Security Compliance',
-      'Zod & API Schema Validation',
+    'Technical Familiarity & AI/ML': [
+      'JavaScript, Python, React.js & Node.js',
+      'MongoDB & PostgreSQL Databases',
+      'REST APIs & Microservice Interop',
+      'LangChain, RAG & LLM Pipelines',
+      'Deep Learning & Few-Shot AI Models',
     ],
   },
 };

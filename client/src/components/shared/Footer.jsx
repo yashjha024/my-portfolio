@@ -3,9 +3,11 @@ import { NavLink } from 'react-router-dom';
 import { Mail, FileText, Globe } from 'lucide-react';
 import { Github, Linkedin } from '../ui/Icon.jsx';
 import { Container } from '../layout/Container.jsx';
+import { usePortfolioData } from '../../hooks/usePortfolioData.js';
 
 export const Footer = () => {
   const currentYear = new Date().getFullYear();
+  const { data: profile } = usePortfolioData({ type: 'profile' });
 
   return (
     <footer className="border-border bg-background w-full border-t py-12 transition-colors md:py-16">
@@ -14,15 +16,17 @@ export const Footer = () => {
           {/* Col 1: Identity & Positioning */}
           <div className="space-y-4 md:col-span-2">
             <h3 className="font-heading text-foreground text-lg font-bold tracking-tight">
-              Yash Jhai
+              {profile?.name || 'Portfolio'}
             </h3>
             <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
-              Senior Product Manager &amp; Builder. Specializing in technical 0-to-1 product
-              strategy, scalable platform architectures, and data-driven execution.
+              {profile?.bio ||
+                'A product portfolio with case studies, product thinking, and delivery evidence.'}
             </p>
             <div className="text-muted-foreground flex items-center gap-2 pt-1 font-mono text-xs">
               <Globe className="text-primary h-4 w-4" />
-              <span>Available globally &amp; open to senior product leadership discussions</span>
+              <span>
+                Based in Delhi, IN • Open to product management &amp; technical opportunities
+              </span>
             </div>
           </div>
 
@@ -68,7 +72,7 @@ export const Footer = () => {
             <ul className="text-muted-foreground space-y-2.5 text-sm">
               <li>
                 <a
-                  href="mailto:yash@example.com"
+                  href={`mailto:${profile?.email || ''}`}
                   className="hover:text-primary inline-flex items-center gap-2 transition-colors"
                 >
                   <Mail className="h-4 w-4" />
@@ -77,7 +81,7 @@ export const Footer = () => {
               </li>
               <li>
                 <a
-                  href="https://linkedin.com"
+                  href={profile?.linkedin || '#'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary inline-flex items-center gap-2 transition-colors"
@@ -88,7 +92,7 @@ export const Footer = () => {
               </li>
               <li>
                 <a
-                  href="https://github.com"
+                  href={profile?.github || '#'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="hover:text-primary inline-flex items-center gap-2 transition-colors"
@@ -112,10 +116,14 @@ export const Footer = () => {
 
         {/* Bottom Bar */}
         <div className="border-border/60 text-muted-foreground mt-12 flex flex-col items-center justify-between gap-4 border-t pt-8 text-xs sm:flex-row">
-          <p>© {currentYear} Yash Jhai. Built with MERN Stack, React 19 &amp; Tailwind CSS.</p>
+          <p>© {currentYear} Yash Jha. Built with MERN Stack, React 19 &amp; Tailwind CSS.</p>
           <div className="flex items-center gap-4">
             <NavLink to="/contact" className="hover:text-foreground transition-colors">
               Contact
+            </NavLink>
+            <span>â€¢</span>
+            <NavLink to="/privacy" className="hover:text-foreground transition-colors">
+              Privacy
             </NavLink>
             <span>•</span>
             <NavLink to="/login" className="hover:text-foreground transition-colors">

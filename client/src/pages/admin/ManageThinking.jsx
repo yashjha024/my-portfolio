@@ -1,0 +1,370 @@
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
+import api from '../../services/api.js';
+import { StatusBadge } from '../../components/admin/StatusBadge.jsx';
+import { ConfirmDialog } from '../../components/admin/ConfirmDialog.jsx';
+import { PaginationControls } from '../../components/admin/PaginationControls.jsx';
+import {
+  BookOpen,
+  Plus,
+  Search,
+  Filter,
+  Eye,
+  Edit,
+  Trash2,
+  Copy,
+  Loader2,
+  AlertCircle,
+  RefreshCw,
+} from 'lucide-react';
+
+export const ManageThinkingPage = () => {
+  const [articles, setArticles] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
+  const [search, setSearch] = useState('');
+  const [statusFilter, setStatusFilter] = useState('all');
+  const [typeFilter, setTypeFilter] = useState('all');
+  const [page, setPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalCount, setTotalCount] = useState(0);
+
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [itemToDelete, setItemToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
+  const [duplicatingId, setDuplicatingId] = useState(null);
+
+  const _navigate = useNavigate();
+
+  const fetchArticles = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      const params = new URLSearchParams({
+        page: page.toString(),
+        limit: '15',
+      });
+      if (search.trim()) params.append('q', search.trim());
+      if (statusFilter !== 'all') params.append('status', statusFilter);
+      if (typeFilter !== 'all') params.append('type', typeFilter);
+
+      const res = await api.get(`/admin/thinking?${params.toString()}`);
+      if (res.data?.success) {
+        setArticles(res.data.data || []);
+        setTotalPages(res.data.totalPages || 1);
+        setTotalCount(res.data.count || 0);
+      }
+    } catch (err) {
+      console.error('Error fetching articles:', err);
+      setError('Failed to load articles from server.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    fetchArticles();
+  }, [page, statusFilter, typeFilter]);
+
+  const handleSearchSubmit = (e) => {
+    e.preventDefault();
+    setPage(1);
+    fetchArticles();
+  };
+
+  const handleDuplicate = async (item) => {
+    try {
+      setDuplicatingId(item.id);
+      const duplicatedPayload = {
+        title: `${item.title} (Draft Copy)`,
+        slug: `${item.slug}-copy-${Date.now().toString().slice(-4)}`,
+        type: item.type,
+        excerpt: item.excerpt,
+        body: item.body,
+        cover_image: item.cover_image,
+        tags: item.tags || [],
+        status: 'draft',
+        reading_time: item.reading_time,
+        disclaimer: item.disclaimer,
+        related_work: item.related_work || [],
+      };
+
+      const res = await api.post('/admin/thinking', duplicatedPayload);
+      if (res.data?.success) {
+        fetchArticles();
+      }
+    } catch (err) {
+      console.error('Failed to duplicate article:', err);
+      alert(err.response?.data?.error || 'Could not duplicate article.');
+    } finally {
+      setDuplicatingId(null);
+    }
+  };
+
+  const confirmDelete = (item) => {
+    setItemToDelete(item);
+    setDeleteModalOpen(true);
+  };
+
+  const handleDelete = async () => {
+    if (!itemToDelete) return;
+    try {
+      setDeleting(true);
+      const res = await api.delete(`/admin/thinking/${itemToDelete.id}`);
+      if (res.data?.success) {
+        setArticles((prev) => prev.filter((art) => art.id !== itemToDelete.id));
+        setTotalCount((c) => Math.max(0, c - 1));
+      }
+    } catch (err) {
+      console.error('Delete error:', err);
+      alert('Failed to delete article.');
+    } finally {
+      setDeleting(false);
+      setDeleteModalOpen(false);
+      setItemToDelete(null);
+    }
+  };
+
+  const formatTypeLabel = (type) => {
+    switch (type) {
+      case 'teardown':
+        return 'Teardown';
+      case 'feature_proposal':
+        return 'Feature Proposal';
+      case 'essay':
+        return 'Essay';
+      default:
+        return type || 'Article';
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      {/* Header */}
+      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 sm:flex-row sm:items-center">
+        <div className="flex items-center gap-3">
+          <div className="rounded-xl border border-violet-500/20 bg-violet-500/10 p-3 text-violet-400">
+            <BookOpen className="h-6 w-6" />
+          </div>
+          <div>
+            <h1 className="text-2xl font-bold tracking-tight text-white">
+              Product Thinking Articles
+            </h1>
+            <p className="mt-0.5 text-sm text-slate-400">
+              Manage product teardowns, WhatsApp feature proposals, and strategic essays (
+              {totalCount} total)
+            </p>
+          </div>
+        </div>
+        <Link
+          to="/admin/thinking/new"
+          className="flex items-center justify-center gap-2 rounded-xl bg-violet-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-violet-600/20 transition-all hover:bg-violet-500"
+        >
+          <Plus className="h-4 w-4" />
+          <span>Write New Article</span>
+        </Link>
+      </div>
+
+      {/* Filter and Search Bar */}
+      <div className="flex flex-col items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 md:flex-row">
+        <form onSubmit={handleSearchSubmit} className="relative w-full md:w-80">
+          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Search title, excerpt, or body..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2 pl-10 pr-4 text-sm text-white transition-colors placeholder:text-slate-500 focus:border-violet-500 focus:outline-none"
+          />
+        </form>
+
+        <div className="flex w-full flex-wrap items-center gap-3 md:w-auto">
+          <div className="flex items-center gap-2">
+            <Filter className="h-4 w-4 text-slate-400" />
+            <span className="font-mono text-xs uppercase text-slate-400">Status:</span>
+            <select
+              value={statusFilter}
+              onChange={(e) => {
+                setStatusFilter(e.target.value);
+                setPage(1);
+              }}
+              className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5 text-xs font-medium text-white focus:border-violet-500 focus:outline-none"
+            >
+              <option value="all">All Statuses</option>
+              <option value="published">Published</option>
+              <option value="draft">Draft</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-xs uppercase text-slate-400">Type:</span>
+            <select
+              value={typeFilter}
+              onChange={(e) => {
+                setTypeFilter(e.target.value);
+                setPage(1);
+              }}
+              className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5 text-xs font-medium text-white focus:border-violet-500 focus:outline-none"
+            >
+              <option value="all">All Types</option>
+              <option value="teardown">Teardown</option>
+              <option value="feature_proposal">Feature Proposal</option>
+              <option value="essay">Essay</option>
+            </select>
+          </div>
+
+          <button
+            onClick={() => fetchArticles()}
+            className="rounded-xl bg-slate-800 p-2 text-slate-300 transition-colors hover:bg-slate-700"
+            title="Refresh List"
+          >
+            <RefreshCw className="h-4 w-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Table Content */}
+      <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl">
+        {loading && articles.length === 0 ? (
+          <div className="flex flex-col items-center justify-center gap-3 py-20">
+            <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
+            <span className="font-mono text-xs uppercase text-slate-400">Loading Articles...</span>
+          </div>
+        ) : error ? (
+          <div className="p-12 text-center">
+            <AlertCircle className="mx-auto mb-2 h-8 w-8 text-rose-400" />
+            <p className="font-medium text-rose-300">{error}</p>
+            <button
+              onClick={fetchArticles}
+              className="mt-4 rounded-xl bg-slate-800 px-4 py-2 font-mono text-xs text-slate-200 hover:bg-slate-700"
+            >
+              Retry Connection
+            </button>
+          </div>
+        ) : articles.length === 0 ? (
+          <div className="p-16 text-center">
+            <BookOpen className="mx-auto mb-3 h-10 w-10 text-slate-600" />
+            <h3 className="mb-1 text-base font-bold text-white">No Articles Found</h3>
+            <p className="mx-auto mb-6 max-w-sm text-xs text-slate-400">
+              No product teardowns or feature proposals match your current filters.
+            </p>
+            <Link
+              to="/admin/thinking/new"
+              className="inline-flex items-center gap-2 rounded-xl bg-violet-600 px-4 py-2.5 text-xs font-medium text-white hover:bg-violet-500"
+            >
+              <Plus className="h-4 w-4" />
+              <span>Write Your First Teardown</span>
+            </Link>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full border-collapse text-left">
+              <thead>
+                <tr className="border-b border-slate-800 bg-slate-950/40 font-mono text-[11px] uppercase tracking-wider text-slate-400">
+                  <th className="px-5 py-4">Article Title & Slug</th>
+                  <th className="px-5 py-4">Type</th>
+                  <th className="px-5 py-4">Reading Time</th>
+                  <th className="px-5 py-4">Status</th>
+                  <th className="px-5 py-4">Last Updated</th>
+                  <th className="px-5 py-4 text-right">Actions</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-slate-800/80 text-sm">
+                {articles.map((item) => (
+                  <tr key={item.id} className="group transition-colors hover:bg-slate-800/40">
+                    <td className="px-5 py-4">
+                      <div className="font-bold text-white transition-colors group-hover:text-violet-300">
+                        {item.title}
+                      </div>
+                      <div className="mt-0.5 font-mono text-xs text-slate-500">/{item.slug}</div>
+                    </td>
+                    <td className="px-5 py-4">
+                      <span className="inline-block rounded-md border border-violet-500/20 bg-violet-500/10 px-2.5 py-1 font-mono text-xs font-medium text-violet-300">
+                        {formatTypeLabel(item.type)}
+                      </span>
+                    </td>
+                    <td className="px-5 py-4 font-mono text-xs text-slate-300">
+                      {item.reading_time || '5 min read'}
+                    </td>
+                    <td className="px-5 py-4">
+                      <StatusBadge status={item.status} />
+                    </td>
+                    <td className="px-5 py-4 font-mono text-xs text-slate-400">
+                      {new Date(item.updated_at || item.created_at).toLocaleDateString([], {
+                        month: 'short',
+                        day: 'numeric',
+                        year: 'numeric',
+                      })}
+                    </td>
+                    <td className="px-5 py-4 text-right">
+                      <div className="flex items-center justify-end gap-1.5">
+                        <a
+                          href={`/thinking/${item.slug}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+                          title="Preview Article"
+                        >
+                          <Eye className="h-4 w-4" />
+                        </a>
+                        <button
+                          type="button"
+                          disabled={duplicatingId === item.id}
+                          onClick={() => handleDuplicate(item)}
+                          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-violet-400 disabled:opacity-30"
+                          title="Duplicate Article"
+                        >
+                          {duplicatingId === item.id ? (
+                            <Loader2 className="h-4 w-4 animate-spin text-violet-400" />
+                          ) : (
+                            <Copy className="h-4 w-4" />
+                          )}
+                        </button>
+                        <Link
+                          to={`/admin/thinking/edit/${item.id}`}
+                          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-violet-400"
+                          title="Edit Article"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Link>
+                        <button
+                          type="button"
+                          onClick={() => confirmDelete(item)}
+                          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-rose-400"
+                          title="Delete Permanently"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+
+        <PaginationControls
+          currentPage={page}
+          totalPages={totalPages}
+          onPageChange={(newPage) => setPage(newPage)}
+        />
+      </div>
+
+      <ConfirmDialog
+        isOpen={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+        onConfirm={handleDelete}
+        title="Delete Thinking Article"
+        description={
+          itemToDelete
+            ? `Are you sure you want to delete "${itemToDelete.title}"? All markdown body text and metadata will be permanently removed.`
+            : 'Are you sure?'
+        }
+        confirmText="Delete Permanently"
+        loading={deleting}
+      />
+    </div>
+  );
+};

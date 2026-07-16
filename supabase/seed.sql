@@ -9,8 +9,8 @@
 INSERT INTO users (id, email, full_name, role, avatar_url)
 VALUES (
     '00000000-0000-0000-0000-000000000001',
-    'yash@example.com',
-    'Yash Jhai',
+    'yashjha024@gmail.com',
+    'Yash Jha',
     'owner',
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop'
 )
@@ -37,14 +37,14 @@ INSERT INTO site_settings (
 VALUES (
     1,
     'https://images.unsplash.com/photo-1534528741775-53994a69daeb?q=80&w=400&auto=format&fit=crop',
-    'Senior Staff Product / Program Manager & Engineer',
-    'I translate technical possibilities into clear customer value, aligned execution, and measurable outcomes. With over 10 years of experience transitioning from distributed systems software engineering to product leadership, I specialize in cloud infrastructure, developer platforms, AI telemetry pipelines, and enterprise FinOps.',
-    'yash@example.com',
-    '/resume.pdf',
-    '{"github": "https://github.com/yashjhai", "linkedin": "https://linkedin.com/in/yash-jhai-product", "twitter": "https://twitter.com/yashjhai"}'::jsonb,
+    'Product Professional & AI/ML Engineer',
+    'Product professional with experience taking digital products from requirement gathering to launch, with hands-on exposure to workflow design, feature scoping, and product analytics. B.Tech in Artificial Intelligence and Machine Learning at Birla Institute of Technology, Mesra (2022–2026).',
+    'yashjha024@gmail.com',
+    '/resume',
+    '{"github": "https://github.com/yashjha024", "linkedin": "https://linkedin.com/in/yashjha024", "twitter": "https://twitter.com/yashjha024"}'::jsonb,
     '{"work": "Work", "thinking": "Product Thinking", "prds": "PRD Library", "about": "About", "resume": "Resume", "contact": "Let''s talk"}'::jsonb,
     'By submitting this contact form, you consent to having your inquiry processed safely in accordance with our privacy practices.',
-    '{"location": "San Francisco, CA (UTC-8)", "status": "Available for select advisory and Staff PM opportunities", "copyright": "© 2026 Yash Jhai. All rights reserved."}'::jsonb,
+    '{"location": "Delhi, IN (IST / UTC+5:30)", "status": "Available for select product management and AI/ML engineering opportunities", "copyright": "© 2026 Yash Jha. All rights reserved."}'::jsonb,
     '00000000-0000-0000-0000-000000000001'
 )
 ON CONFLICT (id) DO UPDATE SET

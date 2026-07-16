@@ -12,6 +12,8 @@ import { Chip } from '../../components/ui/Chip.jsx';
 import { Input } from '../../components/ui/Input.jsx';
 import { InteractiveCard, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card.jsx';
 import { CaseStudyCardSkeleton } from '../../components/ui/Skeleton.jsx';
+import { SEO } from '../../components/shared/SEO.jsx';
+import { BreadcrumbNav } from '../../components/shared/BreadcrumbNav.jsx';
 
 export const WorkIndexPage = () => {
   const { data, loading } = usePortfolioData({ delayMs: 350 });
@@ -52,16 +54,25 @@ export const WorkIndexPage = () => {
     });
   }, [caseStudies, activeType, searchQuery, selectedTag]);
 
+  const breadcrumbs = [
+    { name: 'Home', url: '/' },
+    { name: 'Work / Case Studies', url: '/work' },
+  ];
+
   return (
     <>
-      <title>Case Studies &amp; Shipped Projects | Yash Jhai Portfolio</title>
-      <meta name="description" content="Explore verified product case studies, 0-to-1 platform launches, and technical program migrations." />
-      <meta property="og:title" content="Work & Case Studies | Yash Jhai Portfolio" />
+      <SEO
+        title="Case Studies & Shipped Projects"
+        description="Explore verified product case studies, 0-to-1 platform launches, and technical program migrations with explicit problem framing and metrics."
+        type="website"
+        breadcrumbs={breadcrumbs}
+      />
 
       {/* Hero Header */}
       <Section className="pt-10 pb-12 md:pt-16 md:pb-16 border-b border-border/40 bg-gradient-to-b from-background to-muted/20">
         <Container>
           <div className="max-w-3xl space-y-4">
+            <BreadcrumbNav items={breadcrumbs} />
             <Badge variant="outline">Case Studies &amp; Evidence</Badge>
             <h1 className="font-heading text-4xl font-extrabold tracking-tight sm:text-5xl text-foreground leading-tight">
               Evidence Over Opinion

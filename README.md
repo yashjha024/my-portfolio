@@ -91,7 +91,7 @@ CLOUDINARY_API_KEY=your_api_key
 CLOUDINARY_API_SECRET=your_api_secret
 
 # Admin Owner Email
-OWNER_EMAIL=you@yourdomain.com
+OWNER_EMAIL=yashjha024@gmail.com
 ```
 
 ### 3. Install Dependencies

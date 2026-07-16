@@ -33,14 +33,29 @@ export const buttonVariants = cva(
 );
 
 export const Button = React.forwardRef(
-  ({ className, variant, size, isLoading = false, disabled, children, ...props }, ref) => {
+  (
+    { className, variant, size, isLoading = false, disabled, children, asChild = false, ...props },
+    ref
+  ) => {
+    const classes = cn(buttonVariants({ variant, size, className }));
+    if (asChild && React.isValidElement(children)) {
+      return React.cloneElement(children, {
+        ...props,
+        ...children.props,
+        ref,
+        className: cn(classes, children.props.className),
+        'aria-disabled': disabled || isLoading || undefined,
+        onClick: disabled || isLoading ? (event) => event.preventDefault() : children.props.onClick,
+        children: (
+          <>
+            {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
+            {children.props.children}
+          </>
+        ),
+      });
+    }
     return (
-      <button
-        className={cn(buttonVariants({ variant, size, className }))}
-        ref={ref}
-        disabled={disabled || isLoading}
-        {...props}
-      >
+      <button className={classes} ref={ref} disabled={disabled || isLoading} {...props}>
         {isLoading && <Loader2 className="mr-2 h-4 w-4 animate-spin" aria-hidden="true" />}
         {children}
       </button>

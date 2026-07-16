@@ -273,7 +273,7 @@ BEGIN
         auth.role() = 'service_role'
         OR EXISTS (
             SELECT 1 FROM users
-            WHERE id = auth.uid() AND role IN ('owner', 'editor')
+            WHERE id = auth.uid() AND role = 'owner'
         )
     );
 END;
@@ -290,8 +290,9 @@ ALTER TABLE contact_messages ENABLE ROW LEVEL SECURITY;
 
 -- Policies: users
 DROP POLICY IF EXISTS "Public can view user profiles" ON users;
-CREATE POLICY "Public can view user profiles" ON users
-    FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Users can view own profile or admin view all" ON users;
+CREATE POLICY "Users can view own profile or admin view all" ON users
+    FOR SELECT USING (is_admin() OR id = auth.uid());
 
 DROP POLICY IF EXISTS "Admins can manage user profiles" ON users;
 CREATE POLICY "Admins can manage user profiles" ON users
@@ -335,8 +336,9 @@ CREATE POLICY "Admins can manage all prds" ON prds
 
 -- Policies: media
 DROP POLICY IF EXISTS "Public can view media assets" ON media;
-CREATE POLICY "Public can view media assets" ON media
-    FOR SELECT USING (true);
+DROP POLICY IF EXISTS "Public can view non-private media assets" ON media;
+CREATE POLICY "Public can view non-private media assets" ON media
+    FOR SELECT USING (is_admin() OR (folder IS DISTINCT FROM 'private' AND folder IS DISTINCT FROM 'confidential'));
 
 DROP POLICY IF EXISTS "Admins can manage media assets" ON media;
 CREATE POLICY "Admins can manage media assets" ON media
@@ -344,8 +346,9 @@ CREATE POLICY "Admins can manage media assets" ON media
 
 -- Policies: contact_messages
 DROP POLICY IF EXISTS "Public can submit contact messages" ON contact_messages;
-CREATE POLICY "Public can submit contact messages" ON contact_messages
-    FOR INSERT WITH CHECK (true);
+DROP POLICY IF EXISTS "Service role can submit contact messages" ON contact_messages;
+CREATE POLICY "Service role can submit contact messages" ON contact_messages
+    FOR INSERT WITH CHECK (auth.role() = 'service_role' OR is_admin());
 
 DROP POLICY IF EXISTS "Admins can view and manage contact messages" ON contact_messages;
 CREATE POLICY "Admins can view and manage contact messages" ON contact_messages

@@ -10,6 +10,8 @@ import { Button } from '../../components/ui/Button.jsx';
 import { Badge } from '../../components/ui/Badge.jsx';
 import { InteractiveCard, CardHeader, CardTitle, CardDescription, CardContent } from '../../components/ui/Card.jsx';
 import { ArticleCardSkeleton } from '../../components/ui/Skeleton.jsx';
+import { SEO } from '../../components/shared/SEO.jsx';
+import { BreadcrumbNav } from '../../components/shared/BreadcrumbNav.jsx';
 
 export const ThinkingIndexPage = () => {
   const { data, loading } = usePortfolioData({ delayMs: 350 });
@@ -32,16 +34,25 @@ export const ThinkingIndexPage = () => {
     });
   }, [articles, activeType]);
 
+  const breadcrumbs = [
+    { name: 'Home', url: '/' },
+    { name: 'Product Thinking', url: '/thinking' },
+  ];
+
   return (
     <>
-      <title>Product Thinking, Teardowns & Strategy | Yash Jhai</title>
-      <meta name="description" content="Explore architectural teardowns, feature proposals, and platform engineering strategy essays." />
-      <meta property="og:title" content="Product Thinking | Yash Jhai Portfolio" />
+      <SEO
+        title="Product Thinking, Teardowns & Strategy"
+        description="Explore architectural teardowns, feature proposals, and platform engineering strategy essays on developer experience and 0-to-1 execution."
+        type="website"
+        breadcrumbs={breadcrumbs}
+      />
 
       {/* Header */}
       <Section className="pt-10 pb-12 md:pt-16 md:pb-16 border-b border-border/40 bg-gradient-to-b from-background to-muted/20">
         <Container>
           <div className="max-w-3xl space-y-4">
+            <BreadcrumbNav items={breadcrumbs} />
             <Badge variant="outline" className="flex items-center gap-1.5 w-max">
               <BookOpen className="w-3.5 h-3.5 text-primary" /> Product Teardowns &amp; Strategy Essays
             </Badge>

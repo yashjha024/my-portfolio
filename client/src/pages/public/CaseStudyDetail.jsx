@@ -10,6 +10,9 @@ import { Button } from '../../components/ui/Button.jsx';
 import { Badge } from '../../components/ui/Badge.jsx';
 import { MarkdownProse } from '../../components/ui/MarkdownProse.jsx';
 import { DetailPageSkeleton } from '../../components/ui/Skeleton.jsx';
+import { SEO } from '../../components/shared/SEO.jsx';
+import { BreadcrumbNav } from '../../components/shared/BreadcrumbNav.jsx';
+import { calculateReadingTime } from '../../utils/calculateReadingTime.js';
 
 export const CaseStudyDetailPage = () => {
   const { slug } = useParams();
@@ -41,13 +44,24 @@ export const CaseStudyDetailPage = () => {
     );
   }
 
+  const computedReadingTime = cs.readingTime || calculateReadingTime((cs.problem || '') + ' ' + (cs.approach || '') + ' ' + (cs.outcome || '') + ' ' + (cs.summary || '')).text;
+
+  const breadcrumbs = [
+    { name: 'Home', url: '/' },
+    { name: 'Work / Case Studies', url: '/work' },
+    { name: cs.title, url: `/work/${cs.slug}` },
+  ];
+
   return (
     <>
-      <title>{`${cs.title} | Case Study - Yash Jhai`}</title>
-      <meta name="description" content={cs.summary} />
-      <meta property="og:title" content={cs.title} />
-      <meta property="og:description" content={cs.summary} />
-      {cs.coverImage && <meta property="og:image" content={cs.coverImage} />}
+      <SEO
+        title={cs.title}
+        description={cs.summary}
+        image={cs.coverImage}
+        type="case_study"
+        publishedTime={cs.publishedAt || cs.timeline}
+        breadcrumbs={breadcrumbs}
+      />
 
       {/* Section 1: Hero */}
       <Section className="pt-8 pb-12 md:pt-14 md:pb-16 border-b border-border/60 bg-gradient-to-b from-background via-background to-muted/20">
@@ -56,16 +70,11 @@ export const CaseStudyDetailPage = () => {
             initial={{ opacity: 0, y: 16 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.4 }}
-            className="max-w-4xl space-y-6"
+            className="max-w-4xl space-y-5"
           >
-            <NavLink
-              to="/work"
-              className="inline-flex items-center gap-1.5 text-xs sm:text-sm font-semibold text-muted-foreground hover:text-foreground transition-colors"
-            >
-              <ArrowLeft className="w-4 h-4" /> Back to Case Studies
-            </NavLink>
+            <BreadcrumbNav items={breadcrumbs} />
 
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center gap-2 pt-2">
               <Badge variant="default" className="uppercase font-mono text-xs">
                 {cs.type?.replace('_', ' ')}
               </Badge>
@@ -74,6 +83,7 @@ export const CaseStudyDetailPage = () => {
                   {cs.domain}
                 </Badge>
               )}
+              <span className="text-xs font-mono text-muted-foreground">&bull; {computedReadingTime}</span>
             </div>
 
             <h1 className="font-heading text-3xl sm:text-4xl md:text-5xl font-extrabold text-foreground leading-tight">

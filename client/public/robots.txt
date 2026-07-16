@@ -2,5 +2,7 @@ User-agent: *
 Allow: /
 Disallow: /admin
 Disallow: /admin/*
+Disallow: /api/admin/*
 
 Sitemap: https://portfolio.yashjhai.com/sitemap.xml
+Sitemap: https://portfolio.yashjhai.com/api/seo/sitemap.xml

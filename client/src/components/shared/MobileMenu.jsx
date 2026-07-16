@@ -1,10 +1,39 @@
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
 import { NavLink } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Button } from '../ui/Button.jsx';
 import { cn } from '../../utils/cn.js';
 
 export const MobileMenu = ({ isOpen, onClose, navLinks }) => {
+  const menuRef = useRef(null);
+  useEffect(() => {
+    if (!isOpen) return undefined;
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    const firstFocusable = menuRef.current?.querySelector('a, button');
+    firstFocusable?.focus();
+    const onKeyDown = (event) => {
+      if (event.key === 'Escape') onClose();
+      if (event.key !== 'Tab' || !menuRef.current) return;
+      const focusables = [...menuRef.current.querySelectorAll('a, button:not([disabled])')];
+      if (!focusables.length) return;
+      const first = focusables[0];
+      const last = focusables.at(-1);
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      }
+      if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    };
+    document.addEventListener('keydown', onKeyDown);
+    return () => {
+      document.body.style.overflow = previousOverflow;
+      document.removeEventListener('keydown', onKeyDown);
+    };
+  }, [isOpen, onClose]);
   return (
     <AnimatePresence>
       {isOpen && (
@@ -18,12 +47,15 @@ export const MobileMenu = ({ isOpen, onClose, navLinks }) => {
             aria-hidden="true"
           />
           <motion.nav
+            ref={menuRef}
             initial={{ y: -20, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -20, opacity: 0 }}
             transition={{ duration: 0.2, ease: 'easeOut' }}
             className="border-border bg-background fixed inset-x-0 top-[65px] z-50 border-b px-6 py-6 shadow-xl md:hidden"
             aria-label="Mobile Navigation Menu"
+            aria-modal="true"
+            role="dialog"
           >
             <div className="flex flex-col space-y-4">
               {navLinks.map((link) => (

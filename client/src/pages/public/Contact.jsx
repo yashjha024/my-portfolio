@@ -3,7 +3,8 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { motion } from 'framer-motion';
-import { Mail, Send, CheckCircle, MapPin, MessageSquare, ArrowRight } from 'lucide-react';
+import { Mail, Send, CheckCircle, MapPin, MessageSquare, ArrowRight, AlertCircle } from 'lucide-react';
+import api from '../../services/api.js';
 import { Github, Linkedin } from '../../components/ui/Icon.jsx';
 import { usePortfolioData } from '../../hooks/usePortfolioData.js';
 import { Container } from '../../components/layout/Container.jsx';
@@ -15,6 +16,8 @@ import { FormGroup } from '../../components/ui/FormGroup.jsx';
 import { Input } from '../../components/ui/Input.jsx';
 import { Textarea } from '../../components/ui/Textarea.jsx';
 import { Select } from '../../components/ui/Select.jsx';
+import { SEO } from '../../components/shared/SEO.jsx';
+import { BreadcrumbNav } from '../../components/shared/BreadcrumbNav.jsx';
 
 const contactSchema = z.object({
   name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
@@ -28,6 +31,7 @@ export const ContactPage = () => {
   const { data: profile } = usePortfolioData({ type: 'profile', delayMs: 100 });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [submitError, setSubmitError] = useState(null);
 
   const {
     register,
@@ -47,23 +51,47 @@ export const ContactPage = () => {
 
   const onSubmit = async (_data) => {
     setIsSubmitting(true);
-    // Simulate transactional email delivery latency (Resend API placeholder)
-    await new Promise((resolve) => setTimeout(resolve, 1000));
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    reset();
+    setSubmitError(null);
+    try {
+      const response = await api.post('/contact', _data);
+      if (response.data && response.data.success) {
+        setIsSubmitted(true);
+        reset();
+      } else {
+        setSubmitError(response.data?.message || 'Failed to send message. Please try again.');
+      }
+    } catch (err) {
+      console.error('Contact submission error:', err);
+      const errMsg =
+        err.response?.data?.errors?.[0]?.message ||
+        err.response?.data?.error ||
+        err.message ||
+        'Error sending message. Please check your network or try again later.';
+      setSubmitError(errMsg);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
+  const breadcrumbs = [
+    { name: 'Home', url: '/' },
+    { name: 'Contact Me', url: '/contact' },
+  ];
 
   return (
     <>
-      <title>{`Contact ${profile?.name || 'Yash Jhai'} | Let's Talk`}</title>
-      <meta name="description" content="Get in touch with Yash Jhai for product management leadership roles, advisory, or technical collaborations." />
-      <meta property="og:title" content="Contact Yash Jhai | Product Management Portfolio" />
+      <SEO
+        title="Contact Me & Let's Talk"
+        description="Get in touch with Yash Jha for product management roles, AI/ML engineering, or technical collaborations."
+        type="website"
+        breadcrumbs={breadcrumbs}
+      />
 
       {/* Header Section */}
       <Section className="pt-10 pb-12 md:pt-16 md:pb-16 border-b border-border/40 bg-gradient-to-b from-background to-muted/20">
         <Container>
           <div className="max-w-3xl space-y-4">
+            <BreadcrumbNav items={breadcrumbs} />
             <Badge variant="outline" className="flex items-center gap-1.5 w-max">
               <MessageSquare className="w-3.5 h-3.5 text-primary" /> Direct Communication
             </Badge>
@@ -71,7 +99,7 @@ export const ContactPage = () => {
               Let&apos;s Connect
             </h1>
             <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-              Whether you are evaluating candidates for a Senior Product / Program Manager role, seeking platform engineering advisory, or simply want to discuss 0-to-1 execution, I would love to talk.
+              Whether you are evaluating candidates for a Product Manager or AI/ML Engineer role, seeking workflow advisory, or simply want to discuss 0-to-1 execution across AI and commerce, I would love to talk.
             </p>
           </div>
         </Container>
@@ -100,7 +128,7 @@ export const ContactPage = () => {
               <div className="space-y-4">
                 {/* Email Box */}
                 <a
-                  href={`mailto:${profile?.email || 'yash.jhai@example.com'}`}
+                  href={`mailto:${profile?.email || 'yashjha024@gmail.com'}`}
                   className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/50 transition-colors group"
                 >
                   <div className="w-12 h-12 rounded-lg bg-primary/10 flex items-center justify-center text-primary group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
@@ -111,14 +139,14 @@ export const ContactPage = () => {
                       Direct Email
                     </span>
                     <span className="font-heading font-bold text-base text-foreground group-hover:text-primary transition-colors">
-                      {profile?.email || 'yash.jhai@example.com'}
+                      {profile?.email || 'yashjha024@gmail.com'}
                     </span>
                   </div>
                 </a>
 
                 {/* LinkedIn Box */}
                 <a
-                  href={profile?.linkedin || 'https://linkedin.com'}
+                  href={profile?.linkedin || 'https://linkedin.com/in/yashjha024'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/50 transition-colors group"
@@ -131,14 +159,14 @@ export const ContactPage = () => {
                       Professional Network
                     </span>
                     <span className="font-heading font-bold text-base text-foreground group-hover:text-primary transition-colors">
-                      LinkedIn Profile <ArrowRight className="inline w-3.5 h-3.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      yashjha024 <ArrowRight className="inline w-3.5 h-3.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </span>
                   </div>
                 </a>
 
                 {/* GitHub Box */}
                 <a
-                  href={profile?.github || 'https://github.com'}
+                  href={profile?.github || 'https://github.com/yashjha024'}
                   target="_blank"
                   rel="noopener noreferrer"
                   className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:border-primary/50 transition-colors group"
@@ -151,7 +179,7 @@ export const ContactPage = () => {
                       Source Code &amp; Repositories
                     </span>
                     <span className="font-heading font-bold text-base text-foreground group-hover:text-primary transition-colors">
-                      github.com/yashjhai <ArrowRight className="inline w-3.5 h-3.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
+                      github.com/yashjha024 <ArrowRight className="inline w-3.5 h-3.5 ml-1 opacity-0 group-hover:opacity-100 transition-opacity" />
                     </span>
                   </div>
                 </a>
@@ -166,7 +194,7 @@ export const ContactPage = () => {
                       Base &amp; Timezone
                     </span>
                     <span className="font-heading font-bold text-base text-foreground">
-                      {profile?.location || 'San Francisco, CA (PST / UTC-8)'}
+                      {profile?.location || 'Delhi, IN (IST / UTC+5:30)'}
                     </span>
                   </div>
                 </div>
@@ -200,6 +228,15 @@ export const ContactPage = () => {
                 </div>
               ) : (
                 <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                  {submitError && (
+                    <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs sm:text-sm flex items-start gap-3 mb-4">
+                      <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-rose-400" />
+                      <div>
+                        <strong className="block font-semibold mb-0.5">Submission Error</strong>
+                        <span>{submitError}</span>
+                      </div>
+                    </div>
+                  )}
                   <FormGroup label="Your Name" required error={errors.name?.message}>
                     <Input
                       {...register('name')}
@@ -232,7 +269,7 @@ export const ContactPage = () => {
                     <FormGroup label="Subject" required error={errors.subject?.message}>
                       <Input
                         {...register('subject')}
-                        placeholder="Senior PM Opportunity..."
+                        placeholder="Product Opportunity..."
                         error={!!errors.subject}
                       />
                     </FormGroup>
@@ -247,7 +284,7 @@ export const ContactPage = () => {
                     <Textarea
                       {...register('message')}
                       rows={5}
-                      placeholder="Hello Yash, we are looking for a Senior Staff Product Manager to lead..."
+                      placeholder="Hello Yash, we are looking for a Product Professional / AI Engineer to lead..."
                       error={!!errors.message}
                     />
                   </FormGroup>
