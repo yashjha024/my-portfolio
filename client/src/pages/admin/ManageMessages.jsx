@@ -116,37 +116,36 @@ export const ManageMessagesPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col items-start justify-between gap-4 border-b border-slate-800 pb-6 sm:flex-row sm:items-center">
+      <div className="border-border flex flex-col items-start justify-between gap-4 border-b pb-6 sm:flex-row sm:items-center">
         <div>
           <div className="mb-1 flex items-center gap-2">
-            <MessageSquare className="h-6 w-6 text-indigo-400" />
+            <MessageSquare className="text-primary h-6 w-6" />
             <h1 className="font-heading text-2xl font-bold tracking-tight text-white">
               Inquiries & Inbox
             </h1>
           </div>
-          <p className="text-sm text-slate-400">
+          <p className="text-muted-foreground text-sm">
             Review and respond to visitor inquiries submitted via the Contact form (`/contact`).
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <span className="rounded-xl border border-slate-800 bg-slate-900 px-3 py-1.5 font-mono text-xs text-slate-400">
-            Total Inquiries:{' '}
-            <strong className="font-bold text-indigo-400">{messages.length}</strong>
+          <span className="border-border bg-card text-muted-foreground rounded-xl border px-3 py-1.5 font-mono text-xs">
+            Total Inquiries: <strong className="text-primary font-bold">{messages.length}</strong>
           </span>
         </div>
       </div>
 
       {/* Filter Tabs & Search Bar */}
       <div className="flex flex-col items-stretch justify-between gap-4 md:flex-row md:items-center">
-        <div className="flex flex-wrap gap-1.5 rounded-xl border border-slate-800 bg-slate-900/80 p-1.5">
+        <div className="border-border bg-card flex flex-wrap gap-1.5 rounded-xl border p-1.5">
           {['all', 'new', 'read', 'replied', 'archived'].map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
               className={`rounded-lg px-3 py-1.5 font-mono text-xs uppercase capitalize transition-colors ${
                 activeTab === tab
-                  ? 'bg-indigo-600 font-bold text-white shadow-sm'
-                  : 'text-slate-400 hover:bg-slate-800/60 hover:text-white'
+                  ? 'bg-primary font-bold text-white shadow-sm'
+                  : 'text-muted-foreground hover:bg-secondary hover:text-white'
               }`}
             >
               {tab === 'all' ? 'All Messages' : tab}
@@ -155,13 +154,13 @@ export const ManageMessagesPage = () => {
         </div>
 
         <div className="relative w-full md:w-80">
-          <Search className="absolute left-3.5 top-3 h-4 w-4 text-slate-500" />
+          <Search className="text-muted-foreground absolute left-3.5 top-3 h-4 w-4" />
           <input
             type="text"
             placeholder="Search name, email, subject, keyword..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2 pl-10 pr-4 text-sm text-white transition-colors placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none"
+            className="border-border bg-background placeholder:text-muted-foreground focus:border-primary/40 w-full rounded-xl border py-2 pl-10 pr-4 text-sm text-white transition-colors focus:outline-none"
           />
         </div>
       </div>
@@ -175,21 +174,21 @@ export const ManageMessagesPage = () => {
 
       {loading ? (
         <div className="flex flex-col items-center justify-center gap-3 py-20">
-          <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
-          <span className="font-mono text-xs uppercase text-slate-400">
+          <Loader2 className="text-primary h-8 w-8 animate-spin" />
+          <span className="text-muted-foreground font-mono text-xs uppercase">
             Loading visitor inquiries...
           </span>
         </div>
       ) : filteredMessages.length === 0 ? (
-        <div className="mx-auto my-6 max-w-md space-y-3 rounded-2xl border border-slate-800/80 bg-slate-900/50 p-12 text-center">
-          <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10 text-indigo-400">
+        <div className="border-border bg-card mx-auto my-6 max-w-md space-y-3 rounded-2xl border p-12 text-center">
+          <div className="text-primary mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10">
             <Inbox className="h-6 w-6" />
           </div>
           <h3 className="text-base font-bold text-white">No Inquiries Found</h3>
-          <p className="mx-auto max-w-sm text-xs leading-relaxed text-slate-400">
+          <p className="text-muted-foreground mx-auto max-w-sm text-xs leading-relaxed">
             {searchQuery
               ? 'No messages matched your search query. Try broadening your keywords.'
-              : `There are currently no messages marked as "${activeTab}".`}
+              : `There are currently no messages marked as"${activeTab}".`}
           </p>
         </div>
       ) : (
@@ -209,21 +208,21 @@ export const ManageMessagesPage = () => {
                   }}
                   className={`cursor-pointer rounded-xl border p-4 transition-all ${
                     isSelected
-                      ? 'border-indigo-500/50 bg-indigo-950/40 shadow-md'
-                      : 'border-slate-800/80 bg-slate-900/80 hover:border-slate-700 hover:bg-slate-800/60'
+                      ? 'border-primary/40 bg-indigo-950/40 shadow-md'
+                      : 'border-border bg-card hover:border-border hover:bg-secondary'
                   }`}
                 >
                   <div className="mb-1.5 flex items-center justify-between gap-2">
                     <span className="truncate text-sm font-bold text-white">{m.name}</span>
                     <StatusBadge status={m.status} variant={getStatusBadgeVariant(m.status)} />
                   </div>
-                  <p className="mb-2 truncate font-mono text-xs text-indigo-300">
+                  <p className="text-primary mb-2 truncate font-mono text-xs">
                     {m.subject || 'General Inquiry'}
                   </p>
-                  <p className="mb-3 line-clamp-2 text-xs leading-relaxed text-slate-400">
+                  <p className="text-muted-foreground mb-3 line-clamp-2 text-xs leading-relaxed">
                     {m.message}
                   </p>
-                  <div className="flex items-center justify-between border-t border-slate-800/60 pt-2 font-mono text-[10px] text-slate-500">
+                  <div className="border-border text-muted-foreground flex items-center justify-between border-t pt-2 font-mono text-[10px]">
                     <span className="truncate">{m.email}</span>
                     <span>{new Date(m.created_at).toLocaleDateString()}</span>
                   </div>
@@ -234,8 +233,8 @@ export const ManageMessagesPage = () => {
 
           {/* Detailed Message Pane */}
           {selectedMessage ? (
-            <div className="sticky top-6 space-y-6 rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-xl lg:col-span-7">
-              <div className="flex flex-col items-start justify-between gap-4 border-b border-slate-800 pb-4 sm:flex-row sm:items-center">
+            <div className="border-border bg-card shadow-soft sticky top-6 space-y-6 rounded-2xl border p-6 lg:col-span-7">
+              <div className="border-border flex flex-col items-start justify-between gap-4 border-b pb-4 sm:flex-row sm:items-center">
                 <div>
                   <div className="mb-1 flex items-center gap-2">
                     <h2 className="text-lg font-bold tracking-tight text-white">
@@ -246,12 +245,12 @@ export const ManageMessagesPage = () => {
                       variant={getStatusBadgeVariant(selectedMessage.status)}
                     />
                   </div>
-                  <div className="flex items-center gap-4 font-mono text-xs text-slate-400">
-                    <span className="flex items-center gap-1.5 font-medium text-slate-300">
-                      <User className="h-3.5 w-3.5 text-indigo-400" />
+                  <div className="text-muted-foreground flex items-center gap-4 font-mono text-xs">
+                    <span className="text-foreground flex items-center gap-1.5 font-medium">
+                      <User className="text-primary h-3.5 w-3.5" />
                       {selectedMessage.name}
                     </span>
-                    <span className="flex items-center gap-1.5 text-indigo-300">
+                    <span className="text-primary flex items-center gap-1.5">
                       <Mail className="h-3.5 w-3.5" />
                       <a href={`mailto:${selectedMessage.email}`} className="hover:underline">
                         {selectedMessage.email}
@@ -264,7 +263,7 @@ export const ManageMessagesPage = () => {
                   <a
                     href={`mailto:${selectedMessage.email}?subject=Re: ${encodeURIComponent(selectedMessage.subject || 'Your Inquiry')}`}
                     onClick={() => updateStatus(selectedMessage.id, 'replied')}
-                    className="flex items-center gap-1.5 rounded-xl bg-indigo-600 px-3.5 py-2 text-xs font-medium text-white shadow-sm transition-colors hover:bg-indigo-500"
+                    className="bg-primary hover:bg-primary/90 flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-medium text-white shadow-sm transition-colors"
                   >
                     <Reply className="h-3.5 w-3.5" /> Reply via Email
                   </a>
@@ -280,24 +279,24 @@ export const ManageMessagesPage = () => {
               </div>
 
               {/* Message Body Content */}
-              <div className="whitespace-pre-wrap rounded-xl border border-slate-800/80 bg-slate-950 p-5 font-sans text-sm leading-relaxed text-slate-200">
+              <div className="border-border bg-background text-foreground whitespace-pre-wrap rounded-xl border p-5 font-sans text-sm leading-relaxed">
                 {selectedMessage.message}
               </div>
 
               {/* Status Management Actions */}
-              <div className="flex flex-wrap items-center justify-between gap-4 border-t border-slate-800 pt-4">
-                <div className="flex items-center gap-2 font-mono text-xs text-slate-400">
-                  <Clock className="h-3.5 w-3.5 text-slate-500" />
+              <div className="border-border flex flex-wrap items-center justify-between gap-4 border-t pt-4">
+                <div className="text-muted-foreground flex items-center gap-2 font-mono text-xs">
+                  <Clock className="text-muted-foreground h-3.5 w-3.5" />
                   <span>Received: {new Date(selectedMessage.created_at).toLocaleString()}</span>
                   {selectedMessage.ip_address && (
-                    <span className="ml-2 rounded border border-slate-800 bg-slate-950 px-2 py-0.5">
+                    <span className="border-border bg-background ml-2 rounded border px-2 py-0.5">
                       IP: {selectedMessage.ip_address}
                     </span>
                   )}
                 </div>
 
                 <div className="flex items-center gap-2">
-                  <span className="mr-1 font-mono text-xs uppercase text-slate-400">
+                  <span className="text-muted-foreground mr-1 font-mono text-xs uppercase">
                     Mark Status:
                   </span>
                   {['new', 'read', 'replied', 'archived'].map((st) => (
@@ -307,13 +306,11 @@ export const ManageMessagesPage = () => {
                       disabled={selectedMessage.status === st || actionLoading}
                       className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 font-mono text-xs uppercase transition-colors ${
                         selectedMessage.status === st
-                          ? 'cursor-not-allowed bg-slate-800 font-bold text-slate-400 opacity-60'
-                          : 'border border-slate-800 bg-slate-950 text-slate-300 hover:border-slate-700 hover:text-white'
+                          ? 'bg-secondary text-muted-foreground cursor-not-allowed font-bold opacity-60'
+                          : 'border-border bg-background text-foreground hover:border-border border hover:text-white'
                       }`}
                     >
-                      {selectedMessage.status === st && (
-                        <Check className="h-3 w-3 text-indigo-400" />
-                      )}
+                      {selectedMessage.status === st && <Check className="text-primary h-3 w-3" />}
                       <span>{st}</span>
                     </button>
                   ))}
@@ -321,7 +318,7 @@ export const ManageMessagesPage = () => {
               </div>
             </div>
           ) : (
-            <div className="rounded-2xl border border-slate-800/60 bg-slate-900/40 p-12 text-center text-xs text-slate-500 lg:col-span-7">
+            <div className="border-border bg-card text-muted-foreground rounded-2xl border p-12 text-center text-xs lg:col-span-7">
               Select an inquiry from the left sidebar to view details and respond.
             </div>
           )}

@@ -35,6 +35,16 @@ export const toCaseStudyDto = (item) => ({
   tags: array(item.tags),
   skills: array(item.skills),
   prdSnapshot: object(item.prd_snapshot ?? item.prdSnapshot),
+  researchInputs: item.research_inputs ?? item.researchInputs ?? null,
+  roleConstraints: item.role_constraints ?? item.roleConstraints ?? null,
+  problemFraming: item.problem_framing ?? item.problemFraming ?? null,
+  optionsDecision: item.options_decision ?? item.options_tradeoffs ?? item.optionsDecision ?? null,
+  optionsTradeoffs:
+    item.options_tradeoffs ?? item.options_decision ?? item.optionsTradeoffs ?? null,
+  delivery: item.delivery ?? null,
+  outcomeLearning: item.outcome_learning ?? item.outcomeLearning ?? null,
+  year: item.year ? Number(item.year) : null,
+  relatedWork: array(item.related_work ?? item.relatedWork),
 });
 
 export const toArticleDto = (item) => ({
@@ -53,8 +63,21 @@ export const toPrdDto = (item) => ({
   sections: object(item.sections),
 });
 
+const defaultProfileDto = {
+  ...profileData,
+  resumeUrl: '/resume',
+  location: profileData.location || 'Delhi, IN',
+  copyright: `© ${new Date().getFullYear()} Yash Jha. Built with MERN Stack, React 19 & Tailwind CSS.`,
+  navLabels: {
+    work: 'Work',
+    thinking: 'Product Thinking',
+    prds: 'PRDs',
+    about: 'About',
+  },
+};
+
 const emptyData = {
-  profile: null,
+  profile: defaultProfileDto,
   caseStudies: [],
   articles: [],
   prds: [],
@@ -62,7 +85,7 @@ const emptyData = {
   unavailable: false,
 };
 const demoData = {
-  profile: profileData,
+  profile: defaultProfileDto,
   caseStudies: mockCaseStudies.filter((item) => item.status === 'published'),
   articles: mockArticles.filter((item) => item.status === 'published'),
   prds: mockPrds.filter((item) => item.visibility === 'public'),
@@ -92,15 +115,40 @@ const fetchAllData = async () => {
     const result = {
       profile: settings
         ? {
-            name: settings.headline?.split(' | ')[0] || null,
-            role: settings.headline || null,
-            bio: settings.biography || null,
-            email: settings.email || null,
-            resumeUrl: settings.resume_url || null,
-            linkedin: settings.social_links?.linkedin || null,
-            github: settings.social_links?.github || null,
+            name: settings.headline?.split(' | ')[0] || 'Yash Jha',
+            role: settings.headline || 'Product Manager & Architecture Specialist',
+            bio:
+              settings.biography ||
+              'A product portfolio with case studies, product thinking, and delivery evidence.',
+            email: settings.email || 'yashjha024@gmail.com',
+            resumeUrl: settings.resume_url || '/resume',
+            linkedin: settings.social_links?.linkedin || 'https://linkedin.com/in/yashjha024',
+            github: settings.social_links?.github || 'https://github.com/yashjha024',
+            twitter: settings.social_links?.twitter || '',
+            substack: settings.social_links?.substack || '',
+            location: settings.footer_details?.location || 'Delhi, IN',
+            copyright:
+              settings.footer_details?.copyright ||
+              `© ${new Date().getFullYear()} Yash Jha. Built with MERN Stack, React 19 & Tailwind CSS.`,
+            navLabels: settings.navigation_labels || {
+              work: 'Work',
+              thinking: 'Product Thinking',
+              prds: 'PRDs',
+              about: 'About',
+            },
           }
-        : null,
+        : {
+            ...profileData,
+            resumeUrl: '/resume',
+            location: profileData.location || 'Delhi, IN',
+            copyright: `© ${new Date().getFullYear()} Yash Jha. Built with MERN Stack, React 19 & Tailwind CSS.`,
+            navLabels: {
+              work: 'Work',
+              thinking: 'Product Thinking',
+              prds: 'PRDs',
+              about: 'About',
+            },
+          },
       caseStudies:
         workRes.status === 'fulfilled' && workRes.value.data?.success
           ? array(workRes.value.data.data).map(toCaseStudyDto)

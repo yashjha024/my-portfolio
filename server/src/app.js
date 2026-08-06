@@ -4,6 +4,8 @@ import cors from 'cors';
 import cookieParser from 'cookie-parser';
 import helmet from 'helmet';
 import morgan from 'morgan';
+import crypto from 'crypto';
+import { supabase } from './config/supabase.js';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware.js';
 import { requestLogger } from './middleware/logger.middleware.js';
 import { apiLimiter, authLimiter } from './middleware/rateLimiter.middleware.js';
@@ -47,12 +49,48 @@ app.use(
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(cookieParser());
+// CSRF Initialization and Double-Submit Cookie Protection
+app.use((req, res, next) => {
+  if (!req.cookies['csrf-token']) {
+    const token = crypto.randomBytes(24).toString('hex');
+    res.cookie('csrf-token', token, {
+      httpOnly: false, // Must be readable by client JS/Axios for Double-Submit Cookie pattern
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/',
+    });
+    req.cookies['csrf-token'] = token;
+  }
+  next();
+});
+
+app.get('/api/csrf-token', (req, res) => {
+  const token = req.cookies['csrf-token'] || crypto.randomBytes(24).toString('hex');
+  res.cookie('csrf-token', token, {
+    httpOnly: false,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'strict',
+    path: '/',
+  });
+  res.status(200).json({ success: true, csrfToken: token });
+});
+
 app.use((req, res, next) => {
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) && req.path !== '/api/contact') {
     const origin = req.get('origin');
     const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
-    if (origin && origin !== allowedOrigin)
+    if (origin && origin !== allowedOrigin) {
       return res.status(403).json({ success: false, error: 'Invalid request origin.' });
+    }
+
+    // Double-Submit Cookie CSRF verification when cookie authentication is present
+    if (req.cookies && req.cookies['sb-access-token']) {
+      const cookieCsrf = req.cookies['csrf-token'];
+      const headerCsrf = req.headers['x-csrf-token'];
+      if (!cookieCsrf || !headerCsrf || cookieCsrf !== headerCsrf) {
+        return res.status(403).json({ success: false, error: 'CSRF token mismatch or missing.' });
+      }
+    }
   }
   next();
 });
@@ -79,15 +117,64 @@ app.use('/api/settings', settingsRoutes);
 // Protected Admin CMS Command Center Routes (`/api/admin/*`)
 app.use('/api/admin', adminRoutes);
 
-// Health check endpoint
-app.get('/api/health', (req, res) => {
+// Health, Liveness, and Readiness check endpoints
+const handleLiveness = (req, res) => {
   res.status(200).json({
     success: true,
-    status: 'Production API Server is healthy and running',
+    status: 'ok',
+    uptime: process.uptime(),
     timestamp: new Date().toISOString(),
-    env: process.env.NODE_ENV || 'development',
   });
-});
+};
+
+const handleReadiness = async (req, res) => {
+  try {
+    // 1. Check Supabase Database non-destructively
+    let dbHealthy = false;
+    try {
+      const { error: dbError } = await supabase.from('users').select('id').limit(1);
+      dbHealthy = !dbError || dbError.code === 'PGRST116';
+    } catch {
+      dbHealthy = false;
+    }
+
+    // 2. Check Supabase Storage
+    let storageHealthy = false;
+    try {
+      const { error: storageError } = await supabase.storage.getBucket('portfolio-media');
+      storageHealthy = !storageError || storageError.message?.includes('not found') === false;
+    } catch {
+      storageHealthy = false;
+    }
+
+    // 3. Check Email Configuration (true if configured, or ok if dev)
+    const emailConfigured = Boolean(process.env.RESEND_API_KEY && process.env.OWNER_EMAIL);
+    const isProd = process.env.NODE_ENV === 'production';
+    const emailHealthy = isProd ? emailConfigured : true;
+
+    const allHealthy = dbHealthy && storageHealthy && emailHealthy;
+
+    res.status(allHealthy ? 200 : 503).json({
+      success: allHealthy,
+      status: allHealthy ? 'ready' : 'not_ready',
+      checks: {
+        database: dbHealthy,
+        storage: storageHealthy,
+        email_configured: emailConfigured,
+      },
+      timestamp: new Date().toISOString(),
+    });
+  } catch (_error) {
+    res.status(503).json({
+      success: false,
+      status: 'error',
+      timestamp: new Date().toISOString(),
+    });
+  }
+};
+
+app.get(['/healthz/liveness', '/api/healthz/liveness', '/api/health'], handleLiveness);
+app.get(['/healthz/readiness', '/api/healthz/readiness'], handleReadiness);
 
 // 404 & Global Error Handling
 app.use('*', notFoundHandler);

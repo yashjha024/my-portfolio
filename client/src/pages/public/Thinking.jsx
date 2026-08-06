@@ -49,7 +49,7 @@ export const ThinkingIndexPage = () => {
       />
 
       {/* Header */}
-      <Section className="pt-10 pb-12 md:pt-16 md:pb-16 border-b border-border/40 bg-gradient-to-b from-background to-muted/20">
+      <Section className="pt-20 pb-24 md:pt-28 md:pb-36 border-b border-border bg-background">
         <Container>
           <div className="max-w-3xl space-y-4">
             <BreadcrumbNav items={breadcrumbs} />
@@ -67,7 +67,7 @@ export const ThinkingIndexPage = () => {
       </Section>
 
       {/* Filter Tabs */}
-      <Section variant="muted" className="py-6 border-b border-border/60">
+      <Section variant="muted" className="py-10 border-b border-border">
         <Container>
           <div className="flex flex-wrap items-center gap-2">
             <span className="text-xs font-mono font-bold uppercase text-muted-foreground mr-1 flex items-center gap-1">
@@ -89,7 +89,7 @@ export const ThinkingIndexPage = () => {
       </Section>
 
       {/* Articles Grid */}
-      <Section className="py-12 sm:py-16">
+      <Section className="bg-background">
         <Container>
           {loading ? (
             <Grid cols={2} gap="lg">
@@ -123,7 +123,7 @@ export const ThinkingIndexPage = () => {
                             <img
                               src={art.coverImage}
                               alt={art.title}
-                              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                              className="w-full h-full object-cover transition-opacity duration-200 hover:opacity-95"
                               loading="lazy"
                             />
                           </div>

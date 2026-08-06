@@ -36,35 +36,32 @@ export const Login = () => {
   };
 
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-slate-950 p-4 selection:bg-indigo-500 selection:text-white">
-      {/* Subtle glowing orb in background */}
-      <div className="pointer-events-none absolute left-1/2 top-1/3 h-96 w-96 -translate-x-1/2 -translate-y-1/2 rounded-full bg-indigo-600/10 blur-3xl" />
-
+    <div className="flex min-h-screen flex-col items-center justify-center bg-[#F7F5F0] p-4 selection:bg-[#171717] selection:text-white">
       <motion.div
-        initial={{ opacity: 0, y: 20 }}
+        initial={{ opacity: 0, y: 12 }}
         animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        className="relative z-10 w-full max-w-md rounded-2xl border border-slate-800/80 bg-slate-900/80 p-8 shadow-2xl backdrop-blur-xl"
+        transition={{ duration: 0.22, ease: 'easeOut' }}
+        className="w-full max-w-md rounded-2xl border border-[#E5E2DA] bg-white p-8 text-[#171717] shadow-sm"
       >
         <div className="mb-8 text-center">
-          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl border border-indigo-500/20 bg-indigo-500/10 text-indigo-400">
+          <div className="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-2xl border border-[#E5E2DA] bg-[#FBFAF8] text-[#171717]">
             <ShieldCheck className="h-6 w-6" />
           </div>
-          <h1 className="text-2xl font-bold tracking-tight text-white">Admin Command Center</h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <h1 className="text-2xl font-bold tracking-tight text-[#171717]">Admin Command Center</h1>
+          <p className="mt-1 text-sm text-[#6B6B6B]">
             Secure, passwordless authentication for the product portfolio CMS
           </p>
         </div>
 
         {statusMessage && (
-          <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-300">
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm font-medium text-emerald-600">
             <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0" />
             <span>{statusMessage}</span>
           </div>
         )}
 
         {errorMessage && (
-          <div className="mb-6 flex items-start gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-300">
+          <div className="mb-6 flex items-start gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-600">
             <AlertCircle className="mt-0.5 h-5 w-5 shrink-0" />
             <span>{errorMessage}</span>
           </div>
@@ -74,7 +71,7 @@ export const Login = () => {
         <button
           type="button"
           onClick={loginWithGoogle}
-          className="flex w-full items-center justify-center gap-3 rounded-xl bg-white px-4 py-3.5 font-medium text-slate-900 shadow-lg shadow-white/5 transition-colors hover:bg-slate-100 active:scale-[0.99]"
+          className="flex w-full items-center justify-center gap-3 rounded-xl border border-[#E5E2DA] bg-white px-4 py-3.5 font-medium text-[#171717] shadow-sm transition-colors hover:bg-[#FBFAF8] active:scale-[0.99]"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path
@@ -99,10 +96,10 @@ export const Login = () => {
 
         <div className="relative my-6">
           <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t border-slate-800"></div>
+            <div className="w-full border-t border-[#E5E2DA]"></div>
           </div>
           <div className="relative flex justify-center text-xs uppercase tracking-wider">
-            <span className="bg-slate-900 px-3 font-mono text-slate-500">Or Magic Link OTP</span>
+            <span className="bg-white px-3 font-semibold text-[#6B6B6B]">Or Magic Link OTP</span>
           </div>
         </div>
 
@@ -111,22 +108,20 @@ export const Login = () => {
           <div>
             <label
               htmlFor="email"
-              className="mb-2 block font-mono text-xs uppercase tracking-wider text-slate-400"
+              className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-[#6B6B6B]"
             >
-              Work Email
+              Admin Email Address
             </label>
             <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3.5 text-slate-500">
-                <Mail className="h-4 w-4" />
-              </div>
+              <Mail className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-[#6B6B6B]" />
               <input
-                type="email"
                 id="email"
+                type="email"
+                required
+                placeholder="admin@portfolio.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="yashjha024@gmail.com"
-                required
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 py-3 pl-10 pr-4 text-sm text-white placeholder-slate-600 transition-colors focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+                className="w-full rounded-xl border border-[#E5E2DA] bg-[#FBFAF8] py-3 pl-10 pr-4 text-sm text-[#171717] placeholder-[#6B6B6B]/60 outline-none transition-all focus:border-[#171717] focus:bg-white focus:ring-1 focus:ring-[#171717]"
               />
             </div>
           </div>
@@ -134,13 +129,10 @@ export const Login = () => {
           <button
             type="submit"
             disabled={loadingMagicLink}
-            className="flex w-full items-center justify-center gap-2 rounded-xl bg-indigo-600 px-4 py-3.5 font-medium text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-500 active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
+            className="mt-2 flex w-full items-center justify-center gap-2 rounded-xl bg-[#171717] px-4 py-3.5 font-medium text-white shadow-sm transition-all hover:bg-black active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50"
           >
             {loadingMagicLink ? (
-              <span className="flex items-center gap-2">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white/20 border-t-white" />
-                Sending Link...
-              </span>
+              <span className="inline-block h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
             ) : (
               <>
                 <span>Send Passwordless Magic Link</span>
@@ -150,10 +142,10 @@ export const Login = () => {
           </button>
         </form>
 
-        <div className="mt-8 border-t border-slate-800/80 pt-6 text-center">
+        <div className="mt-8 border-t border-[#E5E2DA] pt-6 text-center">
           <a
             href="/"
-            className="text-xs text-slate-400 underline underline-offset-4 transition-colors hover:text-white"
+            className="text-xs text-[#6B6B6B] underline underline-offset-4 transition-colors hover:text-[#171717]"
           >
             ← Back to Public Portfolio
           </a>

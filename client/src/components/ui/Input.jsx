@@ -6,8 +6,8 @@ export const Input = React.forwardRef(({ className, type = 'text', error, ...pro
     <input
       type={type}
       className={cn(
-        'border-input bg-background ring-offset-background placeholder:text-muted-foreground focus-visible:ring-ring flex h-10 min-h-[44px] w-full rounded-md border px-3 py-2 text-sm file:border-0 file:bg-transparent file:text-sm file:font-medium focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:min-h-[40px]',
-        error ? 'border-destructive focus-visible:ring-destructive' : '',
+        'border-border bg-card text-foreground placeholder:text-muted-foreground focus:border-foreground focus:ring-foreground flex h-12 min-h-[48px] w-full rounded-2xl border px-4 py-3 text-sm transition-all duration-200 focus:outline-none focus:ring-1 disabled:cursor-not-allowed disabled:opacity-50',
+        error ? 'border-destructive focus:border-destructive focus:ring-destructive' : '',
         className
       )}
       ref={ref}

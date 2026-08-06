@@ -214,7 +214,7 @@ export const EditThinkingPage = () => {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-24">
         <Loader2 className="h-8 w-8 animate-spin text-violet-400" />
-        <span className="font-mono text-xs uppercase text-slate-400">
+        <span className="text-muted-foreground font-mono text-xs uppercase">
           Loading Article Editor...
         </span>
       </div>
@@ -224,11 +224,11 @@ export const EditThinkingPage = () => {
   return (
     <div className="space-y-6 pb-20">
       {/* Top Action Bar */}
-      <div className="sticky top-2 z-20 flex flex-col justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-2xl backdrop-blur-xl md:flex-row md:items-center">
+      <div className="border-border bg-card shadow-soft sticky top-2 z-20 flex flex-col justify-between gap-4 rounded-2xl border p-5 md:flex-row md:items-center">
         <div className="flex items-center gap-3">
           <Link
             to="/admin/thinking"
-            className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+            className="text-muted-foreground hover:bg-secondary rounded-xl p-2 transition-colors hover:text-white"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
@@ -239,30 +239,46 @@ export const EditThinkingPage = () => {
               </h1>
               {!isNew && <AutosaveIndicator status={autosaveStatus} lastSavedAt={lastSavedAt} />}
             </div>
-            <p className="mt-0.5 font-mono text-xs text-slate-400">
+            <p className="text-muted-foreground mt-0.5 font-mono text-xs">
               Slug: <span className="text-violet-400">/{formData.slug || 'untitled'}</span>
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {formData.slug && formData.status === 'published' && (
-            <a
-              href={`/thinking/${formData.slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-xl bg-slate-800 px-3 py-2 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-700"
+          {formData.slug && (
+            <button
+              type="button"
+              onClick={async () => {
+                if (formData.status === 'published') {
+                  window.open(`/thinking/${formData.slug}`, '_blank');
+                  return;
+                }
+                if (!id) {
+                  alert('Please save the draft before previewing.');
+                  return;
+                }
+                try {
+                  const res = await api.post(`/thinking/${id}/preview-token`);
+                  if (res.data?.success && res.data.previewUrl) {
+                    window.open(res.data.previewUrl, '_blank');
+                  }
+                } catch (err) {
+                  alert(err?.response?.data?.error || 'Failed to generate preview token');
+                }
+              }}
+              className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors"
             >
               <Eye className="h-3.5 w-3.5" />
-              <span>Preview</span>
-            </a>
+              <span>{formData.status === 'published' ? 'Preview' : 'Preview Draft'}</span>
+            </button>
           )}
 
           <button
             type="button"
             disabled={saving}
             onClick={() => handleSave('draft')}
-            className="flex items-center gap-1.5 rounded-xl bg-slate-800 px-4 py-2 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-700 disabled:opacity-50"
+            className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium transition-colors disabled:opacity-50"
           >
             <Save className="h-3.5 w-3.5" />
             <span>Save Draft</span>
@@ -272,7 +288,7 @@ export const EditThinkingPage = () => {
             type="button"
             disabled={saving}
             onClick={() => handleSave('published')}
-            className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-medium text-white shadow-lg shadow-violet-600/20 transition-all hover:bg-violet-500 disabled:opacity-50"
+            className="shadow-soft flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-medium text-white shadow-violet-600/20 transition-all hover:bg-violet-500 disabled:opacity-50"
           >
             {saving ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -295,9 +311,9 @@ export const EditThinkingPage = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main Body Column */}
         <div className="space-y-6 lg:col-span-2">
-          <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-6">
+          <div className="border-border bg-card space-y-4 rounded-2xl border p-6">
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-300">
+              <label className="text-foreground mb-1.5 block font-mono text-xs uppercase">
                 Article Title <span className="text-rose-400">*</span>
               </label>
               <input
@@ -305,12 +321,12 @@ export const EditThinkingPage = () => {
                 placeholder="e.g. Improving WhatsApp Group Event Coordination"
                 value={formData.title}
                 onChange={handleTitleChange}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-base font-bold text-white focus:border-violet-500 focus:outline-none"
+                className="border-border bg-background w-full rounded-xl border px-4 py-2.5 text-base font-bold text-white focus:border-violet-500 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-300">
+              <label className="text-foreground mb-1.5 block font-mono text-xs uppercase">
                 Excerpt / Elevator Summary (140-300 chars) <span className="text-rose-400">*</span>
               </label>
               <textarea
@@ -318,7 +334,7 @@ export const EditThinkingPage = () => {
                 placeholder="Summarize the core problem observed, target users, and proposed feature..."
                 value={formData.excerpt}
                 onChange={(e) => handleFieldChange('excerpt', e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm text-white focus:border-violet-500 focus:outline-none"
+                className="border-border bg-background w-full rounded-xl border p-4 text-sm text-white focus:border-violet-500 focus:outline-none"
               />
             </div>
 
@@ -337,15 +353,15 @@ export const EditThinkingPage = () => {
           </div>
 
           {/* Related Work Strip */}
-          <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <div className="border-border bg-card space-y-4 rounded-2xl border p-6">
+            <div className="border-border flex items-center justify-between border-b pb-3">
               <h3 className="font-mono text-sm uppercase tracking-wider text-white">
                 Related Work & References
               </h3>
               <button
                 type="button"
                 onClick={addRelatedWork}
-                className="flex items-center gap-1.5 rounded-lg bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-700"
+                className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-colors"
               >
                 <Plus className="h-3.5 w-3.5" />
                 <span>Add Reference</span>
@@ -353,7 +369,7 @@ export const EditThinkingPage = () => {
             </div>
 
             {formData.related_work.length === 0 ? (
-              <p className="font-mono text-xs italic text-slate-500">
+              <p className="text-muted-foreground font-mono text-xs italic">
                 No related portfolio references added.
               </p>
             ) : (
@@ -361,26 +377,26 @@ export const EditThinkingPage = () => {
                 {formData.related_work.map((item, idx) => (
                   <div
                     key={idx}
-                    className="flex items-center gap-3 rounded-xl border border-slate-800 bg-slate-950 p-3"
+                    className="border-border bg-background flex items-center gap-3 rounded-xl border p-3"
                   >
                     <input
                       type="text"
                       placeholder="Title e.g. Flagship Project"
                       value={item.title || ''}
                       onChange={(e) => updateRelatedWork(idx, 'title', e.target.value)}
-                      className="flex-1 rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 text-xs text-white"
+                      className="border-border bg-card flex-1 rounded-lg border px-3 py-1.5 text-xs text-white"
                     />
                     <input
                       type="text"
                       placeholder="URL e.g. /work/flagship-project"
                       value={item.url || ''}
                       onChange={(e) => updateRelatedWork(idx, 'url', e.target.value)}
-                      className="flex-1 rounded-lg border border-slate-800 bg-slate-900 px-3 py-1.5 font-mono text-xs text-violet-300"
+                      className="border-border bg-card flex-1 rounded-lg border px-3 py-1.5 font-mono text-xs text-violet-300"
                     />
                     <button
                       type="button"
                       onClick={() => removeRelatedWork(idx)}
-                      className="rounded-lg p-1.5 text-slate-500 hover:text-rose-400"
+                      className="text-muted-foreground rounded-lg p-1.5 hover:text-rose-400"
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>
@@ -393,19 +409,19 @@ export const EditThinkingPage = () => {
 
         {/* Sidebar Configuration Column */}
         <div className="space-y-6">
-          <div className="space-y-5 rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <h3 className="border-b border-slate-800 pb-2 font-mono text-sm uppercase tracking-wider text-slate-300">
+          <div className="border-border bg-card space-y-5 rounded-2xl border p-6">
+            <h3 className="border-border text-foreground border-b pb-2 font-mono text-sm uppercase tracking-wider">
               Article Configuration
             </h3>
 
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 Article Type
               </label>
               <select
                 value={formData.type}
                 onChange={(e) => handleFieldChange('type', e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5 text-sm font-medium text-white focus:border-violet-500 focus:outline-none"
+                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:border-violet-500 focus:outline-none"
               >
                 <option value="teardown">Product Teardown</option>
                 <option value="feature_proposal">Feature Proposal</option>
@@ -414,13 +430,13 @@ export const EditThinkingPage = () => {
             </div>
 
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 Publish Status
               </label>
               <select
                 value={formData.status}
                 onChange={(e) => handleFieldChange('status', e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5 text-sm font-medium text-white focus:border-violet-500 focus:outline-none"
+                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:border-violet-500 focus:outline-none"
               >
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
@@ -429,31 +445,31 @@ export const EditThinkingPage = () => {
             </div>
 
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 URL Slug
               </label>
               <input
                 type="text"
                 value={formData.slug}
                 onChange={(e) => handleFieldChange('slug', e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 font-mono text-xs text-violet-300 focus:border-violet-500 focus:outline-none"
+                className="border-border bg-background w-full rounded-xl border px-3 py-2 font-mono text-xs text-violet-300 focus:border-violet-500 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 Estimated Reading Time
               </label>
               <input
                 type="text"
                 value={formData.reading_time}
                 onChange={(e) => handleFieldChange('reading_time', e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 font-mono text-xs text-white focus:border-violet-500 focus:outline-none"
+                className="border-border bg-background w-full rounded-xl border px-3 py-2 font-mono text-xs text-white focus:border-violet-500 focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 Topics & Tags
               </label>
               <input
@@ -464,26 +480,26 @@ export const EditThinkingPage = () => {
                   setTagsInput(e.target.value);
                   setAutosaveStatus('unsaved');
                 }}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 text-xs text-white focus:border-violet-500 focus:outline-none"
+                className="border-border bg-background w-full rounded-xl border px-3 py-2 text-xs text-white focus:border-violet-500 focus:outline-none"
               />
-              <p className="mt-1 text-[10px] text-slate-500">
+              <p className="text-muted-foreground mt-1 text-[10px]">
                 Comma-separated tags for public index filters.
               </p>
             </div>
           </div>
 
           {/* Cover & Brand Disclaimer */}
-          <div className="space-y-5 rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <h3 className="border-b border-slate-800 pb-2 font-mono text-sm uppercase tracking-wider text-slate-300">
+          <div className="border-border bg-card space-y-5 rounded-2xl border p-6">
+            <h3 className="border-border text-foreground border-b pb-2 font-mono text-sm uppercase tracking-wider">
               Media & Disclaimer
             </h3>
 
             <div>
-              <label className="mb-2 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-2 block font-mono text-xs uppercase">
                 Cover Image URL
               </label>
               {formData.cover_image && (
-                <div className="group relative mb-2 h-32 w-full overflow-hidden rounded-xl border border-slate-800">
+                <div className="border-border group relative mb-2 h-32 w-full overflow-hidden rounded-xl border">
                   <img
                     src={formData.cover_image}
                     alt="Cover preview"
@@ -492,7 +508,7 @@ export const EditThinkingPage = () => {
                   <button
                     type="button"
                     onClick={() => handleFieldChange('cover_image', '')}
-                    className="absolute inset-0 flex items-center justify-center gap-1 bg-slate-950/80 text-xs font-medium text-rose-400 opacity-0 transition-opacity group-hover:opacity-100"
+                    className="bg-background absolute inset-0 flex items-center justify-center gap-1 text-xs font-medium text-rose-400 opacity-0 transition-opacity group-hover:opacity-100"
                   >
                     <Trash2 className="h-4 w-4" /> Remove
                   </button>
@@ -504,12 +520,12 @@ export const EditThinkingPage = () => {
                   placeholder="https://..."
                   value={formData.cover_image}
                   onChange={(e) => handleFieldChange('cover_image', e.target.value)}
-                  className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5 font-mono text-xs text-white"
+                  className="border-border bg-background flex-1 rounded-xl border px-3 py-1.5 font-mono text-xs text-white"
                 />
                 <button
                   type="button"
                   onClick={() => setMediaPickerOpen(true)}
-                  className="rounded-xl bg-slate-800 px-3 py-1.5 text-xs font-medium text-slate-200 hover:bg-slate-700"
+                  className="bg-secondary text-foreground hover:bg-secondary rounded-xl px-3 py-1.5 text-xs font-medium"
                 >
                   Pick
                 </button>
@@ -517,16 +533,16 @@ export const EditThinkingPage = () => {
             </div>
 
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 Brand & Legal Disclaimer
               </label>
               <textarea
                 rows={3}
                 value={formData.disclaimer}
                 onChange={(e) => handleFieldChange('disclaimer', e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 p-3 font-mono text-xs leading-relaxed text-slate-400 focus:border-violet-500 focus:outline-none"
+                className="border-border bg-background text-muted-foreground w-full rounded-xl border p-3 font-mono text-xs leading-relaxed focus:border-violet-500 focus:outline-none"
               />
-              <p className="mt-1 text-[10px] text-slate-500">
+              <p className="text-muted-foreground mt-1 text-[10px]">
                 Required per PRD Section 5 for all independent concepts mentioning real trademarks.
               </p>
             </div>

@@ -5,8 +5,9 @@ import {
   uploadMedia,
   updateMedia,
   deleteMedia,
+  getMediaDownload,
 } from '../controllers/media.controller.js';
-import { verifyAuth } from '../middleware/auth.middleware.js';
+import { verifyAuth, verifyAuthOptional } from '../middleware/auth.middleware.js';
 import { verifyOwner } from '../middleware/admin.middleware.js';
 
 const router = express.Router();
@@ -36,5 +37,6 @@ router.get('/list', verifyAuth, verifyOwner, getMediaList);
 router.post('/upload', verifyAuth, verifyOwner, upload.single('file'), uploadMedia);
 router.put('/:id', verifyAuth, verifyOwner, updateMedia);
 router.delete('/:id', verifyAuth, verifyOwner, deleteMedia);
+router.get('/download/:id', verifyAuthOptional, getMediaDownload);
 
 export default router;

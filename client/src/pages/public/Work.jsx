@@ -22,6 +22,8 @@ export const WorkIndexPage = () => {
   const [activeType, setActiveType] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedTag, setSelectedTag] = useState(null);
+  const [selectedDomain, setSelectedDomain] = useState(null);
+  const [selectedYear, setSelectedYear] = useState(null);
 
   const filterTypes = [
     { id: 'all', label: 'All Work' },
@@ -35,8 +37,27 @@ export const WorkIndexPage = () => {
     const tagSet = new Set();
     caseStudies.forEach((cs) => {
       cs.tags?.forEach((tag) => tagSet.add(tag));
+      cs.skills?.forEach((skill) => tagSet.add(skill));
     });
     return Array.from(tagSet);
+  }, [caseStudies]);
+
+  const availableDomains = useMemo(() => {
+    if (!caseStudies) return [];
+    const domainSet = new Set();
+    caseStudies.forEach((cs) => {
+      if (cs.domain) domainSet.add(cs.domain);
+    });
+    return Array.from(domainSet);
+  }, [caseStudies]);
+
+  const availableYears = useMemo(() => {
+    if (!caseStudies) return [];
+    const yearSet = new Set();
+    caseStudies.forEach((cs) => {
+      if (cs.year) yearSet.add(String(cs.year));
+    });
+    return Array.from(yearSet).sort((a, b) => Number(b) - Number(a));
   }, [caseStudies]);
 
   const filteredCaseStudies = useMemo(() => {
@@ -47,12 +68,16 @@ export const WorkIndexPage = () => {
         searchQuery === '' ||
         cs.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
         cs.summary.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        cs.domain?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchesTag = !selectedTag || cs.tags?.includes(selectedTag);
+        cs.domain?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        cs.skills?.some((s) => s.toLowerCase().includes(searchQuery.toLowerCase()));
+      const matchesTag =
+        !selectedTag || cs.tags?.includes(selectedTag) || cs.skills?.includes(selectedTag);
+      const matchesDomain = !selectedDomain || cs.domain === selectedDomain;
+      const matchesYear = !selectedYear || String(cs.year) === selectedYear;
 
-      return matchesType && matchesSearch && matchesTag;
+      return matchesType && matchesSearch && matchesTag && matchesDomain && matchesYear;
     });
-  }, [caseStudies, activeType, searchQuery, selectedTag]);
+  }, [caseStudies, activeType, searchQuery, selectedTag, selectedDomain, selectedYear]);
 
   const breadcrumbs = [
     { name: 'Home', url: '/' },
@@ -69,7 +94,7 @@ export const WorkIndexPage = () => {
       />
 
       {/* Hero Header */}
-      <Section className="pt-10 pb-12 md:pt-16 md:pb-16 border-b border-border/40 bg-gradient-to-b from-background to-muted/20">
+      <Section className="pt-20 pb-24 md:pt-28 md:pb-36 border-b border-border bg-background">
         <Container>
           <div className="max-w-3xl space-y-4">
             <BreadcrumbNav items={breadcrumbs} />
@@ -85,7 +110,7 @@ export const WorkIndexPage = () => {
       </Section>
 
       {/* Filter Bar & Search */}
-      <Section variant="muted" className="py-6 border-b border-border/60">
+      <Section variant="muted" className="py-10 border-b border-border">
         <Container>
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             {/* Type Filter Buttons */}
@@ -120,9 +145,43 @@ export const WorkIndexPage = () => {
             </div>
           </div>
 
-          {/* Skill / Domain Chips */}
-          <div className="flex flex-wrap items-center gap-2 mt-4 pt-4 border-t border-border/40">
-            <span className="text-xs font-semibold text-muted-foreground mr-1">Skills &amp; Domain Tags:</span>
+          {/* Year and Domain Filters */}
+          {(availableYears.length > 0 || availableDomains.length > 0) && (
+            <div className="flex flex-wrap items-center gap-3 mt-4 pt-4 border-t border-border/40">
+              {availableYears.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-semibold text-muted-foreground">Year:</span>
+                  {availableYears.map((yr) => (
+                    <Chip
+                      key={yr}
+                      label={yr}
+                      selected={selectedYear === yr}
+                      onSelect={() => setSelectedYear(selectedYear === yr ? null : yr)}
+                      size="sm"
+                    />
+                  ))}
+                </div>
+              )}
+              {availableDomains.length > 0 && (
+                <div className="flex items-center gap-1.5">
+                  <span className="text-xs font-semibold text-muted-foreground ml-2">Domain:</span>
+                  {availableDomains.map((dom) => (
+                    <Chip
+                      key={dom}
+                      label={dom}
+                      selected={selectedDomain === dom}
+                      onSelect={() => setSelectedDomain(selectedDomain === dom ? null : dom)}
+                      size="sm"
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Skill / Tag Chips */}
+          <div className="flex flex-wrap items-center gap-2 mt-3 pt-3 border-t border-border/40">
+            <span className="text-xs font-semibold text-muted-foreground mr-1">Skills &amp; Tags:</span>
             {availableTags.map((tag) => (
               <Chip
                 key={tag}
@@ -132,14 +191,18 @@ export const WorkIndexPage = () => {
                 size="sm"
               />
             ))}
-            {selectedTag && (
+            {(selectedTag || selectedDomain || selectedYear) && (
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => setSelectedTag(null)}
+                onClick={() => {
+                  setSelectedTag(null);
+                  setSelectedDomain(null);
+                  setSelectedYear(null);
+                }}
                 className="text-[11px] h-6 px-2 text-destructive hover:text-destructive"
               >
-                Clear tag
+                Clear all filters
               </Button>
             )}
           </div>
@@ -147,7 +210,7 @@ export const WorkIndexPage = () => {
       </Section>
 
       {/* Case Studies Grid */}
-      <Section className="py-12 sm:py-16">
+      <Section className="bg-background">
         <Container>
           <div className="mb-6 flex items-center justify-between">
             <span className="text-sm font-semibold text-muted-foreground">
@@ -196,7 +259,7 @@ export const WorkIndexPage = () => {
                             <img
                               src={cs.coverImage}
                               alt={cs.title}
-                              className="w-full h-full object-cover transition-transform duration-300 hover:scale-105"
+                              className="w-full h-full object-cover transition-opacity duration-200 hover:opacity-95"
                               loading="lazy"
                             />
                           </div>

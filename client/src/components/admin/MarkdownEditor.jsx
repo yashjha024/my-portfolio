@@ -133,7 +133,7 @@ export const MarkdownEditor = ({
       if ((e.ctrlKey || e.metaKey) && e.shiftKey && e.key.toLowerCase() === 'm') {
         e.preventDefault();
         insertAtCursor(
-          '\n```mermaid\ngraph TD;\n  User[User Action] --> System[Portfolio Service];\n  System --> DB[(Supabase DB)];\n```\n',
+          '\n```mermaid\ngraph TD;\n User[User Action] --> System[Portfolio Service];\n System --> DB[(Supabase DB)];\n```\n',
           ''
         );
         return;
@@ -217,10 +217,10 @@ export const MarkdownEditor = ({
   const insertMermaid = (type = 'flowchart') => {
     const templates = {
       flowchart:
-        '\n```mermaid\ngraph LR;\n  Client[Frontend Client] --> API[Express Gateway];\n  API --> Auth[Supabase Auth];\n  API --> DB[(PostgreSQL Store)];\n```\n',
+        '\n```mermaid\ngraph LR;\n Client[Frontend Client] --> API[Express Gateway];\n API --> Auth[Supabase Auth];\n API --> DB[(PostgreSQL Store)];\n```\n',
       sequence:
-        '\n```mermaid\nsequenceDiagram\n  autonumber\n  User->>+Client: Click Publish\n  Client->>+API: PUT /api/admin/work/:id\n  API->>+DB: Update status to published\n  DB-->>-API: OK\n  API-->>-Client: 200 Success\n```\n',
-      erd: '\n```mermaid\nerDiagram\n  USERS ||--o{ CASE_STUDIES : owns\n  CASE_STUDIES ||--|{ METRICS : includes\n  USERS {\n    uuid id PK\n    string email\n    string role\n  }\n```\n',
+        '\n```mermaid\nsequenceDiagram\n autonumber\n User->>+Client: Click Publish\n Client->>+API: PUT /api/admin/work/:id\n API->>+DB: Update status to published\n DB-->>-API: OK\n API-->>-Client: 200 Success\n```\n',
+      erd: '\n```mermaid\nerDiagram\n USERS ||--o{ CASE_STUDIES : owns\n CASE_STUDIES ||--|{ METRICS : includes\n USERS {\n uuid id PK\n string email\n string role\n }\n```\n',
     };
     insertAtCursor(templates[type] || templates.flowchart, '');
     setMermaidDropdownOpen(false);
@@ -235,7 +235,7 @@ export const MarkdownEditor = ({
     <div className="space-y-2 font-sans">
       {label && (
         <div className="flex items-center justify-between">
-          <label className="flex items-center gap-2 font-mono text-xs font-bold uppercase text-slate-300">
+          <label className="text-foreground flex items-center gap-2 font-mono text-xs font-bold uppercase">
             <span>{label}</span>
             {required && <span className="text-rose-400">*</span>}
           </label>
@@ -244,7 +244,7 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => setShortcutsModalOpen(true)}
-              className="flex items-center gap-1 font-mono text-[11px] text-slate-400 transition-colors hover:text-white"
+              className="text-muted-foreground flex items-center gap-1 font-mono text-[11px] transition-colors hover:text-white"
               title="View Keyboard Shortcuts"
             >
               <HelpCircle className="h-3.5 w-3.5" />
@@ -255,19 +255,19 @@ export const MarkdownEditor = ({
       )}
 
       {/* Main Editor Container */}
-      <div className="flex flex-col overflow-hidden rounded-2xl border border-slate-800 bg-slate-900/90 shadow-2xl transition-colors focus-within:border-indigo-500/80">
+      <div className="border-border bg-card shadow-soft focus-within:border-primary/40 flex flex-col overflow-hidden rounded-2xl border transition-colors">
         {/* Editor Toolbar Header */}
         <div
           role="toolbar"
           aria-label="Markdown content editor toolbar"
-          className="sticky top-0 z-10 flex select-none flex-wrap items-center justify-between gap-2 border-b border-slate-800/80 bg-slate-950/80 p-2"
+          className="border-border bg-background sticky top-0 z-10 flex select-none flex-wrap items-center justify-between gap-2 border-b p-2"
         >
           {/* Left formatting group */}
-          <div className="flex flex-wrap items-center gap-1 text-slate-300">
+          <div className="text-foreground flex flex-wrap items-center gap-1">
             {/* Mode Switcher Tabs */}
             <div
               role="tablist"
-              className="mr-2 flex items-center rounded-xl border border-slate-800 bg-slate-900 p-0.5"
+              className="border-border bg-card mr-2 flex items-center rounded-xl border p-0.5"
             >
               <button
                 type="button"
@@ -276,8 +276,8 @@ export const MarkdownEditor = ({
                 onClick={() => setViewMode('write')}
                 className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
                   viewMode === 'write'
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-primary text-white shadow-md'
+                    : 'text-muted-foreground hover:text-white'
                 }`}
               >
                 <Edit3 className="h-3.5 w-3.5" />
@@ -290,8 +290,8 @@ export const MarkdownEditor = ({
                 onClick={() => setViewMode('split')}
                 className={`hidden items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all md:flex ${
                   viewMode === 'split'
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-primary text-white shadow-md'
+                    : 'text-muted-foreground hover:text-white'
                 }`}
               >
                 <Columns className="h-3.5 w-3.5" />
@@ -304,8 +304,8 @@ export const MarkdownEditor = ({
                 onClick={() => setViewMode('preview')}
                 className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
                   viewMode === 'preview'
-                    ? 'bg-indigo-600 text-white shadow-md'
-                    : 'text-slate-400 hover:text-white'
+                    ? 'bg-primary text-white shadow-md'
+                    : 'text-muted-foreground hover:text-white'
                 }`}
               >
                 <Eye className="h-3.5 w-3.5" />
@@ -313,13 +313,13 @@ export const MarkdownEditor = ({
               </button>
             </div>
 
-            <span className="mx-1 hidden h-5 w-px bg-slate-800 sm:inline-block" />
+            <span className="bg-secondary mx-1 hidden h-5 w-px sm:inline-block" />
 
             {/* Headings */}
             <button
               type="button"
               onClick={() => insertAtCursor('# ', '', 'Heading 1')}
-              className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
               title="Heading 1"
             >
               <Heading1 className="h-4 w-4" />
@@ -327,7 +327,7 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => insertAtCursor('## ', '', 'Heading 2')}
-              className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
               title="Heading 2"
             >
               <Heading2 className="h-4 w-4" />
@@ -335,19 +335,19 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => insertAtCursor('### ', '', 'Heading 3')}
-              className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
               title="Heading 3"
             >
               <Heading3 className="h-4 w-4" />
             </button>
 
-            <span className="mx-1 h-5 w-px bg-slate-800" />
+            <span className="bg-secondary mx-1 h-5 w-px" />
 
             {/* Basic Formatting */}
             <button
               type="button"
               onClick={() => insertAtCursor('**', '**', 'bold text')}
-              className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
               title="Bold (Ctrl+B)"
             >
               <Bold className="h-4 w-4" />
@@ -355,7 +355,7 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => insertAtCursor('*', '*', 'italic text')}
-              className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
               title="Italic (Ctrl+I)"
             >
               <Italic className="h-4 w-4" />
@@ -363,7 +363,7 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => insertAtCursor('`', '`', 'code')}
-              className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
               title="Inline Code"
             >
               <Code className="h-4 w-4" />
@@ -371,19 +371,19 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => insertAtCursor('\n> ', '', 'Quote text')}
-              className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
               title="Blockquote"
             >
               <Quote className="h-4 w-4" />
             </button>
 
-            <span className="mx-1 h-5 w-px bg-slate-800" />
+            <span className="bg-secondary mx-1 h-5 w-px" />
 
             {/* Lists */}
             <button
               type="button"
               onClick={() => insertAtCursor('\n- ', '', 'list item')}
-              className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
               title="Bullet List"
             >
               <List className="h-4 w-4" />
@@ -391,13 +391,13 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => insertAtCursor('\n1. ', '', 'numbered item')}
-              className="rounded-lg p-1.5 text-slate-300 transition-colors hover:bg-slate-800 hover:text-white"
+              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
               title="Numbered List"
             >
               <ListOrdered className="h-4 w-4" />
             </button>
 
-            <span className="mx-1 h-5 w-px bg-slate-800" />
+            <span className="bg-secondary mx-1 h-5 w-px" />
 
             {/* Table Insertion */}
             <button
@@ -408,7 +408,7 @@ export const MarkdownEditor = ({
                   ''
                 )
               }
-              className="flex items-center gap-1 rounded-lg p-1.5 font-mono text-xs text-indigo-400 transition-colors hover:bg-slate-800 hover:text-indigo-300"
+              className="text-primary hover:bg-secondary hover:text-primary flex items-center gap-1 rounded-lg p-1.5 font-mono text-xs transition-colors"
               title="Insert Table (Ctrl+Shift+T)"
             >
               <TableIcon className="h-4 w-4" />
@@ -420,15 +420,15 @@ export const MarkdownEditor = ({
               <button
                 type="button"
                 onClick={() => setCodeDropdownOpen(!codeDropdownOpen)}
-                className="flex items-center gap-1 rounded-lg p-1.5 font-mono text-xs text-indigo-400 transition-colors hover:bg-slate-800 hover:text-indigo-300"
+                className="text-primary hover:bg-secondary hover:text-primary flex items-center gap-1 rounded-lg p-1.5 font-mono text-xs transition-colors"
                 title="Insert Fenced Code Block (Ctrl+Shift+C)"
               >
                 <Code2 className="h-4 w-4" />
                 <span className="hidden lg:inline">Code</span>
               </button>
               {codeDropdownOpen && (
-                <div className="absolute left-0 top-full z-50 mt-1 w-44 space-y-0.5 rounded-xl border border-slate-800 bg-slate-900 p-1.5 font-mono text-xs shadow-2xl">
-                  <div className="px-2 py-1 text-[10px] font-bold uppercase text-slate-500">
+                <div className="border-border bg-card shadow-soft absolute left-0 top-full z-50 mt-1 w-44 space-y-0.5 rounded-xl border p-1.5 font-mono text-xs">
+                  <div className="text-muted-foreground px-2 py-1 text-[10px] font-bold uppercase">
                     Language
                   </div>
                   {['javascript', 'python', 'sql', 'json', 'bash', 'html', 'css'].map((lang) => (
@@ -436,7 +436,7 @@ export const MarkdownEditor = ({
                       key={lang}
                       type="button"
                       onClick={() => insertCodeBlock(lang)}
-                      className="w-full rounded-lg px-2.5 py-1.5 text-left capitalize text-slate-300 transition-colors hover:bg-indigo-600 hover:text-white"
+                      className="text-foreground hover:bg-primary w-full rounded-lg px-2.5 py-1.5 text-left capitalize transition-colors hover:text-white"
                     >
                       {lang}
                     </button>
@@ -450,15 +450,15 @@ export const MarkdownEditor = ({
               <button
                 type="button"
                 onClick={() => setCalloutDropdownOpen(!calloutDropdownOpen)}
-                className="flex items-center gap-1 rounded-lg p-1.5 font-mono text-xs text-amber-400 transition-colors hover:bg-slate-800 hover:text-amber-300"
+                className="hover:bg-secondary flex items-center gap-1 rounded-lg p-1.5 font-mono text-xs text-amber-400 transition-colors hover:text-amber-300"
                 title="Insert GitHub-Style Callout Box"
               >
                 <AlertCircle className="h-4 w-4" />
                 <span className="hidden lg:inline">Callout</span>
               </button>
               {calloutDropdownOpen && (
-                <div className="absolute left-0 top-full z-50 mt-1 w-48 space-y-0.5 rounded-xl border border-slate-800 bg-slate-900 p-1.5 font-mono text-xs shadow-2xl">
-                  <div className="px-2 py-1 text-[10px] font-bold uppercase text-slate-500">
+                <div className="border-border bg-card shadow-soft absolute left-0 top-full z-50 mt-1 w-48 space-y-0.5 rounded-xl border p-1.5 font-mono text-xs">
+                  <div className="text-muted-foreground px-2 py-1 text-[10px] font-bold uppercase">
                     Alert Level
                   </div>
                   {[
@@ -472,7 +472,7 @@ export const MarkdownEditor = ({
                       key={item.type}
                       type="button"
                       onClick={() => insertCallout(item.type)}
-                      className="w-full rounded-lg px-2.5 py-1.5 text-left text-slate-300 transition-colors hover:bg-indigo-600 hover:text-white"
+                      className="text-foreground hover:bg-primary w-full rounded-lg px-2.5 py-1.5 text-left transition-colors hover:text-white"
                     >
                       {item.label}
                     </button>
@@ -486,15 +486,15 @@ export const MarkdownEditor = ({
               <button
                 type="button"
                 onClick={() => setMermaidDropdownOpen(!mermaidDropdownOpen)}
-                className="flex items-center gap-1 rounded-lg p-1.5 font-mono text-xs text-violet-400 transition-colors hover:bg-slate-800 hover:text-violet-300"
+                className="hover:bg-secondary flex items-center gap-1 rounded-lg p-1.5 font-mono text-xs text-violet-400 transition-colors hover:text-violet-300"
                 title="Insert Mermaid Architecture Diagram (Ctrl+Shift+M)"
               >
                 <GitBranch className="h-4 w-4" />
                 <span className="hidden lg:inline">Mermaid</span>
               </button>
               {mermaidDropdownOpen && (
-                <div className="absolute left-0 top-full z-50 mt-1 w-52 space-y-0.5 rounded-xl border border-slate-800 bg-slate-900 p-1.5 font-mono text-xs shadow-2xl">
-                  <div className="px-2 py-1 text-[10px] font-bold uppercase text-slate-500">
+                <div className="border-border bg-card shadow-soft absolute left-0 top-full z-50 mt-1 w-52 space-y-0.5 rounded-xl border p-1.5 font-mono text-xs">
+                  <div className="text-muted-foreground px-2 py-1 text-[10px] font-bold uppercase">
                     Diagram Type
                   </div>
                   {[
@@ -506,7 +506,7 @@ export const MarkdownEditor = ({
                       key={item.id}
                       type="button"
                       onClick={() => insertMermaid(item.id)}
-                      className="w-full rounded-lg px-2.5 py-1.5 text-left text-slate-300 transition-colors hover:bg-indigo-600 hover:text-white"
+                      className="text-foreground hover:bg-primary w-full rounded-lg px-2.5 py-1.5 text-left transition-colors hover:text-white"
                     >
                       {item.label}
                     </button>
@@ -524,10 +524,10 @@ export const MarkdownEditor = ({
                 setMediaPickerType('image');
                 setMediaPickerOpen(true);
               }}
-              className="flex items-center gap-1.5 rounded-lg bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-200 shadow-sm transition-colors hover:bg-slate-700"
+              className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium shadow-sm transition-colors"
               title="Insert Image from Media Library"
             >
-              <ImageIcon className="h-3.5 w-3.5 text-indigo-400" />
+              <ImageIcon className="text-primary h-3.5 w-3.5" />
               <span>+ Image</span>
             </button>
             <button
@@ -536,7 +536,7 @@ export const MarkdownEditor = ({
                 setMediaPickerType('pdf');
                 setMediaPickerOpen(true);
               }}
-              className="flex items-center gap-1.5 rounded-lg bg-slate-800 px-2.5 py-1 text-xs font-medium text-slate-200 shadow-sm transition-colors hover:bg-slate-700"
+              className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium shadow-sm transition-colors"
               title="Attach Downloadable PDF Spec"
             >
               <FileText className="h-3.5 w-3.5 text-emerald-400" />
@@ -547,7 +547,7 @@ export const MarkdownEditor = ({
 
         {/* Editor & Preview Workspace Area */}
         <div
-          className="relative flex flex-1 flex-col divide-y divide-slate-800 md:flex-row md:divide-x md:divide-y-0"
+          className="divide-border relative flex flex-1 flex-col divide-y md:flex-row md:divide-x md:divide-y-0"
           style={{ minHeight }}
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
@@ -555,21 +555,21 @@ export const MarkdownEditor = ({
         >
           {/* Drag & Drop Upload Overlay */}
           {(isDraggingOver || uploadingDrop) && (
-            <div className="animate-fadeIn absolute inset-0 z-40 flex flex-col items-center justify-center gap-3 rounded-b-2xl border-2 border-dashed border-indigo-500 bg-indigo-950/90 p-6 text-center backdrop-blur-md">
+            <div className="animate-fadeIn border-primary/40 absolute inset-0 z-40 flex flex-col items-center justify-center gap-3 rounded-b-2xl border-2 border-dashed bg-indigo-950/90 p-6 text-center">
               {uploadingDrop ? (
                 <>
-                  <Loader2 className="h-10 w-10 animate-spin text-indigo-400" />
+                  <Loader2 className="text-primary h-10 w-10 animate-spin" />
                   <p className="font-mono text-sm font-bold text-white">
                     Uploading & attaching files to markdown...
                   </p>
                 </>
               ) : (
                 <>
-                  <UploadCloud className="h-12 w-12 animate-bounce text-indigo-400" />
+                  <UploadCloud className="text-primary h-12 w-12 animate-bounce" />
                   <p className="text-base font-bold text-white">
                     Drop Images or PDF Specifications Here
                   </p>
-                  <p className="font-mono text-xs text-indigo-300">
+                  <p className="text-primary font-mono text-xs">
                     Files will automatically upload and insert markdown links at your cursor
                     position.
                   </p>
@@ -589,7 +589,7 @@ export const MarkdownEditor = ({
                 onChange={(e) => onChange?.(e.target.value)}
                 onKeyDown={handleKeyDown}
                 placeholder={placeholder}
-                className="w-full flex-1 resize-y bg-slate-950/50 p-5 font-mono text-sm leading-relaxed text-slate-100 transition-colors placeholder:text-slate-600 focus:bg-slate-950 focus:outline-none"
+                className="bg-background text-foreground placeholder:text-muted-foreground focus:bg-background w-full flex-1 resize-y p-5 font-mono text-sm leading-relaxed transition-colors focus:outline-none"
                 style={{ minHeight }}
               />
             </div>
@@ -598,13 +598,13 @@ export const MarkdownEditor = ({
           {/* Live Preview Column */}
           {(viewMode === 'preview' || viewMode === 'split') && (
             <div
-              className={`min-w-0 flex-1 overflow-y-auto bg-slate-950/80 p-6 ${
+              className={`bg-background min-w-0 flex-1 overflow-y-auto p-6 ${
                 viewMode === 'split' ? 'md:w-1/2' : 'w-full'
               }`}
               style={{ minHeight, maxHeight: viewMode === 'split' ? '680px' : 'none' }}
             >
-              <div className="mb-4 flex items-center justify-between border-b border-slate-800/80 pb-3 font-mono text-xs text-slate-500">
-                <span className="flex items-center gap-1.5 font-bold uppercase text-indigo-400">
+              <div className="border-border text-muted-foreground mb-4 flex items-center justify-between border-b pb-3 font-mono text-xs">
+                <span className="text-primary flex items-center gap-1.5 font-bold uppercase">
                   <Sparkles className="h-3.5 w-3.5" />
                   <span>Real-Time Live Preview</span>
                 </span>
@@ -616,19 +616,19 @@ export const MarkdownEditor = ({
         </div>
 
         {/* Editor Status Footer */}
-        <div className="flex items-center justify-between border-t border-slate-800/80 bg-slate-950/90 p-2.5 px-4 font-mono text-[11px] text-slate-500">
+        <div className="border-border bg-background text-muted-foreground flex items-center justify-between border-t p-2.5 px-4 font-mono text-[11px]">
           <div className="flex items-center gap-4">
             <span>
-              Lines: <strong className="text-slate-300">{value.split('\n').length}</strong>
+              Lines: <strong className="text-foreground">{value.split('\n').length}</strong>
             </span>
             <span>
               Words:{' '}
-              <strong className="text-slate-300">
+              <strong className="text-foreground">
                 {value.trim() ? value.trim().split(/\s+/).length : 0}
               </strong>
             </span>
             <span>
-              Characters: <strong className="text-slate-300">{value.length}</strong>
+              Characters: <strong className="text-foreground">{value.length}</strong>
             </span>
           </div>
           <div className="hidden items-center gap-2 sm:flex">
@@ -647,22 +647,22 @@ export const MarkdownEditor = ({
 
       {/* Keyboard Shortcuts Cheat Sheet Modal */}
       {shortcutsModalOpen && (
-        <div className="animate-fadeIn fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-md">
-          <div className="relative w-full max-w-lg rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl">
-            <div className="mb-4 flex items-center justify-between border-b border-slate-800 pb-4">
+        <div className="animate-fadeIn bg-background fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="border-border bg-card shadow-soft relative w-full max-w-lg rounded-2xl border p-6">
+            <div className="border-border mb-4 flex items-center justify-between border-b pb-4">
               <div className="flex items-center gap-2 text-base font-bold text-white">
-                <HelpCircle className="h-5 w-5 text-indigo-400" />
+                <HelpCircle className="text-primary h-5 w-5" />
                 <span>Editor Keyboard Shortcuts</span>
               </div>
               <button
                 onClick={() => setShortcutsModalOpen(false)}
-                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-800 hover:text-white"
+                className="text-muted-foreground hover:bg-secondary rounded-lg p-1.5 hover:text-white"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
-            <div className="space-y-2.5 font-mono text-xs text-slate-300">
+            <div className="text-foreground space-y-2.5 font-mono text-xs">
               {[
                 { keys: 'Ctrl / Cmd + S', action: 'Save / Trigger Autosave Immediately' },
                 { keys: 'Ctrl / Cmd + B', action: 'Bold (**text**)' },
@@ -681,18 +681,18 @@ export const MarkdownEditor = ({
               ].map((sc, idx) => (
                 <div
                   key={idx}
-                  className="flex items-center justify-between rounded-lg border border-slate-800/80 bg-slate-950/60 p-2"
+                  className="border-border bg-background flex items-center justify-between rounded-lg border p-2"
                 >
-                  <span className="font-bold text-indigo-300">{sc.keys}</span>
-                  <span className="text-right text-slate-400">{sc.action}</span>
+                  <span className="text-primary font-bold">{sc.keys}</span>
+                  <span className="text-muted-foreground text-right">{sc.action}</span>
                 </div>
               ))}
             </div>
 
-            <div className="mt-6 border-t border-slate-800 pt-4 text-right">
+            <div className="border-border mt-6 border-t pt-4 text-right">
               <button
                 onClick={() => setShortcutsModalOpen(false)}
-                className="rounded-xl bg-indigo-600 px-5 py-2 text-xs font-medium text-white hover:bg-indigo-500"
+                className="bg-primary hover:bg-primary/90 rounded-xl px-5 py-2 text-xs font-medium text-white"
               >
                 Got It
               </button>

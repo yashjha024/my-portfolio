@@ -1,9 +1,10 @@
-import React from 'react';
-import { useParams, NavLink } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, NavLink, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { ArrowLeft, ExternalLink, FileText, CheckCircle, Clock, Users, ShieldAlert, Award, Layers } from 'lucide-react';
+import { ArrowLeft, ArrowRight, ExternalLink, FileText, CheckCircle, Clock, Users, ShieldAlert, Award, Layers } from 'lucide-react';
 import { Github } from '../../components/ui/Icon.jsx';
-import { usePortfolioData } from '../../hooks/usePortfolioData.js';
+import { usePortfolioData, toCaseStudyDto } from '../../hooks/usePortfolioData.js';
+import api from '../../services/api.js';
 import { Container } from '../../components/layout/Container.jsx';
 import { Section } from '../../components/layout/Section.jsx';
 import { Button } from '../../components/ui/Button.jsx';
@@ -16,9 +17,37 @@ import { calculateReadingTime } from '../../utils/calculateReadingTime.js';
 
 export const CaseStudyDetailPage = () => {
   const { slug } = useParams();
-  const { data: caseStudies, loading } = usePortfolioData({ type: 'caseStudies', delayMs: 350 });
+  const [searchParams] = useSearchParams();
+  const previewToken = searchParams.get('preview_token');
+  const { data: caseStudies, loading: listLoading } = usePortfolioData({ type: 'caseStudies', delayMs: 350 });
 
-  const cs = caseStudies?.find((item) => item.slug === slug);
+  const [previewItem, setPreviewItem] = useState(null);
+  const [previewError, setPreviewError] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(Boolean(previewToken));
+
+  useEffect(() => {
+    if (!previewToken || !slug) {
+      setPreviewLoading(false);
+      return;
+    }
+    setPreviewLoading(true);
+    api
+      .get(`/work/slug/${slug}?preview_token=${encodeURIComponent(previewToken)}`)
+      .then((res) => {
+        if (res.data?.success && res.data.data) {
+          setPreviewItem(toCaseStudyDto(res.data.data));
+        }
+      })
+      .catch((err) => {
+        setPreviewError(err.response?.data?.error || 'Unauthorized or expired preview token');
+      })
+      .finally(() => {
+        setPreviewLoading(false);
+      });
+  }, [slug, previewToken]);
+
+  const cs = previewToken ? previewItem : caseStudies?.find((item) => item.slug === slug);
+  const loading = previewToken ? previewLoading : listLoading;
 
   if (loading) {
     return <DetailPageSkeleton />;
@@ -29,9 +58,15 @@ export const CaseStudyDetailPage = () => {
       <Section className="py-24 text-center">
         <Container>
           <div className="max-w-md mx-auto space-y-4">
-            <h1 className="font-heading text-3xl font-bold text-foreground">Case Study Not Found</h1>
+            <h1 className="font-heading text-3xl font-bold text-foreground">
+              {previewError ? 'Preview Unauthorized' : 'Case Study Not Found'}
+            </h1>
             <p className="text-muted-foreground text-sm">
-              We couldn&apos;t find the case study matching slug <code className="font-mono bg-muted px-2 py-0.5 rounded">{slug}</code>.
+              {previewError || (
+                <>
+                  We couldn&apos;t find the case study matching slug <code className="font-mono bg-muted px-2 py-0.5 rounded">{slug}</code>.
+                </>
+              )}
             </p>
             <Button asChild>
               <NavLink to="/work">
@@ -54,6 +89,11 @@ export const CaseStudyDetailPage = () => {
 
   return (
     <>
+      {previewToken && (
+        <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2.5 text-center text-xs font-medium text-amber-300 flex items-center justify-center gap-2">
+          <span>⚠️ Preview Mode — Viewing draft / unpublished content (Owner Only)</span>
+        </div>
+      )}
       <SEO
         title={cs.title}
         description={cs.summary}
@@ -64,12 +104,12 @@ export const CaseStudyDetailPage = () => {
       />
 
       {/* Section 1: Hero */}
-      <Section className="pt-8 pb-12 md:pt-14 md:pb-16 border-b border-border/60 bg-gradient-to-b from-background via-background to-muted/20">
+      <Section className="pt-20 pb-24 md:pt-28 md:pb-36 border-b border-border bg-background">
         <Container>
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
             className="max-w-4xl space-y-5"
           >
             <BreadcrumbNav items={breadcrumbs} />
@@ -155,7 +195,7 @@ export const CaseStudyDetailPage = () => {
       {/* Cover Image Banner */}
       {cs.coverImage && (
         <div className="w-full max-w-6xl mx-auto px-4 -mt-6 sm:-mt-10 mb-12">
-          <div className="rounded-2xl overflow-hidden border border-border shadow-xl bg-card max-h-[480px]">
+          <div className="rounded-2xl overflow-hidden border border-border shadow-soft bg-card max-h-[480px]">
             <img src={cs.coverImage} alt={cs.title} className="w-full h-full object-cover" />
           </div>
         </div>
@@ -163,7 +203,7 @@ export const CaseStudyDetailPage = () => {
 
       {/* Metrics Banner */}
       {cs.metrics && cs.metrics.length > 0 && (
-        <Section variant="muted" className="py-8 border-y border-border/60 mb-12">
+        <Section variant="muted" className="py-10 border-y border-border mb-12">
           <Container>
             <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-3 gap-6 text-center">
               {cs.metrics.map((m, idx) => (
@@ -324,7 +364,64 @@ export const CaseStudyDetailPage = () => {
               </MarkdownProse>
             </div>
 
-            {/* Section 10: Links & Contact CTA */}
+            {/* Gallery with Captions */}
+            {cs.gallery && cs.gallery.length > 0 && (
+              <div className="space-y-6 border-t border-border/60 pt-10">
+                <div className="flex items-center gap-2 text-primary font-mono text-sm font-bold uppercase tracking-wider">
+                  <CheckCircle className="w-4 h-4" /> 10. Visual Evidence &amp; Artifact Gallery
+                </div>
+                <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
+                  Product Artifacts &amp; Diagrams
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                  {cs.gallery.map((img, idx) => (
+                    <div key={idx} className="rounded-xl overflow-hidden border border-border bg-card shadow-sm flex flex-col">
+                      <div className="aspect-video w-full overflow-hidden bg-muted">
+                        <img src={img.url || img.image || img} alt={img.caption || `Artifact ${idx + 1}`} className="w-full h-full object-cover" />
+                      </div>
+                      {(img.caption || typeof img === 'string') && (
+                        <div className="p-3 text-xs text-muted-foreground font-mono bg-muted/30 border-t border-border/40">
+                          {img.caption || img}
+                        </div>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Related Work */}
+            {cs.relatedWork && cs.relatedWork.length > 0 && (
+              <div className="space-y-4 border-t border-border/60 pt-10">
+                <div className="flex items-center gap-2 text-primary font-mono text-sm font-bold uppercase tracking-wider">
+                  <ExternalLink className="w-4 h-4" /> 11. Related Work &amp; Precursors
+                </div>
+                <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
+                  Connected Explorations &amp; Case Studies
+                </h2>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  {cs.relatedWork.map((rw, idx) => (
+                    <div key={idx} className="p-4 rounded-xl border border-border bg-card hover:border-primary/50 transition-colors">
+                      <h3 className="font-heading font-bold text-sm text-foreground mb-1">
+                        {rw.url ? (
+                          <NavLink to={rw.url} className="hover:text-primary transition-colors flex items-center justify-between">
+                            <span>{rw.title || rw.name}</span>
+                            <ArrowRight className="w-3.5 h-3.5 text-primary shrink-0" />
+                          </NavLink>
+                        ) : (
+                          rw.title || rw.name
+                        )}
+                      </h3>
+                      {rw.relationship && (
+                        <p className="text-xs text-muted-foreground font-mono">{rw.relationship}</p>
+                      )}
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Section 12: Links & Contact CTA */}
             <div className="p-8 rounded-2xl bg-muted/60 border border-border flex flex-col sm:flex-row items-center justify-between gap-6 mt-16">
               <div className="space-y-1 text-center sm:text-left">
                 <h3 className="font-heading text-xl font-bold text-foreground">

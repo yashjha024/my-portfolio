@@ -2,18 +2,21 @@ import React from 'react';
 import { cva } from 'class-variance-authority';
 import { cn } from '../../utils/cn.js';
 
-export const sectionVariants = cva('w-full py-12 transition-colors sm:py-16 md:py-20 lg:py-24', {
-  variants: {
-    variant: {
-      default: 'bg-background text-foreground',
-      muted: 'bg-muted/40 text-foreground border-border/40 border-y',
-      accent: 'bg-accent text-accent-foreground border-border/50 border-y',
+export const sectionVariants = cva(
+  'relative w-full py-20 transition-colors duration-200 sm:py-24 md:py-32',
+  {
+    variants: {
+      variant: {
+        default: 'bg-background text-foreground',
+        muted: 'bg-secondary text-foreground border-border border-y',
+        accent: 'bg-secondary text-foreground border-border border-y',
+      },
     },
-  },
-  defaultVariants: {
-    variant: 'default',
-  },
-});
+    defaultVariants: {
+      variant: 'default',
+    },
+  }
+);
 
 export const Section = React.forwardRef(({ className, variant, id, children, ...props }, ref) => {
   return (

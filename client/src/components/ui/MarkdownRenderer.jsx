@@ -30,15 +30,15 @@ const CodeBlockRender = ({ language = 'text', code = '' }) => {
 
   if (isMermaid) {
     return (
-      <div className="group relative my-6 overflow-x-auto rounded-2xl border border-indigo-500/30 bg-slate-900/90 p-6 shadow-xl">
-        <div className="mb-4 flex items-center justify-between border-b border-slate-800 pb-3 font-mono text-xs text-indigo-400">
+      <div className="border-primary/40 bg-card shadow-soft group relative my-6 overflow-x-auto rounded-2xl border p-6">
+        <div className="border-border text-primary mb-4 flex items-center justify-between border-b pb-3 font-mono text-xs">
           <div className="flex items-center gap-2 font-semibold">
             <GitBranch className="h-4 w-4" />
             <span>Mermaid Architecture Diagram</span>
           </div>
           <button
             onClick={handleCopy}
-            className="flex items-center gap-1.5 rounded-lg bg-slate-800 px-2.5 py-1 text-[11px] text-slate-300 transition-colors hover:bg-slate-700"
+            className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] transition-colors"
           >
             {copied ? (
               <Check className="h-3.5 w-3.5 text-emerald-400" />
@@ -48,10 +48,10 @@ const CodeBlockRender = ({ language = 'text', code = '' }) => {
             <span>{copied ? 'Copied Spec' : 'Copy Spec'}</span>
           </button>
         </div>
-        <pre className="overflow-x-auto rounded-xl border border-slate-800/80 bg-slate-950/60 p-2 font-mono text-xs leading-relaxed text-indigo-200/90 sm:text-sm">
+        <pre className="border-border bg-background overflow-x-auto rounded-xl border p-2 font-mono text-xs leading-relaxed text-indigo-200/90 sm:text-sm">
           <code>{code.trim()}</code>
         </pre>
-        <p className="mt-3 text-center font-mono text-[11px] italic text-slate-500">
+        <p className="text-muted-foreground mt-3 text-center font-mono text-[11px] italic">
           💡 Interactive diagram visualization rendered via system architecture tokens.
         </p>
       </div>
@@ -59,17 +59,17 @@ const CodeBlockRender = ({ language = 'text', code = '' }) => {
   }
 
   return (
-    <div className="my-6 overflow-hidden rounded-2xl border border-slate-800 bg-slate-950 shadow-2xl">
-      <div className="flex items-center justify-between border-b border-slate-800 bg-slate-900/80 px-4 py-2.5 font-mono text-xs text-slate-400">
+    <div className="border-border bg-background shadow-soft my-6 overflow-hidden rounded-2xl border">
+      <div className="border-border bg-card text-muted-foreground flex items-center justify-between border-b px-4 py-2.5 font-mono text-xs">
         <div className="flex items-center gap-2">
-          <Code2 className="h-4 w-4 text-indigo-400" />
-          <span className="font-semibold uppercase tracking-wider text-slate-300">
+          <Code2 className="text-primary h-4 w-4" />
+          <span className="text-foreground font-semibold uppercase tracking-wider">
             {language || 'CODE'}
           </span>
         </div>
         <button
           onClick={handleCopy}
-          className="flex items-center gap-1.5 rounded-lg bg-slate-800 px-2.5 py-1 text-[11px] text-slate-300 transition-colors hover:bg-slate-700"
+          className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-[11px] transition-colors"
           title="Copy code to clipboard"
         >
           {copied ? (
@@ -80,7 +80,7 @@ const CodeBlockRender = ({ language = 'text', code = '' }) => {
           <span>{copied ? 'Copied!' : 'Copy'}</span>
         </button>
       </div>
-      <div className="overflow-x-auto p-4 font-mono text-xs leading-relaxed text-slate-200 sm:text-sm">
+      <div className="text-foreground overflow-x-auto p-4 font-mono text-xs leading-relaxed sm:text-sm">
         <pre>
           <code>{code.trim()}</code>
         </pre>
@@ -93,9 +93,9 @@ const CodeBlockRender = ({ language = 'text', code = '' }) => {
 const CalloutRender = ({ type = 'note', title = null, content = '' }) => {
   const calloutMap = {
     note: {
-      bg: 'bg-indigo-500/10 border-indigo-500/30 text-indigo-300',
+      bg: 'bg-indigo-500/10 border-primary/40 text-primary',
       icon: Info,
-      iconColor: 'text-indigo-400',
+      iconColor: 'text-primary',
       label: 'Note',
     },
     tip: {
@@ -128,12 +128,12 @@ const CalloutRender = ({ type = 'note', title = null, content = '' }) => {
   const Icon = config.icon;
 
   return (
-    <div className={`my-6 rounded-2xl border border-l-4 p-5 ${config.bg} space-y-2 shadow-lg`}>
+    <div className={`my-6 rounded-2xl border border-l-4 p-5 ${config.bg} shadow-soft space-y-2`}>
       <div className="flex items-center gap-2 text-sm font-bold">
         <Icon className={`h-5 w-5 shrink-0 ${config.iconColor}`} />
         <span className="font-mono text-xs uppercase tracking-wide">{title || config.label}</span>
       </div>
-      <div className="whitespace-pre-wrap pl-7 font-sans text-sm leading-relaxed text-slate-200/90">
+      <div className="text-foreground/90 whitespace-pre-wrap pl-7 font-sans text-sm leading-relaxed">
         {content.trim()}
       </div>
     </div>
@@ -144,7 +144,9 @@ const CalloutRender = ({ type = 'note', title = null, content = '' }) => {
 export const MarkdownRenderer = ({ content = '', className = '' }) => {
   if (!content || typeof content !== 'string') {
     return (
-      <div className={`text-sm italic text-slate-500 ${className}`}>No content provided...</div>
+      <div className={`text-muted-foreground text-sm italic ${className}`}>
+        No content provided...
+      </div>
     );
   }
 
@@ -319,9 +321,9 @@ export const MarkdownRenderer = ({ content = '', className = '' }) => {
               href={url}
               target="_blank"
               rel="noopener noreferrer"
-              className="my-3 inline-flex items-center gap-2 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-4 py-2.5 font-mono text-xs text-indigo-300 shadow-sm transition-colors hover:bg-indigo-500/20"
+              className="border-primary/40 text-primary hover:bg-primary/90/20 my-3 inline-flex items-center gap-2 rounded-xl border bg-indigo-500/10 px-4 py-2.5 font-mono text-xs shadow-sm transition-colors"
             >
-              <FileText className="h-4 w-4 text-indigo-400" />
+              <FileText className="text-primary h-4 w-4" />
               <span>{alt || 'Download Attached PDF Document'}</span>
               <ExternalLink className="h-3.5 w-3.5 opacity-60" />
             </a>
@@ -332,10 +334,10 @@ export const MarkdownRenderer = ({ content = '', className = '' }) => {
               <img
                 src={url}
                 alt={alt || 'Content image'}
-                className="mx-auto max-h-[500px] w-auto rounded-2xl border border-slate-800 bg-slate-950 object-contain shadow-2xl"
+                className="border-border bg-background shadow-soft mx-auto max-h-[500px] w-auto rounded-2xl border object-contain"
               />
               {alt && (
-                <span className="mt-2 block text-center font-mono text-xs text-slate-500">
+                <span className="text-muted-foreground mt-2 block text-center font-mono text-xs">
                   {alt}
                 </span>
               )}
@@ -357,7 +359,7 @@ export const MarkdownRenderer = ({ content = '', className = '' }) => {
             href={url}
             target={isExternal ? '_blank' : '_self'}
             rel={isExternal ? 'noopener noreferrer' : ''}
-            className="font-medium text-indigo-400 underline underline-offset-4 transition-colors hover:text-indigo-300"
+            className="text-primary hover:text-primary font-medium underline underline-offset-4 transition-colors"
           >
             {text}
           </a>
@@ -366,7 +368,7 @@ export const MarkdownRenderer = ({ content = '', className = '' }) => {
         parts.push(
           <code
             key={idx++}
-            className="rounded border border-slate-700/60 bg-slate-800/80 px-1.5 py-0.5 font-mono text-xs text-indigo-300"
+            className="border-border bg-secondary text-primary rounded border px-1.5 py-0.5 font-mono text-xs"
           >
             {m[1]}
           </code>
@@ -379,7 +381,7 @@ export const MarkdownRenderer = ({ content = '', className = '' }) => {
         );
       } else if (first.type === 'italic') {
         parts.push(
-          <em key={idx++} className="italic text-slate-300">
+          <em key={idx++} className="text-foreground italic">
             {m[1]}
           </em>
         );
@@ -392,17 +394,17 @@ export const MarkdownRenderer = ({ content = '', className = '' }) => {
   };
 
   return (
-    <div className={`space-y-4 font-sans text-base leading-relaxed text-slate-300 ${className}`}>
+    <div className={`text-foreground space-y-4 font-sans text-base leading-relaxed ${className}`}>
       {blocks.map((block, idx) => {
         if (block.type === 'heading') {
           const Tag = `h${block.level}`;
           const styles = {
-            1: 'text-3xl sm:text-4xl font-bold text-white tracking-tight mt-10 mb-4 border-b border-slate-800 pb-3',
-            2: 'text-2xl sm:text-3xl font-bold text-white tracking-tight mt-8 mb-3 border-b border-slate-800/60 pb-2',
+            1: 'text-3xl sm:text-4xl font-bold text-white tracking-tight mt-10 mb-4 border-b border-border pb-3',
+            2: 'text-2xl sm:text-3xl font-bold text-white tracking-tight mt-8 mb-3 border-b border-border pb-2',
             3: 'text-xl sm:text-2xl font-bold text-white tracking-tight mt-6 mb-2.5',
             4: 'text-lg sm:text-xl font-bold text-white mt-5 mb-2',
             5: 'text-base font-bold text-white mt-4 mb-1.5 font-mono uppercase tracking-wider',
-            6: 'text-sm font-bold text-slate-400 mt-3 mb-1 font-mono uppercase tracking-widest',
+            6: 'text-sm font-bold text-muted-foreground mt-3 mb-1 font-mono uppercase tracking-widest',
           };
           return (
             <Tag key={idx} className={styles[block.level] || styles[3]}>
@@ -432,7 +434,7 @@ export const MarkdownRenderer = ({ content = '', className = '' }) => {
           return (
             <blockquote
               key={idx}
-              className="my-6 space-y-1 rounded-r-2xl border-l-4 border-indigo-500 bg-slate-900/50 px-5 py-3.5 italic text-slate-300 shadow-md"
+              className="border-primary/40 bg-card text-foreground my-6 space-y-1 rounded-r-2xl border-l-4 px-5 py-3.5 italic shadow-md"
             >
               {block.lines.map((l, i) => (
                 <p key={i}>{renderInline(l)}</p>
@@ -457,28 +459,28 @@ export const MarkdownRenderer = ({ content = '', className = '' }) => {
           return (
             <div
               key={idx}
-              className="my-6 overflow-x-auto rounded-2xl border border-slate-800 bg-slate-950 shadow-xl"
+              className="border-border bg-background shadow-soft my-6 overflow-x-auto rounded-2xl border"
             >
               <table className="w-full border-collapse text-left text-sm">
                 <thead>
-                  <tr className="border-b border-slate-800 bg-slate-900/90 font-mono text-xs uppercase tracking-wider text-indigo-400">
+                  <tr className="border-border bg-card text-primary border-b font-mono text-xs uppercase tracking-wider">
                     {header.map((th, i) => (
                       <th
                         key={i}
-                        className="border-r border-slate-800/50 px-4 py-3.5 font-bold last:border-r-0"
+                        className="border-border border-r px-4 py-3.5 font-bold last:border-r-0"
                       >
                         {renderInline(th)}
                       </th>
                     ))}
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-slate-800/80">
+                <tbody className="divide-border divide-y">
                   {body.map((row, rIdx) => (
-                    <tr key={rIdx} className="transition-colors hover:bg-slate-900/40">
+                    <tr key={rIdx} className="hover:bg-card transition-colors">
                       {row.map((td, cIdx) => (
                         <td
                           key={cIdx}
-                          className="border-r border-slate-800/30 px-4 py-3 font-sans text-slate-300 last:border-r-0"
+                          className="border-border text-foreground border-r px-4 py-3 font-sans last:border-r-0"
                         >
                           {renderInline(td)}
                         </td>
@@ -500,9 +502,9 @@ export const MarkdownRenderer = ({ content = '', className = '' }) => {
                 return (
                   <li
                     key={i}
-                    className="flex items-start gap-2.5 text-sm text-slate-300 sm:text-base"
+                    className="text-foreground flex items-start gap-2.5 text-sm sm:text-base"
                   >
-                    <span className="mt-0.5 shrink-0 select-none font-mono font-bold text-indigo-400">
+                    <span className="text-primary mt-0.5 shrink-0 select-none font-mono font-bold">
                       {isOrdered ? `${i + 1}.` : '•'}
                     </span>
                     <div className="flex-1">{renderInline(cleaned)}</div>
@@ -516,7 +518,7 @@ export const MarkdownRenderer = ({ content = '', className = '' }) => {
         // Default Paragraph
         const textContent = block.lines.join(' ');
         return (
-          <p key={idx} className="my-3 text-sm leading-relaxed text-slate-300 sm:text-base">
+          <p key={idx} className="text-foreground my-3 text-sm leading-relaxed sm:text-base">
             {renderInline(textContent)}
           </p>
         );

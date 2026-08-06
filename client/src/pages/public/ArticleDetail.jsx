@@ -1,8 +1,9 @@
-import React from 'react';
-import { useParams, NavLink } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, NavLink, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, AlertTriangle, CheckCircle, Users, Sparkles, ShieldCheck, Layers, GitBranch, ArrowRight } from 'lucide-react';
-import { usePortfolioData } from '../../hooks/usePortfolioData.js';
+import { usePortfolioData, toArticleDto } from '../../hooks/usePortfolioData.js';
+import api from '../../services/api.js';
 import { Container } from '../../components/layout/Container.jsx';
 import { Section } from '../../components/layout/Section.jsx';
 import { Button } from '../../components/ui/Button.jsx';
@@ -15,9 +16,37 @@ import { calculateReadingTime } from '../../utils/calculateReadingTime.js';
 
 export const ArticleDetailPage = () => {
   const { slug } = useParams();
-  const { data: articles, loading } = usePortfolioData({ type: 'articles', delayMs: 350 });
+  const [searchParams] = useSearchParams();
+  const previewToken = searchParams.get('preview_token');
+  const { data: articles, loading: listLoading } = usePortfolioData({ type: 'articles', delayMs: 350 });
 
-  const art = articles?.find((item) => item.slug === slug);
+  const [previewItem, setPreviewItem] = useState(null);
+  const [previewError, setPreviewError] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(Boolean(previewToken));
+
+  useEffect(() => {
+    if (!previewToken || !slug) {
+      setPreviewLoading(false);
+      return;
+    }
+    setPreviewLoading(true);
+    api
+      .get(`/thinking/slug/${slug}?preview_token=${encodeURIComponent(previewToken)}`)
+      .then((res) => {
+        if (res.data?.success && res.data.data) {
+          setPreviewItem(toArticleDto(res.data.data));
+        }
+      })
+      .catch((err) => {
+        setPreviewError(err.response?.data?.error || 'Unauthorized or expired preview token');
+      })
+      .finally(() => {
+        setPreviewLoading(false);
+      });
+  }, [slug, previewToken]);
+
+  const art = previewToken ? previewItem : articles?.find((item) => item.slug === slug);
+  const loading = previewToken ? previewLoading : listLoading;
 
   if (loading) {
     return <DetailPageSkeleton />;
@@ -28,9 +57,15 @@ export const ArticleDetailPage = () => {
       <Section className="py-24 text-center">
         <Container>
           <div className="max-w-md mx-auto space-y-4">
-            <h1 className="font-heading text-3xl font-bold text-foreground">Article Not Found</h1>
+            <h1 className="font-heading text-3xl font-bold text-foreground">
+              {previewError ? 'Preview Unauthorized' : 'Article Not Found'}
+            </h1>
             <p className="text-muted-foreground text-sm">
-              We couldn&apos;t find the article with slug <code className="font-mono bg-muted px-2 py-0.5 rounded">{slug}</code>.
+              {previewError || (
+                <>
+                  We couldn&apos;t find the article with slug <code className="font-mono bg-muted px-2 py-0.5 rounded">{slug}</code>.
+                </>
+              )}
             </p>
             <Button asChild>
               <NavLink to="/thinking">
@@ -55,6 +90,11 @@ export const ArticleDetailPage = () => {
 
   return (
     <>
+      {previewToken && (
+        <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2.5 text-center text-xs font-medium text-amber-300 flex items-center justify-center gap-2">
+          <span>⚠️ Preview Mode — Viewing draft / unpublished content (Owner Only)</span>
+        </div>
+      )}
       <SEO
         title={art.title}
         description={art.excerpt}
@@ -65,12 +105,12 @@ export const ArticleDetailPage = () => {
       />
 
       {/* Hero Section */}
-      <Section className="pt-8 pb-12 md:pt-14 md:pb-16 border-b border-border/60 bg-gradient-to-b from-background via-background to-muted/20">
+      <Section className="pt-20 pb-24 md:pt-28 md:pb-36 border-b border-border bg-background">
         <Container>
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
             className="max-w-4xl space-y-5"
           >
             <BreadcrumbNav items={breadcrumbs} />
@@ -107,7 +147,7 @@ export const ArticleDetailPage = () => {
       {/* Cover Image */}
       {art.coverImage && (
         <div className="w-full max-w-5xl mx-auto px-4 -mt-6 sm:-mt-10 mb-12">
-          <div className="rounded-2xl overflow-hidden border border-border shadow-xl bg-card max-h-[440px]">
+          <div className="rounded-2xl overflow-hidden border border-border shadow-soft bg-card max-h-[440px]">
             <img src={art.coverImage} alt={art.title} className="w-full h-full object-cover" />
           </div>
         </div>

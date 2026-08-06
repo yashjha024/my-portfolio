@@ -1,5 +1,6 @@
 import { supabase } from '../config/supabase.js';
 import { parseResource, settingsSchema } from '../utils/validation.utils.js';
+import { logAuditAction } from '../utils/audit.utils.js';
 
 /**
  * Get public site settings (id = 1 singleton)
@@ -54,6 +55,14 @@ export const updateSettings = async (req, res, next) => {
         .status(400)
         .json({ success: false, error: error?.message || 'Failed to update settings' });
     }
+
+    logAuditAction({
+      req,
+      action: 'UPDATE',
+      resourceType: 'SETTINGS',
+      resourceId: '1',
+      details: { updated_keys: Object.keys(payload) },
+    });
 
     res.status(200).json({ success: true, data });
   } catch (error) {

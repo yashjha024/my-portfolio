@@ -11,7 +11,12 @@ const contactSchema = z.object({
 });
 
 const deliverContactEmail = async ({ name, email, subject, message }) => {
-  if (!process.env.RESEND_API_KEY) return false;
+  if (!process.env.RESEND_API_KEY) {
+    if (process.env.NODE_ENV === 'production') {
+      throw new Error('Email provider not configured for production delivery');
+    }
+    return false;
+  }
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -26,7 +31,10 @@ const deliverContactEmail = async ({ name, email, subject, message }) => {
       text: `From: ${name} <${email}>\n\n${message}`,
     }),
   });
-  if (!response.ok) throw new Error('Contact email delivery failed');
+  if (!response.ok) {
+    const errorBody = await response.text().catch(() => 'Unknown error');
+    throw new Error(`Contact email delivery failed: ${errorBody}`);
+  }
   return true;
 };
 
@@ -39,11 +47,36 @@ export const submitContactForm = async (req, res, next) => {
       return res.status(200).json({ success: true, message: 'Message sent successfully' });
     }
 
+    if (process.env.NODE_ENV === 'production' && !process.env.RESEND_API_KEY) {
+      return res.status(503).json({
+        success: false,
+        error: 'Contact form is currently unavailable: email service is not configured.',
+      });
+    }
+
     const fullSubject = validatedData.purpose
       ? `[${validatedData.purpose}] ${validatedData.subject}`
       : validatedData.subject;
 
-    const { error: dbError } = await supabase
+    // Idempotency check: prevent duplicate messages within 5 minutes
+    const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000).toISOString();
+    const { data: existingDuplicate } = await supabase
+      .from('contact_messages')
+      .select('id')
+      .eq('email', validatedData.email)
+      .eq('message', validatedData.message)
+      .gte('created_at', fiveMinutesAgo)
+      .limit(1);
+
+    if (existingDuplicate && existingDuplicate.length > 0) {
+      return res.status(200).json({
+        success: true,
+        message: 'Thank you! Your message has already been received.',
+        deduplicated: true,
+      });
+    }
+
+    const { data: dbMessage, error: dbError } = await supabase
       .from('contact_messages')
       .insert([
         {
@@ -59,18 +92,34 @@ export const submitContactForm = async (req, res, next) => {
       .select('id')
       .single();
 
-    if (dbError) {
+    if (dbError || !dbMessage) {
       console.error('Database error storing contact message:', dbError);
       return res
         .status(500)
         .json({ success: false, error: 'Failed to store contact inquiry in database.' });
     }
-    await deliverContactEmail({
-      name: validatedData.name,
-      email: validatedData.email,
-      subject: fullSubject,
-      message: validatedData.message,
-    });
+
+    try {
+      await deliverContactEmail({
+        name: validatedData.name,
+        email: validatedData.email,
+        subject: fullSubject,
+        message: validatedData.message,
+      });
+    } catch (deliveryError) {
+      console.error('Email delivery error, rolling back DB row:', deliveryError);
+      if (dbMessage?.id) {
+        await supabase
+          .from('contact_messages')
+          .delete()
+          .eq('id', dbMessage.id)
+          .catch(() => null);
+      }
+      return res.status(502).json({
+        success: false,
+        error: 'Failed to send notification email. Please try again later.',
+      });
+    }
 
     res.status(200).json({
       success: true,

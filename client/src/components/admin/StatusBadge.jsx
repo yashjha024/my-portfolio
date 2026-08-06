@@ -13,7 +13,7 @@ export const StatusBadge = ({ status = 'draft', className = '' }) => {
       dot: 'bg-amber-400',
     },
     archived: {
-      bg: 'bg-slate-500/10 border-slate-500/20 text-slate-400',
+      bg: 'bg-slate-500/10 border-slate-500/20 text-muted-foreground',
       label: 'Archived',
       dot: 'bg-slate-400',
     },

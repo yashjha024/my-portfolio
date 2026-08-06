@@ -31,8 +31,8 @@ export const AboutPage = () => {
         breadcrumbs={breadcrumbs}
       />
 
-      {/* Hero Header */}
-      <Section className="pt-10 pb-12 md:pt-16 md:pb-16 border-b border-border/40 bg-gradient-to-b from-background to-muted/20">
+      {/* Hero Section */}
+      <Section className="pt-20 pb-24 md:pt-28 md:pb-36 border-b border-border bg-background">
         <Container>
           <div className="max-w-3xl space-y-4">
             <BreadcrumbNav items={breadcrumbs} />
@@ -50,7 +50,7 @@ export const AboutPage = () => {
       </Section>
 
       {/* Narrative & Story */}
-      <Section className="py-12 sm:py-16">
+      <Section className="py-16 sm:py-20 bg-background">
         <Container>
           <div className="max-w-3xl mx-auto space-y-6">
             <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
@@ -86,7 +86,7 @@ export const AboutPage = () => {
                 whileInView={{ opacity: 1, y: 0 }}
                 viewport={{ once: true }}
                 transition={{ duration: 0.3, delay: idx * 0.1 }}
-                className="p-6 rounded-xl bg-background border border-border/80 shadow-sm space-y-2"
+                className="p-6 rounded-xl bg-background border border-border/80 shadow-subtle space-y-2"
               >
                 <div className="flex items-center gap-2 text-primary font-bold text-sm">
                   <CheckCircle2 className="w-4 h-4" />

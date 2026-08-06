@@ -47,8 +47,8 @@ export const Dashboard = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
-        <span className="font-mono text-xs uppercase text-slate-400">
+        <Loader2 className="text-primary h-8 w-8 animate-spin" />
+        <span className="text-muted-foreground font-mono text-xs uppercase">
           Loading Command Center...
         </span>
       </div>
@@ -71,7 +71,7 @@ export const Dashboard = () => {
       value: stats?.totalCaseStudies || 0,
       subtext: `${stats?.publishedCaseStudies || 0} Published • ${stats?.draftCaseStudies || 0} Drafts`,
       icon: Briefcase,
-      color: 'text-indigo-400 bg-indigo-500/10 border-indigo-500/20',
+      color: 'text-primary bg-indigo-500/10 border-primary/40',
       path: '/admin/work',
     },
     {
@@ -116,7 +116,7 @@ export const Dashboard = () => {
           <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
             Executive Command Center
           </h1>
-          <p className="mt-1 text-sm text-slate-400">
+          <p className="text-muted-foreground mt-1 text-sm">
             Real-time content telemetry, publishing velocity, and system status
           </p>
         </div>
@@ -125,7 +125,7 @@ export const Dashboard = () => {
             href="/"
             target="_blank"
             rel="noopener noreferrer"
-            className="flex items-center gap-2 rounded-xl border border-slate-800 bg-slate-900 px-4 py-2.5 text-sm font-medium text-slate-200 shadow-sm transition-colors hover:bg-slate-800"
+            className="border-border bg-card text-foreground hover:bg-secondary flex items-center gap-2 rounded-xl border px-4 py-2.5 text-sm font-medium shadow-sm transition-colors"
           >
             <span>View Public Site</span>
             <ExternalLink className="h-4 w-4" />
@@ -141,13 +141,13 @@ export const Dashboard = () => {
             <div
               key={i}
               onClick={() => navigate(card.path)}
-              className="group cursor-pointer rounded-2xl border border-slate-800 bg-slate-900/80 p-5 transition-all hover:-translate-y-0.5 hover:border-slate-700"
+              className="border-border bg-card hover:border-border group cursor-pointer rounded-2xl border p-5 transition-all hover:-translate-y-0.5"
             >
               <div className="flex items-start justify-between">
                 <div className={`rounded-xl border p-3 ${card.color}`}>
                   <Icon className="h-5 w-5" />
                 </div>
-                <div className="flex items-center gap-1 font-mono text-xs text-slate-500 transition-colors group-hover:text-slate-300">
+                <div className="text-muted-foreground group-hover:text-foreground flex items-center gap-1 font-mono text-xs transition-colors">
                   <span>Manage</span>
                   <ArrowUpRight className="h-3.5 w-3.5" />
                 </div>
@@ -156,8 +156,8 @@ export const Dashboard = () => {
                 <span className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
                   {card.value}
                 </span>
-                <p className="mt-1 text-xs font-medium text-slate-300">{card.title}</p>
-                <p className="mt-1 font-mono text-[11px] text-slate-500">{card.subtext}</p>
+                <p className="text-foreground mt-1 text-xs font-medium">{card.title}</p>
+                <p className="text-muted-foreground mt-1 font-mono text-[11px]">{card.subtext}</p>
               </div>
             </div>
           );
@@ -165,15 +165,15 @@ export const Dashboard = () => {
       </div>
 
       {/* Quick Actions Strip */}
-      <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-5">
-        <h2 className="mb-4 flex items-center gap-2 font-mono text-xs uppercase tracking-wider text-slate-400">
-          <TrendingUp className="h-4 w-4 text-indigo-400" />
+      <div className="border-border bg-card rounded-2xl border p-5">
+        <h2 className="text-muted-foreground mb-4 flex items-center gap-2 font-mono text-xs uppercase tracking-wider">
+          <TrendingUp className="text-primary h-4 w-4" />
           <span>High-Velocity Quick Actions</span>
         </h2>
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             to="/admin/work/new"
-            className="group flex items-center justify-between rounded-xl bg-indigo-600 px-4 py-3 text-sm font-medium text-white shadow-lg shadow-indigo-600/10 transition-all hover:bg-indigo-500"
+            className="bg-primary shadow-soft shadow-subtle hover:bg-primary/90 group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-white transition-all"
           >
             <div className="flex items-center gap-2.5">
               <Plus className="h-4 w-4 shrink-0" />
@@ -184,7 +184,7 @@ export const Dashboard = () => {
 
           <Link
             to="/admin/thinking/new"
-            className="group flex items-center justify-between rounded-xl border border-slate-700/60 bg-slate-800 px-4 py-3 text-sm font-medium text-white transition-all hover:bg-slate-700"
+            className="border-border bg-secondary hover:bg-secondary group flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium text-white transition-all"
           >
             <div className="flex items-center gap-2.5">
               <Plus className="h-4 w-4 shrink-0 text-violet-400" />
@@ -195,7 +195,7 @@ export const Dashboard = () => {
 
           <Link
             to="/admin/prds/new"
-            className="group flex items-center justify-between rounded-xl border border-slate-700/60 bg-slate-800 px-4 py-3 text-sm font-medium text-white transition-all hover:bg-slate-700"
+            className="border-border bg-secondary hover:bg-secondary group flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium text-white transition-all"
           >
             <div className="flex items-center gap-2.5">
               <Plus className="h-4 w-4 shrink-0 text-emerald-400" />
@@ -206,7 +206,7 @@ export const Dashboard = () => {
 
           <Link
             to="/admin/media"
-            className="group flex items-center justify-between rounded-xl border border-slate-700/60 bg-slate-800 px-4 py-3 text-sm font-medium text-white transition-all hover:bg-slate-700"
+            className="border-border bg-secondary hover:bg-secondary group flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium text-white transition-all"
           >
             <div className="flex items-center gap-2.5">
               <Plus className="h-4 w-4 shrink-0 text-amber-400" />
@@ -218,24 +218,24 @@ export const Dashboard = () => {
       </div>
 
       {/* Recent Activity Table */}
-      <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl">
-        <div className="flex items-center justify-between border-b border-slate-800 p-5">
+      <div className="border-border bg-card shadow-soft overflow-hidden rounded-2xl border">
+        <div className="border-border flex items-center justify-between border-b p-5">
           <div className="flex items-center gap-2">
-            <Clock className="h-4 w-4 text-indigo-400" />
+            <Clock className="text-primary h-4 w-4" />
             <h2 className="text-base font-bold text-white">Recent Content Activity</h2>
           </div>
-          <span className="font-mono text-xs text-slate-500">Last 10 updates</span>
+          <span className="text-muted-foreground font-mono text-xs">Last 10 updates</span>
         </div>
 
         {recentActivity.length === 0 ? (
-          <div className="p-12 text-center font-mono text-sm text-slate-500">
+          <div className="text-muted-foreground p-12 text-center font-mono text-sm">
             No recent content modifications recorded yet.
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-950/40 font-mono text-[11px] uppercase tracking-wider text-slate-400">
+                <tr className="border-border bg-background text-muted-foreground border-b font-mono text-[11px] uppercase tracking-wider">
                   <th className="px-5 py-3.5">Content Title</th>
                   <th className="px-5 py-3.5">Module</th>
                   <th className="px-5 py-3.5">Status / Stage</th>
@@ -243,13 +243,13 @@ export const Dashboard = () => {
                   <th className="px-5 py-3.5 text-right">Action</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/80 text-sm">
+              <tbody className="divide-border divide-y text-sm">
                 {recentActivity.map((item, idx) => {
                   const moduleConfig = {
                     work: {
                       label: 'Case Study',
                       path: `/admin/work/edit/${item.id}`,
-                      color: 'text-indigo-400 bg-indigo-500/10',
+                      color: 'text-primary bg-indigo-500/10',
                     },
                     thinking: {
                       label: 'Article',
@@ -266,7 +266,7 @@ export const Dashboard = () => {
                   const mod = moduleConfig[item.module] || moduleConfig.work;
 
                   return (
-                    <tr key={idx} className="transition-colors hover:bg-slate-800/40">
+                    <tr key={idx} className="hover:bg-secondary transition-colors">
                       <td
                         className="max-w-xs truncate px-5 py-3.5 font-medium text-white"
                         title={item.title}
@@ -284,12 +284,12 @@ export const Dashboard = () => {
                         {item.status ? (
                           <StatusBadge status={item.status} />
                         ) : (
-                          <span className="font-mono text-xs uppercase text-slate-400">
+                          <span className="text-muted-foreground font-mono text-xs uppercase">
                             {item.stage || 'Active'}
                           </span>
                         )}
                       </td>
-                      <td className="px-5 py-3.5 font-mono text-xs text-slate-400">
+                      <td className="text-muted-foreground px-5 py-3.5 font-mono text-xs">
                         {new Date(item.updated_at).toLocaleDateString([], {
                           month: 'short',
                           day: 'numeric',
@@ -300,7 +300,7 @@ export const Dashboard = () => {
                       <td className="px-5 py-3.5 text-right">
                         <Link
                           to={mod.path}
-                          className="rounded-lg px-3 py-1.5 font-mono text-xs font-medium text-indigo-400 transition-colors hover:bg-indigo-500/10 hover:text-indigo-300"
+                          className="text-primary hover:bg-primary/90/10 hover:text-primary rounded-lg px-3 py-1.5 font-mono text-xs font-medium transition-colors"
                         >
                           Edit →
                         </Link>

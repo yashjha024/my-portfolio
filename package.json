@@ -14,6 +14,7 @@
     "dev:client": "npm run dev --prefix client",
     "build": "npm run build --prefix client",
     "start": "npm run start --prefix server",
+    "test": "npm run test --prefix server",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

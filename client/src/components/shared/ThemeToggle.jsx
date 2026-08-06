@@ -42,7 +42,7 @@ export const ThemeToggle = ({ className }) => {
       title={`Theme: ${theme}`}
     >
       {theme === 'light' && <Sun className="h-5 w-5 text-amber-500 transition-transform" />}
-      {theme === 'dark' && <Moon className="h-5 w-5 text-indigo-400 transition-transform" />}
+      {theme === 'dark' && <Moon className="text-primary h-5 w-5 transition-transform" />}
       {theme === 'system' && (
         <Laptop className="text-muted-foreground h-5 w-5 transition-transform" />
       )}

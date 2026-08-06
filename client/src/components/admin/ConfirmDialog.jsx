@@ -17,12 +17,12 @@ export const ConfirmDialog = ({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+      <div className="bg-background fixed inset-0 z-50 flex items-center justify-center p-4">
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
           exit={{ opacity: 0, scale: 0.95 }}
-          className="w-full max-w-md rounded-2xl border border-slate-800 bg-slate-900 p-6 shadow-2xl"
+          className="border-border bg-card shadow-soft w-full max-w-md rounded-2xl border p-6"
         >
           <div className="mb-5 flex items-start gap-4">
             <div
@@ -34,16 +34,16 @@ export const ConfirmDialog = ({
             </div>
             <div>
               <h3 className="text-lg font-bold text-white">{title}</h3>
-              <p className="mt-1 text-sm leading-relaxed text-slate-400">{description}</p>
+              <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{description}</p>
             </div>
           </div>
 
-          <div className="flex items-center justify-end gap-3 border-t border-slate-800 pt-4">
+          <div className="border-border flex items-center justify-end gap-3 border-t pt-4">
             <button
               type="button"
               disabled={loading}
               onClick={onClose}
-              className="rounded-xl bg-slate-800 px-4 py-2.5 text-sm font-medium text-slate-300 transition-colors hover:bg-slate-700 disabled:opacity-50"
+              className="bg-secondary text-foreground hover:bg-secondary rounded-xl px-4 py-2.5 text-sm font-medium transition-colors disabled:opacity-50"
             >
               {cancelText}
             </button>
@@ -51,10 +51,10 @@ export const ConfirmDialog = ({
               type="button"
               disabled={loading}
               onClick={onConfirm}
-              className={`flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white shadow-lg transition-all ${
+              className={`shadow-soft flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-all ${
                 isDestructive
                   ? 'bg-rose-600 shadow-rose-600/20 hover:bg-rose-500'
-                  : 'bg-indigo-600 shadow-indigo-600/20 hover:bg-indigo-500'
+                  : 'bg-primary shadow-subtle hover:bg-primary/90'
               } disabled:cursor-not-allowed disabled:opacity-50`}
             >
               {loading && <Loader2 className="h-4 w-4 animate-spin" />}

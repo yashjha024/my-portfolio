@@ -1,7 +1,7 @@
 import express from 'express';
 import { verifyAuth } from '../middleware/auth.middleware.js';
 import { verifyOwner } from '../middleware/admin.middleware.js';
-import { getDashboardStats } from '../controllers/dashboard.controller.js';
+import { getDashboardStats, getAuditLogs } from '../controllers/dashboard.controller.js';
 import {
   getAdminCaseStudies,
   createCaseStudy,
@@ -30,6 +30,7 @@ router.use(verifyAuth, verifyOwner);
 
 // Dashboard stats & activity
 router.get('/dashboard', getDashboardStats);
+router.get('/audit-logs', getAuditLogs);
 
 // Work / Case Studies CMS
 router.get('/work', getAdminCaseStudies);

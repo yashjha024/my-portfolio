@@ -1,8 +1,9 @@
-import React from 'react';
-import { useParams, NavLink } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { useParams, NavLink, useSearchParams } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { ArrowLeft, Printer, CheckCircle, ShieldAlert, ExternalLink } from 'lucide-react';
-import { usePortfolioData } from '../../hooks/usePortfolioData.js';
+import { usePortfolioData, toPrdDto } from '../../hooks/usePortfolioData.js';
+import api from '../../services/api.js';
 import { Container } from '../../components/layout/Container.jsx';
 import { Section } from '../../components/layout/Section.jsx';
 import { Button } from '../../components/ui/Button.jsx';
@@ -15,9 +16,37 @@ import { calculateReadingTime } from '../../utils/calculateReadingTime.js';
 
 export const PrdDetailPage = () => {
   const { slug } = useParams();
-  const { data: prds, loading } = usePortfolioData({ type: 'prds', delayMs: 350 });
+  const [searchParams] = useSearchParams();
+  const previewToken = searchParams.get('preview_token');
+  const { data: prds, loading: listLoading } = usePortfolioData({ type: 'prds', delayMs: 350 });
 
-  const prd = prds?.find((item) => item.slug === slug);
+  const [previewItem, setPreviewItem] = useState(null);
+  const [previewError, setPreviewError] = useState(null);
+  const [previewLoading, setPreviewLoading] = useState(Boolean(previewToken));
+
+  useEffect(() => {
+    if (!previewToken || !slug) {
+      setPreviewLoading(false);
+      return;
+    }
+    setPreviewLoading(true);
+    api
+      .get(`/prds/slug/${slug}?preview_token=${encodeURIComponent(previewToken)}`)
+      .then((res) => {
+        if (res.data?.success && res.data.data) {
+          setPreviewItem(toPrdDto(res.data.data));
+        }
+      })
+      .catch((err) => {
+        setPreviewError(err.response?.data?.error || 'Unauthorized or expired preview token');
+      })
+      .finally(() => {
+        setPreviewLoading(false);
+      });
+  }, [slug, previewToken]);
+
+  const prd = previewToken ? previewItem : prds?.find((item) => item.slug === slug);
+  const loading = previewToken ? previewLoading : listLoading;
 
   if (loading) {
     return <DetailPageSkeleton />;
@@ -28,13 +57,19 @@ export const PrdDetailPage = () => {
       <Section className="py-24 text-center">
         <Container>
           <div className="max-w-md mx-auto space-y-4">
-            <h1 className="font-heading text-3xl font-bold text-foreground">PRD Specification Not Found</h1>
+            <h1 className="font-heading text-3xl font-bold text-foreground">
+              {previewError ? 'Preview Unauthorized' : 'PRD Specification Not Found'}
+            </h1>
             <p className="text-muted-foreground text-sm">
-              We couldn&apos;t find the specification matching slug <code className="font-mono bg-muted px-2 py-0.5 rounded">{slug}</code>.
+              {previewError || (
+                <>
+                  We couldn&apos;t find the specification matching slug <code className="font-mono bg-muted px-2 py-0.5 rounded">{slug}</code>.
+                </>
+              )}
             </p>
             <Button asChild>
               <NavLink to="/prds">
-                <ArrowLeft className="mr-2 w-4 h-4" /> Return to PRD Library
+                <ArrowLeft className="mr-2 w-4 h-4" /> Return to PRD Specifications
               </NavLink>
             </Button>
           </div>
@@ -64,6 +99,11 @@ export const PrdDetailPage = () => {
 
   return (
     <>
+      {previewToken && (
+        <div className="bg-amber-500/10 border-b border-amber-500/30 px-4 py-2.5 text-center text-xs font-medium text-amber-500 flex items-center justify-center gap-2 print:hidden">
+          <span>⚠️ Preview Mode — Viewing draft / private specification (Owner Only)</span>
+        </div>
+      )}
       <SEO
         title={prd.title}
         description={prd.context?.substring(0, 160)}
@@ -73,12 +113,12 @@ export const PrdDetailPage = () => {
       />
 
       {/* Header */}
-      <Section className="pt-8 pb-12 md:pt-14 md:pb-16 border-b border-border/60 bg-gradient-to-b from-background to-muted/20 print:bg-white print:border-none">
+      <Section className="pt-20 pb-24 md:pt-28 md:pb-36 border-b border-border bg-background print:bg-white print:border-none">
         <Container>
           <motion.div
-            initial={{ opacity: 0, y: 16 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
+            transition={{ duration: 0.22, ease: 'easeOut' }}
             className="max-w-4xl space-y-5"
           >
             <div className="flex items-center justify-between gap-4 print:hidden">
@@ -149,7 +189,7 @@ export const PrdDetailPage = () => {
               </h2>
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-6 rounded-xl bg-card border border-border shadow-sm space-y-3">
+                <div className="p-6 rounded-xl bg-card border border-border shadow-subtle space-y-3">
                   <h3 className="font-heading font-bold text-base text-foreground flex items-center gap-1.5">
                     <CheckCircle className="w-4 h-4 text-success" /> Primary Goals
                   </h3>
@@ -160,7 +200,7 @@ export const PrdDetailPage = () => {
                   </ul>
                 </div>
 
-                <div className="p-6 rounded-xl bg-card border border-border shadow-sm space-y-3">
+                <div className="p-6 rounded-xl bg-card border border-border shadow-subtle space-y-3">
                   <h3 className="font-heading font-bold text-base text-foreground flex items-center gap-1.5">
                     <ShieldAlert className="w-4 h-4 text-destructive" /> Explicit Non-Goals
                   </h3>
@@ -227,7 +267,7 @@ export const PrdDetailPage = () => {
 
               <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                 {metrics.map((m, idx) => (
-                  <div key={idx} className="p-5 rounded-xl bg-card border border-border space-y-1 shadow-sm">
+                  <div key={idx} className="p-5 rounded-xl bg-card border border-border space-y-1 shadow-subtle">
                     <span className="block font-heading font-bold text-base text-foreground">{m.name}</span>
                     <span className="text-xs font-mono text-primary font-semibold block">{m.target}</span>
                   </div>
@@ -258,7 +298,7 @@ export const PrdDetailPage = () => {
 
             {/* Print Note CTA */}
             <div className="pt-12 text-center print:hidden">
-              <Button size="lg" onClick={handlePrint} className="shadow-md">
+              <Button size="lg" onClick={handlePrint} className="shadow-subtle">
                 <Printer className="mr-2 w-4 h-4" /> Print or Download PDF Spec
               </Button>
             </div>

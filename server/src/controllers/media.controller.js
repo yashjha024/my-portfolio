@@ -1,22 +1,6 @@
 import { supabase } from '../config/supabase.js';
-import { parsePagination } from '../utils/validation.utils.js';
-
-const hasValidSignature = (file) => {
-  const bytes = file.buffer;
-  if (!bytes?.length) return false;
-  if (file.mimetype === 'image/jpeg')
-    return bytes.subarray(0, 3).equals(Buffer.from([0xff, 0xd8, 0xff]));
-  if (file.mimetype === 'image/png')
-    return bytes
-      .subarray(0, 8)
-      .equals(Buffer.from([0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a]));
-  if (file.mimetype === 'image/webp')
-    return (
-      bytes.subarray(0, 4).toString() === 'RIFF' && bytes.subarray(8, 12).toString() === 'WEBP'
-    );
-  if (file.mimetype === 'application/pdf') return bytes.subarray(0, 5).toString() === '%PDF-';
-  return false;
-};
+import { parsePagination, hasValidSignature } from '../utils/validation.utils.js';
+import { logAuditAction } from '../utils/audit.utils.js';
 
 export const getMediaList = async (req, res, next) => {
   try {
@@ -108,13 +92,7 @@ export const uploadMedia = async (req, res, next) => {
     }
 
     const file = req.file;
-    const allowedMimeTypes = [
-      'image/jpeg',
-      'image/png',
-      'image/webp',
-      'image/svg+xml',
-      'application/pdf',
-    ];
+    const allowedMimeTypes = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
     if (!allowedMimeTypes.includes(file.mimetype)) {
       return res
         .status(400)
@@ -141,9 +119,13 @@ export const uploadMedia = async (req, res, next) => {
     if (file.mimetype.startsWith('image/')) mediaType = 'image';
     else if (file.mimetype.includes('pdf')) mediaType = 'pdf';
 
+    const isPublic = req.body.is_public !== 'false' && req.body.is_public !== false;
+    const isPrivateAsset = !isPublic || folder === 'private' || folder === 'confidential';
+    const targetBucket = isPrivateAsset ? 'portfolio-media-private' : 'portfolio-media';
+
     // Upload to Supabase Storage bucket
     const { error: uploadError } = await supabase.storage
-      .from('portfolio-media')
+      .from(targetBucket)
       .upload(storagePath, file.buffer, {
         contentType: file.mimetype,
         upsert: false,
@@ -156,24 +138,24 @@ export const uploadMedia = async (req, res, next) => {
         .json({ success: false, error: `Storage upload failed: ${uploadError.message}` });
     }
 
-    const { data: publicUrlData } = supabase.storage
-      .from('portfolio-media')
-      .getPublicUrl(storagePath);
-
-    const publicUrl =
-      publicUrlData?.publicUrl ||
-      (process.env.SUPABASE_URL
-        ? `${process.env.SUPABASE_URL}/storage/v1/object/public/portfolio-media/${storagePath}`
-        : `/uploads/${filename}`);
+    let assetUrl = `/api/media/download/${filename}`;
+    if (!isPrivateAsset) {
+      const { data: publicUrlData } = supabase.storage.from(targetBucket).getPublicUrl(storagePath);
+      assetUrl =
+        publicUrlData?.publicUrl ||
+        (process.env.SUPABASE_URL
+          ? `${process.env.SUPABASE_URL}/storage/v1/object/public/${targetBucket}/${storagePath}`
+          : `/uploads/${filename}`);
+    }
 
     const mediaRecord = {
       filename,
       original_name: file.originalname,
-      url: publicUrl,
+      url: assetUrl,
       storage_path: storagePath,
       type: mediaType,
       folder,
-      is_public: req.body.is_public !== 'false',
+      is_public: !isPrivateAsset,
       size_bytes: file.size || 0,
       alt_text: req.body.alt_text || file.originalname.split('.')[0] || 'Media asset',
       uploaded_by: req.user?.id || null,
@@ -188,11 +170,19 @@ export const uploadMedia = async (req, res, next) => {
     if (dbError) {
       // Remove orphaned storage file if DB insert fails
       await supabase.storage
-        .from('portfolio-media')
+        .from(targetBucket)
         .remove([storagePath])
         .catch(() => null);
       return res.status(400).json({ success: false, error: dbError.message });
     }
+
+    logAuditAction({
+      req,
+      action: 'CREATE',
+      resourceType: 'MEDIA',
+      resourceId: data.id || filename,
+      details: { filename, type: mediaType, folder, is_public: !isPrivateAsset },
+    });
 
     res.status(201).json({
       success: true,
@@ -227,6 +217,14 @@ export const updateMedia = async (req, res, next) => {
     const parts = (data.storage_path || '').split('/');
     const itemFolder = parts.length >= 3 ? parts[1] : 'general';
 
+    logAuditAction({
+      req,
+      action: 'UPDATE',
+      resourceType: 'MEDIA',
+      resourceId: data.id || req.params.id,
+      details: { alt_text, is_public },
+    });
+
     res.status(200).json({
       success: true,
       data: {
@@ -253,13 +251,68 @@ export const deleteMedia = async (req, res, next) => {
         .from('portfolio-media')
         .remove([mediaItem.storage_path])
         .catch(() => null);
+      await supabase.storage
+        .from('portfolio-media-private')
+        .remove([mediaItem.storage_path])
+        .catch(() => null);
     }
 
     const { error } = await supabase.from('media').delete().eq('id', req.params.id);
     if (error) {
       return res.status(400).json({ success: false, error: error.message });
     }
+
+    logAuditAction({
+      req,
+      action: 'DELETE',
+      resourceType: 'MEDIA',
+      resourceId: req.params.id,
+    });
+
     res.status(200).json({ success: true, message: 'Media asset deleted successfully' });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getMediaDownload = async (req, res, next) => {
+  try {
+    const identifier = req.params.id;
+    // Check if identifier is a UUID or filename
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+      identifier
+    );
+    let query = supabase.from('media').select('*');
+    if (isUuid) {
+      query = query.eq('id', identifier);
+    } else {
+      query = query.eq('filename', identifier);
+    }
+
+    const { data: mediaItem, error } = await query.single();
+    if (error || !mediaItem) {
+      return res.status(404).json({ success: false, error: 'Media asset not found' });
+    }
+
+    const isPrivate =
+      !mediaItem.is_public || mediaItem.folder === 'private' || mediaItem.folder === 'confidential';
+    if (isPrivate) {
+      // Require admin authentication for private assets
+      if (!req.user || !req.user.is_admin) {
+        return res.status(403).json({ success: false, error: 'Forbidden: Private asset' });
+      }
+    }
+
+    const bucketName = isPrivate ? 'portfolio-media-private' : 'portfolio-media';
+    const { data: signedData, error: signedError } = await supabase.storage
+      .from(bucketName)
+      .createSignedUrl(mediaItem.storage_path, 3600);
+
+    if (signedError || !signedData?.signedUrl) {
+      return res.status(500).json({ success: false, error: 'Failed to generate download link' });
+    }
+
+    res.redirect(signedData.signedUrl);
   } catch (error) {
     next(error);
   }

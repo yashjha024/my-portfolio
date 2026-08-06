@@ -1,8 +1,9 @@
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Mail, FileText, Globe } from 'lucide-react';
+import { Mail, FileText, Lock } from 'lucide-react';
 import { Github, Linkedin } from '../ui/Icon.jsx';
 import { Container } from '../layout/Container.jsx';
+import { Button } from '../ui/Button.jsx';
 import { usePortfolioData } from '../../hooks/usePortfolioData.js';
 
 export const Footer = () => {
@@ -10,124 +11,83 @@ export const Footer = () => {
   const { data: profile } = usePortfolioData({ type: 'profile' });
 
   return (
-    <footer className="border-border bg-background w-full border-t py-12 transition-colors md:py-16">
+    <footer className="border-border bg-secondary w-full border-t py-12 transition-colors sm:py-16">
       <Container>
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-4 lg:gap-12">
-          {/* Col 1: Identity & Positioning */}
-          <div className="space-y-4 md:col-span-2">
-            <h3 className="font-heading text-foreground text-lg font-bold tracking-tight">
-              {profile?.name || 'Portfolio'}
+        <div className="flex flex-col justify-between gap-8 md:flex-row md:items-center">
+          {/* Identity: Name & Role */}
+          <div className="space-y-1.5">
+            <h3 className="font-heading text-foreground text-2xl font-extrabold tracking-tight sm:text-3xl">
+              {profile?.name || 'Yash Jha'}
             </h3>
-            <p className="text-muted-foreground max-w-md text-sm leading-relaxed">
-              {profile?.bio ||
-                'A product portfolio with case studies, product thinking, and delivery evidence.'}
+            <p className="text-muted-foreground text-sm font-medium sm:text-base">
+              {profile?.role || 'Product Professional & AI/ML Engineer'}
             </p>
-            <div className="text-muted-foreground flex items-center gap-2 pt-1 font-mono text-xs">
-              <Globe className="text-primary h-4 w-4" />
-              <span>
-                Based in Delhi, IN • Open to product management &amp; technical opportunities
-              </span>
-            </div>
           </div>
 
-          {/* Col 2: Navigation Links */}
-          <div className="space-y-3">
-            <h4 className="text-foreground text-sm font-semibold uppercase tracking-wider">
-              Explore
-            </h4>
-            <ul className="text-muted-foreground space-y-2 text-sm">
-              <li>
-                <NavLink to="/work" className="hover:text-primary transition-colors">
-                  Case Studies
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/thinking" className="hover:text-primary transition-colors">
-                  Product Thinking
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/prds" className="hover:text-primary transition-colors">
-                  PRD Library
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/about" className="hover:text-primary transition-colors">
-                  About &amp; Principles
-                </NavLink>
-              </li>
-              <li>
-                <NavLink to="/resume" className="hover:text-primary transition-colors">
-                  Interactive Resume
-                </NavLink>
-              </li>
-            </ul>
-          </div>
+          {/* Actions: Social Links, Email, Resume */}
+          <div className="flex flex-wrap items-center gap-3">
+            {profile?.email && (
+              <a
+                href={`mailto:${profile.email}`}
+                className="border-border bg-card text-foreground shadow-subtle hover:bg-background inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-semibold transition-colors sm:text-sm"
+              >
+                <Mail className="text-muted-foreground h-4 w-4 shrink-0" />
+                <span>Email</span>
+              </a>
+            )}
 
-          {/* Col 3: Contact & Connect */}
-          <div className="space-y-3">
-            <h4 className="text-foreground text-sm font-semibold uppercase tracking-wider">
-              Connect
-            </h4>
-            <ul className="text-muted-foreground space-y-2.5 text-sm">
-              <li>
-                <a
-                  href={`mailto:${profile?.email || ''}`}
-                  className="hover:text-primary inline-flex items-center gap-2 transition-colors"
-                >
-                  <Mail className="h-4 w-4" />
-                  <span>Email directly</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href={profile?.linkedin || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-primary inline-flex items-center gap-2 transition-colors"
-                >
-                  <Linkedin className="h-4 w-4" />
-                  <span>LinkedIn profile</span>
-                </a>
-              </li>
-              <li>
-                <a
-                  href={profile?.github || '#'}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="hover:text-primary inline-flex items-center gap-2 transition-colors"
-                >
-                  <Github className="h-4 w-4" />
-                  <span>GitHub repository</span>
-                </a>
-              </li>
-              <li>
-                <NavLink
-                  to="/resume"
-                  className="hover:text-primary inline-flex items-center gap-2 font-medium transition-colors"
-                >
-                  <FileText className="text-primary h-4 w-4" />
-                  <span>Download CV / Resume</span>
-                </NavLink>
-              </li>
-            </ul>
+            {profile?.linkedin && (
+              <a
+                href={profile.linkedin}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border-border bg-card text-foreground shadow-subtle hover:bg-background inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-semibold transition-colors sm:text-sm"
+              >
+                <Linkedin className="text-muted-foreground h-4 w-4 shrink-0" />
+                <span>LinkedIn</span>
+              </a>
+            )}
+
+            {profile?.github && (
+              <a
+                href={profile.github}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="border-border bg-card text-foreground shadow-subtle hover:bg-background inline-flex items-center gap-2 rounded-full border px-4 py-2.5 text-xs font-semibold transition-colors sm:text-sm"
+              >
+                <Github className="text-muted-foreground h-4 w-4 shrink-0" />
+                <span>GitHub</span>
+              </a>
+            )}
+
+            <Button
+              asChild
+              size="sm"
+              className="bg-foreground text-background hover:bg-foreground/90 shadow-subtle rounded-full px-5 py-5 text-xs font-bold sm:text-sm"
+            >
+              <NavLink to={profile?.resumeUrl || '/resume'}>
+                <FileText className="mr-1.5 h-4 w-4" /> Resume
+              </NavLink>
+            </Button>
           </div>
         </div>
 
-        {/* Bottom Bar */}
-        <div className="border-border/60 text-muted-foreground mt-12 flex flex-col items-center justify-between gap-4 border-t pt-8 text-xs sm:flex-row">
-          <p>© {currentYear} Yash Jha. Built with MERN Stack, React 19 &amp; Tailwind CSS.</p>
+        {/* Bottom Bar: Copyright & Discreet Admin Access */}
+        <div className="border-border/80 text-muted-foreground mt-10 flex flex-col items-center justify-between gap-4 border-t pt-6 font-mono text-xs sm:flex-row">
+          <p>
+            {profile?.copyright ||
+              `© ${currentYear} ${profile?.name || 'Yash Jha'}. All rights reserved.`}
+          </p>
           <div className="flex items-center gap-4">
-            <NavLink to="/contact" className="hover:text-foreground transition-colors">
-              Contact
-            </NavLink>
-            <span>â€¢</span>
-            <NavLink to="/privacy" className="hover:text-foreground transition-colors">
-              Privacy
-            </NavLink>
+            <span>Designed with intentional simplicity &amp; editorial focus.</span>
             <span>•</span>
-            <NavLink to="/login" className="hover:text-foreground transition-colors">
-              Owner Console
+            <NavLink
+              to="/login"
+              className="hover:text-foreground inline-flex items-center gap-1.5 opacity-60 transition-colors hover:opacity-100"
+              title="Owner CMS Command Center"
+            >
+              <Lock className="h-3 w-3" />
+              <span>Admin Login</span>
             </NavLink>
           </div>
         </div>

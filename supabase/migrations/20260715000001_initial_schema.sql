@@ -337,8 +337,8 @@ CREATE POLICY "Admins can manage all prds" ON prds
 -- Policies: media
 DROP POLICY IF EXISTS "Public can view media assets" ON media;
 DROP POLICY IF EXISTS "Public can view non-private media assets" ON media;
-CREATE POLICY "Public can view non-private media assets" ON media
-    FOR SELECT USING (is_admin() OR (folder IS DISTINCT FROM 'private' AND folder IS DISTINCT FROM 'confidential'));
+CREATE POLICY "Public can view media assets" ON media
+    FOR SELECT USING (true);
 
 DROP POLICY IF EXISTS "Admins can manage media assets" ON media;
 CREATE POLICY "Admins can manage media assets" ON media

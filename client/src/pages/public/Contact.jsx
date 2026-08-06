@@ -88,7 +88,7 @@ export const ContactPage = () => {
       />
 
       {/* Header Section */}
-      <Section className="pt-10 pb-12 md:pt-16 md:pb-16 border-b border-border/40 bg-gradient-to-b from-background to-muted/20">
+      <Section className="pt-20 pb-24 md:pt-28 md:pb-36 border-b border-border bg-background">
         <Container>
           <div className="max-w-3xl space-y-4">
             <BreadcrumbNav items={breadcrumbs} />
@@ -106,7 +106,7 @@ export const ContactPage = () => {
       </Section>
 
       {/* Contact Content Section */}
-      <Section className="py-16 sm:py-20">
+      <Section className="py-16 sm:py-20 bg-background">
         <Container>
           <Grid cols={2} gap="lg" className="items-start">
             {/* Left Column: Direct Links & Info */}
@@ -206,15 +206,7 @@ export const ContactPage = () => {
               initial={{ opacity: 0, x: 16 }}
               animate={{ opacity: 1, x: 0 }}
               transition={{ duration: 0.4, delay: 0.1 }}
-              className="p-6 sm:p-8 rounded-2xl border border-border bg-card shadow-md space-y-6"
             >
-              <div>
-                <h3 className="font-heading text-xl font-bold text-foreground">Send a Message</h3>
-                <p className="text-xs sm:text-sm text-muted-foreground mt-1">
-                  All submissions are encrypted and delivered directly to my private inbox.
-                </p>
-              </div>
-
               {isSubmitted ? (
                 <div className="p-8 rounded-xl bg-success/10 border border-success/30 text-center space-y-4 my-6">
                   <CheckCircle className="w-12 h-12 text-success mx-auto" />
@@ -227,7 +219,13 @@ export const ContactPage = () => {
                   </Button>
                 </div>
               ) : (
-                <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
+                <form onSubmit={handleSubmit(onSubmit)} className="p-6 sm:p-8 rounded-2xl border border-border bg-card shadow-soft space-y-6">
+                  <div>
+                    <h3 className="font-heading text-xl font-bold text-foreground">Send a Message</h3>
+                    <p className="text-xs sm:text-sm text-muted-foreground mt-1">
+                      All submissions are encrypted and delivered directly to my private inbox.
+                    </p>
+                  </div>
                   {submitError && (
                     <div className="p-4 rounded-xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs sm:text-sm flex items-start gap-3 mb-4">
                       <AlertCircle className="w-5 h-5 shrink-0 mt-0.5 text-rose-400" />
@@ -289,7 +287,7 @@ export const ContactPage = () => {
                     />
                   </FormGroup>
 
-                  <Button type="submit" size="lg" className="w-full font-semibold shadow-md mt-2" isLoading={isSubmitting}>
+                  <Button type="submit" size="lg" className="w-full font-semibold shadow-subtle mt-2" isLoading={isSubmitting}>
                     <Send className="mr-2 w-4 h-4" /> Send Message
                   </Button>
                 </form>

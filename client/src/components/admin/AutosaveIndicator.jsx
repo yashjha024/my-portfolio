@@ -22,7 +22,7 @@ export const AutosaveIndicator = ({ status = 'saved', lastSavedAt = null }) => {
 
   if (status === 'unsaved') {
     return (
-      <div className="inline-flex items-center gap-2 rounded-lg border border-indigo-500/20 bg-indigo-500/10 px-3 py-1.5 font-mono text-xs text-indigo-300">
+      <div className="border-primary/40 text-primary inline-flex items-center gap-2 rounded-lg border bg-indigo-500/10 px-3 py-1.5 font-mono text-xs">
         <Cloud className="h-3.5 w-3.5" />
         <span>Unsaved changes</span>
       </div>

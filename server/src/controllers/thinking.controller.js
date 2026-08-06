@@ -1,5 +1,12 @@
 import { supabase } from '../config/supabase.js';
-import { articleSchema, parsePagination, parseResource } from '../utils/validation.utils.js';
+import {
+  articleSchema,
+  parsePagination,
+  parseResource,
+  generatePreviewToken,
+  verifyPreviewToken,
+} from '../utils/validation.utils.js';
+import { logAuditAction } from '../utils/audit.utils.js';
 
 export const getPublicArticles = async (req, res, next) => {
   try {
@@ -36,17 +43,56 @@ export const getPublicArticles = async (req, res, next) => {
 
 export const getArticleBySlug = async (req, res, next) => {
   try {
-    const { data: article, error } = await supabase
-      .from('thinking_articles')
-      .select('*')
-      .eq('slug', req.params.slug)
-      .eq('status', 'published')
-      .single();
+    const { slug } = req.params;
+    const previewToken = req.query.preview_token || req.headers['x-preview-token'];
+    let query = supabase.from('thinking_articles').select('*').eq('slug', slug);
 
+    if (previewToken) {
+      if (!req.user || req.user.role !== 'owner') {
+        return res
+          .status(403)
+          .json({
+            success: false,
+            error: 'Forbidden: Draft preview requires owner authentication.',
+          });
+      }
+      if (!verifyPreviewToken(previewToken, slug, 'article')) {
+        return res
+          .status(403)
+          .json({ success: false, error: 'Forbidden: Invalid or expired draft preview token.' });
+      }
+    } else {
+      query = query.eq('status', 'published');
+    }
+
+    const { data: article, error } = await query.single();
     if (error || !article) {
       return res.status(404).json({ success: false, error: 'Article not found or not published' });
     }
     res.status(200).json({ success: true, data: article });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getArticlePreviewToken = async (req, res, next) => {
+  try {
+    const { data: article, error } = await supabase
+      .from('thinking_articles')
+      .select('id, slug')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error || !article) {
+      return res.status(404).json({ success: false, error: 'Article not found' });
+    }
+
+    const token = generatePreviewToken(article, 'article');
+    res.status(200).json({
+      success: true,
+      previewToken: token,
+      previewUrl: `/thinking/${article.slug}?preview_token=${token}`,
+    });
   } catch (error) {
     next(error);
   }
@@ -108,6 +154,14 @@ export const createArticle = async (req, res, next) => {
       return res.status(400).json({ success: false, error: error.message });
     }
 
+    logAuditAction({
+      req,
+      action: 'CREATE',
+      resourceType: 'ARTICLE',
+      resourceId: data.id || data.slug,
+      details: { title: data.title, status: data.status },
+    });
+
     res.status(201).json({ success: true, data });
   } catch (error) {
     next(error);
@@ -132,6 +186,14 @@ export const updateArticle = async (req, res, next) => {
       return res.status(400).json({ success: false, error: error?.message || 'Article not found' });
     }
 
+    logAuditAction({
+      req,
+      action: 'UPDATE',
+      resourceType: 'ARTICLE',
+      resourceId: data.id || req.params.id,
+      details: { title: data.title, status: data.status },
+    });
+
     res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);
@@ -144,6 +206,14 @@ export const deleteArticle = async (req, res, next) => {
     if (error) {
       return res.status(400).json({ success: false, error: error.message });
     }
+
+    logAuditAction({
+      req,
+      action: 'DELETE',
+      resourceType: 'ARTICLE',
+      resourceId: req.params.id,
+    });
+
     res.status(200).json({ success: true, message: 'Article deleted successfully' });
   } catch (error) {
     next(error);

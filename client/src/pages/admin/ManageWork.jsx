@@ -156,14 +156,14 @@ export const ManageWorkPage = () => {
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 sm:flex-row sm:items-center">
+      <div className="border-border bg-card flex flex-col justify-between gap-4 rounded-2xl border p-6 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
-          <div className="rounded-xl border border-indigo-500/20 bg-indigo-500/10 p-3 text-indigo-400">
+          <div className="border-primary/40 text-primary rounded-xl border bg-indigo-500/10 p-3">
             <Briefcase className="h-6 w-6" />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">Case Studies & Work</h1>
-            <p className="mt-0.5 text-sm text-slate-400">
+            <p className="text-muted-foreground mt-0.5 text-sm">
               Manage your portfolio case studies, shipped projects, and program evidence (
               {totalCount} total)
             </p>
@@ -171,7 +171,7 @@ export const ManageWorkPage = () => {
         </div>
         <Link
           to="/admin/work/new"
-          className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-500"
+          className="bg-primary shadow-soft shadow-subtle hover:bg-primary/90 flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-all"
         >
           <Plus className="h-4 w-4" />
           <span>Create Case Study</span>
@@ -179,29 +179,29 @@ export const ManageWorkPage = () => {
       </div>
 
       {/* Filter and Search Bar */}
-      <div className="flex flex-col items-center justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-900 p-4 md:flex-row">
+      <div className="border-border bg-card flex flex-col items-center justify-between gap-4 rounded-2xl border p-4 md:flex-row">
         <form onSubmit={handleSearchSubmit} className="relative w-full md:w-80">
-          <Search className="absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+          <Search className="text-muted-foreground absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2" />
           <input
             type="text"
             placeholder="Search by title, domain, or summary..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="w-full rounded-xl border border-slate-800 bg-slate-950 py-2 pl-10 pr-4 text-sm text-white transition-colors placeholder:text-slate-500 focus:border-indigo-500 focus:outline-none"
+            className="border-border bg-background placeholder:text-muted-foreground focus:border-primary/40 w-full rounded-xl border py-2 pl-10 pr-4 text-sm text-white transition-colors focus:outline-none"
           />
         </form>
 
         <div className="flex w-full flex-wrap items-center gap-3 md:w-auto">
           <div className="flex items-center gap-2">
-            <Filter className="h-4 w-4 text-slate-400" />
-            <span className="font-mono text-xs uppercase text-slate-400">Status:</span>
+            <Filter className="text-muted-foreground h-4 w-4" />
+            <span className="text-muted-foreground font-mono text-xs uppercase">Status:</span>
             <select
               value={statusFilter}
               onChange={(e) => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5 text-xs font-medium text-white focus:border-indigo-500 focus:outline-none"
+              className="border-border bg-background focus:border-primary/40 rounded-xl border px-3 py-1.5 text-xs font-medium text-white focus:outline-none"
             >
               <option value="all">All Statuses</option>
               <option value="published">Published</option>
@@ -211,14 +211,14 @@ export const ManageWorkPage = () => {
           </div>
 
           <div className="flex items-center gap-2">
-            <span className="font-mono text-xs uppercase text-slate-400">Type:</span>
+            <span className="text-muted-foreground font-mono text-xs uppercase">Type:</span>
             <select
               value={typeFilter}
               onChange={(e) => {
                 setTypeFilter(e.target.value);
                 setPage(1);
               }}
-              className="rounded-xl border border-slate-800 bg-slate-950 px-3 py-1.5 text-xs font-medium text-white focus:border-indigo-500 focus:outline-none"
+              className="border-border bg-background focus:border-primary/40 rounded-xl border px-3 py-1.5 text-xs font-medium text-white focus:outline-none"
             >
               <option value="all">All Types</option>
               <option value="shipped_project">Shipped Project</option>
@@ -229,7 +229,7 @@ export const ManageWorkPage = () => {
 
           <button
             onClick={() => fetchCaseStudies()}
-            className="rounded-xl bg-slate-800 p-2 text-slate-300 transition-colors hover:bg-slate-700"
+            className="bg-secondary text-foreground hover:bg-secondary rounded-xl p-2 transition-colors"
             title="Refresh List"
           >
             <RefreshCw className="h-4 w-4" />
@@ -238,11 +238,11 @@ export const ManageWorkPage = () => {
       </div>
 
       {/* Table Content */}
-      <div className="overflow-hidden rounded-2xl border border-slate-800 bg-slate-900 shadow-xl">
+      <div className="border-border bg-card shadow-soft overflow-hidden rounded-2xl border">
         {loading && caseStudies.length === 0 ? (
           <div className="flex flex-col items-center justify-center gap-3 py-20">
-            <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
-            <span className="font-mono text-xs uppercase text-slate-400">
+            <Loader2 className="text-primary h-8 w-8 animate-spin" />
+            <span className="text-muted-foreground font-mono text-xs uppercase">
               Loading Case Studies...
             </span>
           </div>
@@ -252,22 +252,22 @@ export const ManageWorkPage = () => {
             <p className="font-medium text-rose-300">{error}</p>
             <button
               onClick={fetchCaseStudies}
-              className="mt-4 rounded-xl bg-slate-800 px-4 py-2 font-mono text-xs text-slate-200 hover:bg-slate-700"
+              className="bg-secondary text-foreground hover:bg-secondary mt-4 rounded-xl px-4 py-2 font-mono text-xs"
             >
               Retry Connection
             </button>
           </div>
         ) : caseStudies.length === 0 ? (
           <div className="p-16 text-center">
-            <Briefcase className="mx-auto mb-3 h-10 w-10 text-slate-600" />
+            <Briefcase className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
             <h3 className="mb-1 text-base font-bold text-white">No Case Studies Found</h3>
-            <p className="mx-auto mb-6 max-w-sm text-xs text-slate-400">
+            <p className="text-muted-foreground mx-auto mb-6 max-w-sm text-xs">
               You don&apos;t have any case studies matching your filter criteria yet. Start building
               your portfolio evidence!
             </p>
             <Link
               to="/admin/work/new"
-              className="inline-flex items-center gap-2 rounded-xl bg-indigo-600 px-4 py-2.5 text-xs font-medium text-white hover:bg-indigo-500"
+              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium text-white"
             >
               <Plus className="h-4 w-4" />
               <span>Create Your First Case Study</span>
@@ -277,7 +277,7 @@ export const ManageWorkPage = () => {
           <div className="overflow-x-auto">
             <table className="w-full border-collapse text-left">
               <thead>
-                <tr className="border-b border-slate-800 bg-slate-950/40 font-mono text-[11px] uppercase tracking-wider text-slate-400">
+                <tr className="border-border bg-background text-muted-foreground border-b font-mono text-[11px] uppercase tracking-wider">
                   <th className="px-5 py-4">Title & Slug</th>
                   <th className="px-5 py-4">Type</th>
                   <th className="px-5 py-4">Domain</th>
@@ -287,11 +287,11 @@ export const ManageWorkPage = () => {
                   <th className="px-5 py-4 text-right">Actions</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-800/80 text-sm">
+              <tbody className="divide-border divide-y text-sm">
                 {caseStudies.map((item) => (
-                  <tr key={item.id} className="group transition-colors hover:bg-slate-800/40">
+                  <tr key={item.id} className="hover:bg-secondary group transition-colors">
                     <td className="px-5 py-4">
-                      <div className="flex items-center gap-2 font-bold text-white transition-colors group-hover:text-indigo-300">
+                      <div className="group-hover:text-primary flex items-center gap-2 font-bold text-white transition-colors">
                         <span>{item.title}</span>
                         {item.featured && (
                           <span className="rounded border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[10px] uppercase text-amber-400">
@@ -299,23 +299,25 @@ export const ManageWorkPage = () => {
                           </span>
                         )}
                       </div>
-                      <div className="mt-0.5 font-mono text-xs text-slate-500">/{item.slug}</div>
+                      <div className="text-muted-foreground mt-0.5 font-mono text-xs">
+                        /{item.slug}
+                      </div>
                     </td>
                     <td className="px-5 py-4">
-                      <span className="inline-block rounded-md border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-1 font-mono text-xs font-medium text-indigo-300">
+                      <span className="border-primary/40 text-primary inline-block rounded-md border bg-indigo-500/10 px-2.5 py-1 font-mono text-xs font-medium">
                         {formatTypeLabel(item.type)}
                       </span>
                     </td>
-                    <td className="px-5 py-4 text-xs font-medium text-slate-300">
+                    <td className="text-foreground px-5 py-4 text-xs font-medium">
                       {item.domain || 'General'}
                     </td>
                     <td className="px-5 py-4">
                       <StatusBadge status={item.status} />
                     </td>
-                    <td className="px-5 py-4 font-mono text-xs text-slate-400">
+                    <td className="text-muted-foreground px-5 py-4 font-mono text-xs">
                       #{item.sort_order || 0}
                     </td>
-                    <td className="px-5 py-4 font-mono text-xs text-slate-400">
+                    <td className="text-muted-foreground px-5 py-4 font-mono text-xs">
                       {new Date(item.updated_at || item.created_at).toLocaleDateString([], {
                         month: 'short',
                         day: 'numeric',
@@ -324,31 +326,47 @@ export const ManageWorkPage = () => {
                     </td>
                     <td className="px-5 py-4 text-right">
                       <div className="flex items-center justify-end gap-1.5">
-                        <a
-                          href={`/work/${item.slug}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
-                          title="Preview on Public Site"
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            if (item.status === 'published') {
+                              window.open(`/work/${item.slug}`, '_blank');
+                              return;
+                            }
+                            try {
+                              const res = await api.post(`/work/${item.id}/preview-token`);
+                              if (res.data?.success && res.data.previewUrl) {
+                                window.open(res.data.previewUrl, '_blank');
+                              }
+                            } catch (err) {
+                              alert(
+                                err?.response?.data?.error || 'Failed to generate preview token'
+                              );
+                            }
+                          }}
+                          className="text-muted-foreground hover:bg-secondary rounded-lg p-2 transition-colors hover:text-white"
+                          title={
+                            item.status === 'published' ? 'Preview on Public Site' : 'Preview Draft'
+                          }
                         >
                           <Eye className="h-4 w-4" />
-                        </a>
+                        </button>
                         <button
                           type="button"
                           disabled={duplicatingId === item.id}
                           onClick={() => handleDuplicate(item)}
-                          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-indigo-400 disabled:opacity-30"
+                          className="text-muted-foreground hover:bg-secondary hover:text-primary rounded-lg p-2 transition-colors disabled:opacity-30"
                           title="Duplicate as Template"
                         >
                           {duplicatingId === item.id ? (
-                            <Loader2 className="h-4 w-4 animate-spin text-indigo-400" />
+                            <Loader2 className="text-primary h-4 w-4 animate-spin" />
                           ) : (
                             <Copy className="h-4 w-4" />
                           )}
                         </button>
                         <Link
                           to={`/admin/work/edit/${item.id}`}
-                          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-indigo-400"
+                          className="text-muted-foreground hover:bg-secondary hover:text-primary rounded-lg p-2 transition-colors"
                           title="Edit Case Study"
                         >
                           <Edit className="h-4 w-4" />
@@ -356,7 +374,7 @@ export const ManageWorkPage = () => {
                         <button
                           type="button"
                           onClick={() => confirmDelete(item)}
-                          className="rounded-lg p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-rose-400"
+                          className="text-muted-foreground hover:bg-secondary rounded-lg p-2 transition-colors hover:text-rose-400"
                           title="Delete Permanently"
                         >
                           <Trash2 className="h-4 w-4" />
@@ -385,7 +403,7 @@ export const ManageWorkPage = () => {
         title="Delete Case Study"
         description={
           itemToDelete
-            ? `Are you absolutely sure you want to delete "${itemToDelete.title}"? This action removes all sections, metrics, and evidence from the database permanently.`
+            ? `Are you absolutely sure you want to delete"${itemToDelete.title}"? This action removes all sections, metrics, and evidence from the database permanently.`
             : 'Are you sure?'
         }
         confirmText="Delete Permanently"

@@ -22,20 +22,20 @@ export const NotFoundPage = () => {
       <Section className="py-24 md:py-32 flex items-center justify-center min-h-[75vh]">
         <Container>
           <motion.div
-            initial={{ opacity: 0, y: 20 }}
+            initial={{ opacity: 0, y: 12 }}
             animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.4 }}
-            className="max-w-2xl mx-auto text-center space-y-8 bg-slate-900/60 border border-slate-800 p-8 sm:p-12 rounded-3xl backdrop-blur-md shadow-2xl"
+            transition={{ duration: 0.2, ease: 'easeOut' }}
+            className="max-w-2xl mx-auto text-center space-y-8 bg-card border border-border p-8 sm:p-12 rounded-2xl shadow-soft text-card-foreground"
           >
-            <div className="inline-flex items-center justify-center w-20 h-20 rounded-3xl bg-indigo-500/10 text-indigo-400 border border-indigo-500/20 font-mono text-3xl font-extrabold shadow-inner">
+            <div className="inline-flex items-center justify-center w-20 h-20 rounded-2xl bg-primary/10 text-primary border border-primary/20 font-mono text-3xl font-extrabold shadow-subtle">
               404
             </div>
 
             <div className="space-y-3">
-              <h1 className="text-3xl sm:text-4xl font-extrabold text-white font-heading tracking-tight">
+              <h1 className="text-3xl sm:text-4xl font-extrabold text-foreground font-heading tracking-tight">
                 Page Not Found or Relocated
               </h1>
-              <p className="text-sm sm:text-base text-slate-400 max-w-lg mx-auto leading-relaxed">
+              <p className="text-sm sm:text-base text-muted-foreground max-w-lg mx-auto leading-relaxed">
                 The artifact or URL you requested does not exist, has been archived, or was moved during our recent system migration.
               </p>
             </div>
@@ -43,36 +43,36 @@ export const NotFoundPage = () => {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4">
               <Link
                 to="/work"
-                className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all flex flex-col items-center text-center gap-2 group"
+                className="p-4 rounded-xl bg-secondary/60 border border-border hover:border-foreground/30 transition-all flex flex-col items-center text-center gap-2 group"
               >
-                <Briefcase className="w-5 h-5 text-indigo-400 group-hover:scale-110 transition-transform" />
-                <span className="text-xs font-bold text-white">Case Studies</span>
-                <span className="text-[10px] text-slate-500">Evidence &amp; Shipped Work</span>
+                <Briefcase className="w-5 h-5 text-primary group-hover:-translate-y-0.5 transition-transform" />
+                <span className="text-xs font-bold text-foreground">Case Studies</span>
+                <span className="text-[10px] text-muted-foreground">Evidence &amp; Shipped Work</span>
               </Link>
 
               <Link
                 to="/thinking"
-                className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all flex flex-col items-center text-center gap-2 group"
+                className="p-4 rounded-xl bg-secondary/60 border border-border hover:border-foreground/30 transition-all flex flex-col items-center text-center gap-2 group"
               >
-                <BookOpen className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform" />
-                <span className="text-xs font-bold text-white">Product Thinking</span>
-                <span className="text-[10px] text-slate-500">Teardowns &amp; Strategy</span>
+                <BookOpen className="w-5 h-5 text-primary group-hover:-translate-y-0.5 transition-transform" />
+                <span className="text-xs font-bold text-foreground">Product Thinking</span>
+                <span className="text-[10px] text-muted-foreground">Teardowns &amp; Strategy</span>
               </Link>
 
               <Link
                 to="/prds"
-                className="p-4 rounded-2xl bg-slate-950 border border-slate-800 hover:border-indigo-500/50 hover:bg-indigo-500/5 transition-all flex flex-col items-center text-center gap-2 group"
+                className="p-4 rounded-xl bg-secondary/60 border border-border hover:border-foreground/30 transition-all flex flex-col items-center text-center gap-2 group"
               >
-                <FileText className="w-5 h-5 text-amber-400 group-hover:scale-110 transition-transform" />
-                <span className="text-xs font-bold text-white">PRD Specifications</span>
-                <span className="text-[10px] text-slate-500">Engineering Artifacts</span>
+                <FileText className="w-5 h-5 text-primary group-hover:-translate-y-0.5 transition-transform" />
+                <span className="text-xs font-bold text-foreground">PRD Specifications</span>
+                <span className="text-[10px] text-muted-foreground">Engineering Artifacts</span>
               </Link>
             </div>
 
-            <div className="pt-4 border-t border-slate-800/80">
+            <div className="pt-4 border-t border-border">
               <Link
                 to="/"
-                className="inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white font-bold text-xs sm:text-sm transition-all shadow-lg shadow-indigo-600/20"
+                className="inline-flex items-center justify-center gap-2 py-3 px-6 rounded-xl bg-primary hover:bg-primary/90 text-primary-foreground font-semibold text-xs sm:text-sm transition-all shadow-subtle"
               >
                 <Home className="w-4 h-4" /> Return to Home Dashboard
               </Link>

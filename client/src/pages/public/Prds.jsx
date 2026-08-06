@@ -30,7 +30,7 @@ export const PrdsIndexPage = () => {
       />
 
       {/* Header */}
-      <Section className="pt-10 pb-12 md:pt-16 md:pb-16 border-b border-border/40 bg-gradient-to-b from-background to-muted/20">
+      <Section className="pt-20 pb-24 md:pt-28 md:pb-36 border-b border-border bg-background">
         <Container>
           <div className="max-w-3xl space-y-4">
             <BreadcrumbNav items={breadcrumbs} />
@@ -48,7 +48,7 @@ export const PrdsIndexPage = () => {
       </Section>
 
       {/* PRDs Grid */}
-      <Section className="py-12 sm:py-16">
+      <Section className="bg-background">
         <Container>
           {loading ? (
             <Grid cols={2} gap="lg">

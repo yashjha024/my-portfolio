@@ -58,15 +58,15 @@ export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }
   };
 
   return (
-    <div className="animate-fadeIn fixed inset-0 z-50 flex items-center justify-center bg-slate-950/85 p-4 backdrop-blur-md">
-      <div className="flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border border-slate-800 bg-slate-900 shadow-2xl md:flex-row">
+    <div className="animate-fadeIn bg-background fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="border-border bg-card shadow-soft flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border md:flex-row">
         {/* Left/Top Preview Area */}
-        <div className="group relative flex min-h-[280px] flex-col items-center justify-center overflow-hidden border-b border-slate-800 bg-slate-950 p-6 md:w-1/2 md:border-b-0 md:border-r">
+        <div className="border-border bg-background group relative flex min-h-[280px] flex-col items-center justify-center overflow-hidden border-b p-6 md:w-1/2 md:border-b-0 md:border-r">
           {isImg ? (
             <img
               src={asset.url}
               alt={asset.alt_text || asset.original_name}
-              className="max-h-[380px] w-auto rounded-2xl border border-slate-800/80 bg-slate-900/50 object-contain shadow-xl"
+              className="border-border bg-card shadow-soft max-h-[380px] w-auto rounded-2xl border object-contain"
             />
           ) : (
             <div className="flex flex-col items-center justify-center p-8 text-center text-emerald-400">
@@ -74,7 +74,7 @@ export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }
               <h4 className="max-w-xs truncate text-base font-bold text-white">
                 {asset.original_name}
               </h4>
-              <span className="mt-1 font-mono text-xs uppercase tracking-wider text-slate-500">
+              <span className="text-muted-foreground mt-1 font-mono text-xs uppercase tracking-wider">
                 PDF Specification
               </span>
             </div>
@@ -84,7 +84,7 @@ export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }
             href={asset.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="absolute left-4 top-4 flex items-center gap-1.5 rounded-xl border border-slate-800 bg-slate-900/90 px-3 py-1.5 text-xs font-medium text-slate-200 backdrop-blur-sm transition-colors hover:bg-slate-800"
+            className="border-border bg-card text-foreground hover:bg-secondary absolute left-4 top-4 flex items-center gap-1.5 rounded-xl border px-3 py-1.5 text-xs font-medium transition-colors"
           >
             <ExternalLink className="h-3.5 w-3.5" />
             <span>Open Full Resolution</span>
@@ -97,7 +97,7 @@ export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }
             <div className="flex items-start justify-between gap-4">
               <div className="min-w-0">
                 <div className="mb-1 flex items-center gap-2">
-                  <span className="rounded border border-slate-700 bg-slate-800 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-slate-300">
+                  <span className="border-border bg-secondary text-foreground rounded border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider">
                     {asset.type || 'document'}
                   </span>
                   {asset.is_used ? (
@@ -116,19 +116,19 @@ export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }
               </div>
               <button
                 onClick={onClose}
-                className="shrink-0 rounded-xl p-1.5 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+                className="text-muted-foreground hover:bg-secondary shrink-0 rounded-xl p-1.5 transition-colors hover:text-white"
               >
                 <X className="h-5 w-5" />
               </button>
             </div>
 
             {/* Storage Metadata Telemetry */}
-            <div className="grid grid-cols-2 gap-3 rounded-2xl border border-slate-800/80 bg-slate-950 p-3.5 font-mono text-xs text-slate-400">
+            <div className="border-border bg-background text-muted-foreground grid grid-cols-2 gap-3 rounded-2xl border p-3.5 font-mono text-xs">
               <div className="flex items-center gap-2">
-                <Folder className="h-4 w-4 shrink-0 text-indigo-400" />
+                <Folder className="text-primary h-4 w-4 shrink-0" />
                 <div className="min-w-0">
-                  <div className="text-[10px] uppercase text-slate-500">Folder</div>
-                  <div className="truncate capitalize text-slate-200">
+                  <div className="text-muted-foreground text-[10px] uppercase">Folder</div>
+                  <div className="text-foreground truncate capitalize">
                     {asset.folder || 'general'}
                   </div>
                 </div>
@@ -137,16 +137,18 @@ export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }
               <div className="flex items-center gap-2">
                 <HardDrive className="h-4 w-4 shrink-0 text-emerald-400" />
                 <div className="min-w-0">
-                  <div className="text-[10px] uppercase text-slate-500">File Size</div>
-                  <div className="text-slate-200">{formatFileSize(asset.size_bytes)}</div>
+                  <div className="text-muted-foreground text-[10px] uppercase">File Size</div>
+                  <div className="text-foreground">{formatFileSize(asset.size_bytes)}</div>
                 </div>
               </div>
 
-              <div className="col-span-2 flex items-center gap-2 border-t border-slate-800/60 pt-1">
+              <div className="border-border col-span-2 flex items-center gap-2 border-t pt-1">
                 <Calendar className="h-4 w-4 shrink-0 text-amber-400" />
                 <div>
-                  <span className="mr-1 text-[10px] uppercase text-slate-500">Uploaded:</span>
-                  <span className="text-slate-300">
+                  <span className="text-muted-foreground mr-1 text-[10px] uppercase">
+                    Uploaded:
+                  </span>
+                  <span className="text-foreground">
                     {new Date(asset.created_at || Date.now()).toLocaleString([], {
                       month: 'short',
                       day: 'numeric',
@@ -161,7 +163,7 @@ export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }
 
             {/* Alt Text Editor */}
             <form onSubmit={handleSaveAltText} className="space-y-2">
-              <label className="block font-mono text-xs font-bold uppercase tracking-wider text-slate-300">
+              <label className="text-foreground block font-mono text-xs font-bold uppercase tracking-wider">
                 Alt Text / SEO Description
               </label>
               <div className="flex gap-2">
@@ -170,12 +172,12 @@ export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }
                   value={altText}
                   onChange={(e) => setAltText(e.target.value)}
                   placeholder="Describe image for screen readers & SEO index..."
-                  className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3.5 py-2 text-xs text-white transition-colors focus:border-indigo-500 focus:outline-none"
+                  className="border-border bg-background focus:border-primary/40 flex-1 rounded-xl border px-3.5 py-2 text-xs text-white transition-colors focus:outline-none"
                 />
                 <button
                   type="submit"
                   disabled={saving}
-                  className="flex shrink-0 items-center gap-1.5 rounded-xl bg-indigo-600 px-4 py-2 text-xs font-medium text-white shadow-md transition-all hover:bg-indigo-500 disabled:opacity-50"
+                  className="bg-primary hover:bg-primary/90 flex shrink-0 items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium text-white shadow-md transition-all disabled:opacity-50"
                 >
                   {saving ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -194,24 +196,24 @@ export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }
 
             {/* Storage Path Display */}
             <div>
-              <label className="mb-1 block font-mono text-[10px] uppercase tracking-wider text-slate-500">
+              <label className="text-muted-foreground mb-1 block font-mono text-[10px] uppercase tracking-wider">
                 Supabase Storage Bucket Path
               </label>
-              <div className="select-all break-all rounded-xl border border-slate-800/80 bg-slate-950 p-2.5 font-mono text-[11px] text-slate-400">
+              <div className="border-border bg-background text-muted-foreground select-all break-all rounded-xl border p-2.5 font-mono text-[11px]">
                 {asset.storage_path || `assets/${asset.folder || 'general'}/${asset.filename}`}
               </div>
             </div>
           </div>
 
           {/* Action Footer buttons */}
-          <div className="flex items-center justify-between gap-3 border-t border-slate-800 pt-4">
+          <div className="border-border flex items-center justify-between gap-3 border-t pt-4">
             <button
               type="button"
               onClick={handleCopy}
               className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium shadow-md transition-all ${
                 copied
                   ? 'border border-emerald-500/30 bg-emerald-500/15 text-emerald-400'
-                  : 'bg-slate-800 text-slate-200 hover:bg-slate-700'
+                  : 'bg-secondary text-foreground hover:bg-secondary'
               }`}
             >
               {copied ? <Check className="h-4 w-4" /> : <Copy className="h-4 w-4" />}
@@ -222,7 +224,7 @@ export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }
               type="button"
               onClick={() => {
                 if (
-                  window.confirm(`Permanently delete "${asset.original_name}" from cloud storage?`)
+                  window.confirm(`Permanently delete"${asset.original_name}"from cloud storage?`)
                 ) {
                   onDelete?.(asset);
                   onClose();

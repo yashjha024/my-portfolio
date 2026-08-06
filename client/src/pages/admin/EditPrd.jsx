@@ -27,6 +27,11 @@ export const EditPrdPage = () => {
   const [lastSavedAt, setLastSavedAt] = useState(null);
   const [error, setError] = useState(null);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
+  const [sectionsMode, setSectionsMode] = useState('canonical'); // 'canonical' | 'json' | 'custom_array'
+  const [sectionsJsonInput, setSectionsJsonInput] = useState(
+    '{\n"requirements": [],\n"goals": [],\n"nonGoals": [],\n"metrics": [],\n"releaseGates": []\n}'
+  );
+  const [jsonError, setJsonError] = useState(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -35,7 +40,13 @@ export const EditPrdPage = () => {
     visibility: 'unlisted',
     status: 'draft',
     context: '',
-    sections: {},
+    sections: {
+      requirements: [],
+      goals: [],
+      nonGoals: [],
+      metrics: [],
+      releaseGates: [],
+    },
     pdf_url: '',
     related_case_study_id: '',
   });
@@ -57,6 +68,8 @@ export const EditPrdPage = () => {
 
       if (res.data?.success && res.data?.data) {
         const item = res.data.data;
+        const loadedSections =
+          item.sections && typeof item.sections === 'object' ? item.sections : {};
         setFormData({
           title: item.title || '',
           slug: item.slug || '',
@@ -64,10 +77,16 @@ export const EditPrdPage = () => {
           visibility: item.visibility || 'unlisted',
           status: item.status || 'draft',
           context: item.context || '',
-          sections: item.sections && typeof item.sections === 'object' ? item.sections : {},
+          sections: loadedSections,
           pdf_url: item.pdf_url || '',
           related_case_study_id: item.related_case_study_id || '',
         });
+        setSectionsJsonInput(JSON.stringify(loadedSections, null, 2));
+        if (Array.isArray(loadedSections)) {
+          setSectionsMode('custom_array');
+        } else {
+          setSectionsMode('canonical');
+        }
         setLastSavedAt(item.updated_at || new Date().toISOString());
       }
     } catch (err) {
@@ -103,16 +122,18 @@ export const EditPrdPage = () => {
   };
 
   const handleSectionsJsonChange = (value) => {
+    setSectionsJsonInput(value);
+    setAutosaveStatus('unsaved');
     try {
       const parsed = JSON.parse(value);
-      if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+      if (parsed && typeof parsed === 'object') {
         handleFieldChange('sections', parsed);
-        setError(null);
+        setJsonError(null);
       } else {
-        setError('PRD sections must be a JSON object.');
+        setJsonError('PRD sections must be a valid JSON object or array.');
       }
-    } catch (_error) {
-      setError('PRD sections must contain valid JSON before saving.');
+    } catch {
+      setJsonError('Typing JSON... (Must be valid JSON before saving)');
     }
   };
 
@@ -128,6 +149,13 @@ export const EditPrdPage = () => {
 
     autosaveTimeout.current = setTimeout(async () => {
       try {
+        if (sectionsMode === 'json') {
+          try {
+            JSON.parse(sectionsJsonInput);
+          } catch {
+            return; // Don't autosave while JSON is malformed
+          }
+        }
         setAutosaveStatus('saving');
         await api.put(`/admin/prds/${id}`, formData);
         setAutosaveStatus('saved');
@@ -139,7 +167,7 @@ export const EditPrdPage = () => {
     }, 3000);
 
     return () => clearTimeout(autosaveTimeout.current);
-  }, [formData, id, isNew]);
+  }, [formData, id, isNew, sectionsMode, sectionsJsonInput]);
 
   const validateForm = () => {
     if (!formData.title || formData.title.trim().length < 3) {
@@ -154,6 +182,20 @@ export const EditPrdPage = () => {
       alert('Please provide at least 15 characters of background overview context.');
       return false;
     }
+    if (sectionsMode === 'json') {
+      try {
+        const parsed = JSON.parse(sectionsJsonInput);
+        if (!parsed || typeof parsed !== 'object') {
+          alert('PRD sections JSON must evaluate to a JSON object or array.');
+          return false;
+        }
+      } catch {
+        alert(
+          'PRD sections contains JSON syntax errors. Please check your formatting before saving.'
+        );
+        return false;
+      }
+    }
     return true;
   };
 
@@ -164,6 +206,9 @@ export const EditPrdPage = () => {
       setSaving(true);
       setError(null);
       const payload = { ...formData };
+      if (sectionsMode === 'json') {
+        payload.sections = JSON.parse(sectionsJsonInput);
+      }
       if (targetStatus) payload.status = targetStatus;
 
       let res;
@@ -189,7 +234,20 @@ export const EditPrdPage = () => {
   };
 
   const addSection = () => {
-    if (!Array.isArray(formData.sections)) return;
+    if (!Array.isArray(formData.sections)) {
+      setFormData((prev) => ({
+        ...prev,
+        sections: [
+          {
+            title: 'Section 1: Core Functional Requirements',
+            content: '### Requirements Table\n- [ ] User can authenticate effortlessly...',
+          },
+        ],
+      }));
+      setSectionsMode('custom_array');
+      setAutosaveStatus('unsaved');
+      return;
+    }
     setFormData((prev) => ({
       ...prev,
       sections: [
@@ -205,6 +263,7 @@ export const EditPrdPage = () => {
   };
 
   const updateSection = (index, field, value) => {
+    if (!Array.isArray(formData.sections)) return;
     setFormData((prev) => {
       const list = [...prev.sections];
       list[index] = { ...list[index], [field]: value };
@@ -214,6 +273,7 @@ export const EditPrdPage = () => {
   };
 
   const removeSection = (index) => {
+    if (!Array.isArray(formData.sections)) return;
     setFormData((prev) => ({
       ...prev,
       sections: prev.sections.filter((_, i) => i !== index),
@@ -221,11 +281,45 @@ export const EditPrdPage = () => {
     setAutosaveStatus('unsaved');
   };
 
+  const addCanonicalListItem = (key) => {
+    const currentObj = Array.isArray(formData.sections) ? {} : { ...formData.sections };
+    const currentList = Array.isArray(currentObj[key]) ? [...currentObj[key]] : [];
+    currentList.push(
+      key === 'metrics' ? { label: 'Metric Name', target: '+15%' } : 'New item specification'
+    );
+    currentObj[key] = currentList;
+    setFormData((prev) => ({ ...prev, sections: currentObj }));
+    setSectionsJsonInput(JSON.stringify(currentObj, null, 2));
+    setAutosaveStatus('unsaved');
+  };
+
+  const updateCanonicalListItem = (key, idx, val) => {
+    const currentObj = Array.isArray(formData.sections) ? {} : { ...formData.sections };
+    const currentList = Array.isArray(currentObj[key]) ? [...currentObj[key]] : [];
+    currentList[idx] = val;
+    currentObj[key] = currentList;
+    setFormData((prev) => ({ ...prev, sections: currentObj }));
+    setSectionsJsonInput(JSON.stringify(currentObj, null, 2));
+    setAutosaveStatus('unsaved');
+  };
+
+  const removeCanonicalListItem = (key, idx) => {
+    const currentObj = Array.isArray(formData.sections) ? {} : { ...formData.sections };
+    const currentList = Array.isArray(currentObj[key]) ? [...currentObj[key]] : [];
+    currentList.splice(idx, 1);
+    currentObj[key] = currentList;
+    setFormData((prev) => ({ ...prev, sections: currentObj }));
+    setSectionsJsonInput(JSON.stringify(currentObj, null, 2));
+    setAutosaveStatus('unsaved');
+  };
+
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-24">
         <Loader2 className="h-8 w-8 animate-spin text-emerald-400" />
-        <span className="font-mono text-xs uppercase text-slate-400">Loading PRD Editor...</span>
+        <span className="text-muted-foreground font-mono text-xs uppercase">
+          Loading PRD Editor...
+        </span>
       </div>
     );
   }
@@ -233,11 +327,11 @@ export const EditPrdPage = () => {
   return (
     <div className="space-y-6 pb-20">
       {/* Top Action Bar */}
-      <div className="sticky top-2 z-20 flex flex-col justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-900/80 p-5 shadow-2xl backdrop-blur-xl md:flex-row md:items-center">
+      <div className="border-border bg-card shadow-soft sticky top-2 z-20 flex flex-col justify-between gap-4 rounded-2xl border p-5 md:flex-row md:items-center">
         <div className="flex items-center gap-3">
           <Link
             to="/admin/prds"
-            className="rounded-xl p-2 text-slate-400 transition-colors hover:bg-slate-800 hover:text-white"
+            className="text-muted-foreground hover:bg-secondary rounded-xl p-2 transition-colors hover:text-white"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
@@ -248,30 +342,50 @@ export const EditPrdPage = () => {
               </h1>
               {!isNew && <AutosaveIndicator status={autosaveStatus} lastSavedAt={lastSavedAt} />}
             </div>
-            <p className="mt-0.5 font-mono text-xs text-slate-400">
+            <p className="text-muted-foreground mt-0.5 font-mono text-xs">
               Slug: <span className="text-emerald-400">/{formData.slug || 'untitled'}</span>
             </p>
           </div>
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
-          {formData.slug && formData.status === 'published' && (
-            <a
-              href={`/prds/${formData.slug}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="flex items-center gap-1.5 rounded-xl bg-slate-800 px-3 py-2 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-700"
+          {formData.slug && (
+            <button
+              type="button"
+              onClick={async () => {
+                if (formData.status === 'published' && formData.visibility === 'public') {
+                  window.open(`/prds/${formData.slug}`, '_blank');
+                  return;
+                }
+                if (!id) {
+                  alert('Please save the draft before previewing.');
+                  return;
+                }
+                try {
+                  const res = await api.post(`/prds/${id}/preview-token`);
+                  if (res.data?.success && res.data.previewUrl) {
+                    window.open(res.data.previewUrl, '_blank');
+                  }
+                } catch (err) {
+                  alert(err?.response?.data?.error || 'Failed to generate preview token');
+                }
+              }}
+              className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors"
             >
               <Eye className="h-3.5 w-3.5" />
-              <span>Preview</span>
-            </a>
+              <span>
+                {formData.status === 'published' && formData.visibility === 'public'
+                  ? 'Preview'
+                  : 'Preview Draft'}
+              </span>
+            </button>
           )}
 
           <button
             type="button"
             disabled={saving}
             onClick={() => handleSave('draft')}
-            className="flex items-center gap-1.5 rounded-xl bg-slate-800 px-4 py-2 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-700 disabled:opacity-50"
+            className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium transition-colors disabled:opacity-50"
           >
             <Save className="h-3.5 w-3.5" />
             <span>Save Draft</span>
@@ -281,7 +395,7 @@ export const EditPrdPage = () => {
             type="button"
             disabled={saving}
             onClick={() => handleSave('published')}
-            className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-medium text-white shadow-lg shadow-emerald-600/20 transition-all hover:bg-emerald-500 disabled:opacity-50"
+            className="shadow-soft flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-medium text-white shadow-emerald-600/20 transition-all hover:bg-emerald-500 disabled:opacity-50"
           >
             {saving ? (
               <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -304,9 +418,9 @@ export const EditPrdPage = () => {
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
         {/* Main Sections Column */}
         <div className="space-y-6 lg:col-span-2">
-          <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-6">
+          <div className="border-border bg-card space-y-4 rounded-2xl border p-6">
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-300">
+              <label className="text-foreground mb-1.5 block font-mono text-xs uppercase">
                 PRD Document Title <span className="text-rose-400">*</span>
               </label>
               <input
@@ -314,7 +428,7 @@ export const EditPrdPage = () => {
                 placeholder="e.g. WhatsApp Group Event Coordinator PRD v1.2"
                 value={formData.title}
                 onChange={handleTitleChange}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-base font-bold text-white focus:border-emerald-500 focus:outline-none"
+                className="border-border bg-background w-full rounded-xl border px-4 py-2.5 text-base font-bold text-white focus:border-emerald-500 focus:outline-none"
               />
             </div>
 
@@ -334,95 +448,199 @@ export const EditPrdPage = () => {
 
           {/* Dynamic Structured Sections */}
           <div className="space-y-4">
-            <div className="flex items-center justify-between rounded-2xl border border-slate-800 bg-slate-900 p-4">
+            <div className="border-border bg-card flex flex-col justify-between gap-4 rounded-2xl border p-4 sm:flex-row sm:items-center">
               <div>
                 <h3 className="font-mono text-sm uppercase tracking-wider text-white">
                   Structured Specification Sections
                 </h3>
-                <p className="text-xs text-slate-400">
-                  Add distinct modules (e.g. Goals, Target KPIs, User Flow, Edge Cases,
-                  Out-of-Scope).
+                <p className="text-muted-foreground text-xs">
+                  Switch between Canonical Lists, Custom Sections Array, or Raw JSON Spec Editor.
                 </p>
               </div>
-              <button
-                type="button"
-                onClick={addSection}
-                disabled={!Array.isArray(formData.sections)}
-                className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-medium text-white shadow-sm transition-colors hover:bg-emerald-500"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Add Section</span>
-              </button>
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  type="button"
+                  onClick={() => setSectionsMode('canonical')}
+                  className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-colors ${
+                    sectionsMode === 'canonical'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-secondary text-foreground hover:bg-secondary'
+                  }`}
+                >
+                  Canonical Lists
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSectionsMode('custom_array')}
+                  className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-colors ${
+                    sectionsMode === 'custom_array'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-secondary text-foreground hover:bg-secondary'
+                  }`}
+                >
+                  Custom Array
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setSectionsMode('json')}
+                  className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-colors ${
+                    sectionsMode === 'json'
+                      ? 'bg-emerald-600 text-white'
+                      : 'bg-secondary text-foreground hover:bg-secondary'
+                  }`}
+                >
+                  Raw JSON
+                </button>
+              </div>
             </div>
 
-            {Array.isArray(formData.sections) ? (
-              formData.sections.length === 0 ? (
-                <div className="rounded-2xl border border-dashed border-slate-800 bg-slate-900 p-12 text-center font-mono text-sm text-slate-500">
-                  No custom specification sections added yet. Click &quot;Add Section&quot; to begin
-                  structuring your requirements.
-                </div>
-              ) : (
-                formData.sections.map((sec, idx) => (
-                  <div
-                    key={idx}
-                    className="space-y-3 rounded-2xl border border-slate-800 bg-slate-900 p-5"
-                  >
-                    <div className="flex items-center justify-between gap-3">
-                      <input
-                        type="text"
-                        placeholder="Section Title e.g. 1. Functional Requirements Table"
-                        value={sec.title || ''}
-                        onChange={(e) => updateSection(idx, 'title', e.target.value)}
-                        className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-4 py-2 text-sm font-bold text-white focus:border-emerald-500 focus:outline-none"
-                      />
-                      <button
-                        type="button"
-                        onClick={() => removeSection(idx)}
-                        className="rounded-xl p-2 text-slate-500 transition-colors hover:bg-slate-950 hover:text-rose-400"
-                        title="Remove Section"
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </button>
+            {sectionsMode === 'canonical' && (
+              <div className="border-border bg-card space-y-6 rounded-2xl border p-6">
+                {['requirements', 'goals', 'nonGoals', 'releaseGates'].map((key) => {
+                  const items = Array.isArray(formData.sections?.[key])
+                    ? formData.sections[key]
+                    : [];
+                  return (
+                    <div
+                      key={key}
+                      className="border-border space-y-3 border-b pb-5 last:border-0 last:pb-0"
+                    >
+                      <div className="flex items-center justify-between">
+                        <label className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-400">
+                          {key === 'nonGoals'
+                            ? 'Explicit Non-Goals'
+                            : key === 'releaseGates'
+                              ? 'Release Gates & Quality Checklists'
+                              : key}
+                        </label>
+                        <button
+                          type="button"
+                          onClick={() => addCanonicalListItem(key)}
+                          className="bg-secondary hover:bg-secondary flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-medium text-emerald-300"
+                        >
+                          <Plus className="h-3 w-3" /> Add {key} item
+                        </button>
+                      </div>
+                      {items.length === 0 ? (
+                        <p className="text-muted-foreground text-xs italic">No {key} added yet.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {items.map((itemVal, idx) => (
+                            <div key={idx} className="flex items-center gap-2">
+                              <input
+                                type="text"
+                                value={
+                                  typeof itemVal === 'string' ? itemVal : JSON.stringify(itemVal)
+                                }
+                                onChange={(e) => updateCanonicalListItem(key, idx, e.target.value)}
+                                className="border-border bg-background flex-1 rounded-xl border px-3.5 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
+                              />
+                              <button
+                                type="button"
+                                onClick={() => removeCanonicalListItem(key, idx)}
+                                className="text-muted-foreground hover:bg-background rounded-lg p-2 hover:text-rose-400"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
-                    <MarkdownEditor
-                      value={sec.content || ''}
-                      onChange={(val) => updateSection(idx, 'content', val)}
-                      onSave={() => handleSave('draft')}
-                      autosaveStatus={autosaveStatus}
-                      lastSavedAt={lastSavedAt}
-                      minHeight="240px"
-                      placeholder="Write specification section markdown content..."
-                    />
+                  );
+                })}
+              </div>
+            )}
+
+            {sectionsMode === 'custom_array' && (
+              <div className="space-y-4">
+                <div className="flex justify-end">
+                  <button
+                    type="button"
+                    onClick={addSection}
+                    className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-medium text-white shadow-sm transition-colors hover:bg-emerald-500"
+                  >
+                    <Plus className="h-4 w-4" />
+                    <span>Add Custom Section</span>
+                  </button>
+                </div>
+                {Array.isArray(formData.sections) && formData.sections.length > 0 ? (
+                  formData.sections.map((sec, idx) => (
+                    <div
+                      key={idx}
+                      className="border-border bg-card space-y-3 rounded-2xl border p-5"
+                    >
+                      <div className="flex items-center justify-between gap-3">
+                        <input
+                          type="text"
+                          placeholder="Section Title e.g. 1. Functional Requirements Table"
+                          value={sec.title || ''}
+                          onChange={(e) => updateSection(idx, 'title', e.target.value)}
+                          className="border-border bg-background flex-1 rounded-xl border px-4 py-2 text-sm font-bold text-white focus:border-emerald-500 focus:outline-none"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => removeSection(idx)}
+                          className="text-muted-foreground hover:bg-background rounded-xl p-2 transition-colors hover:text-rose-400"
+                          title="Remove Section"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </button>
+                      </div>
+                      <MarkdownEditor
+                        value={sec.content || ''}
+                        onChange={(val) => updateSection(idx, 'content', val)}
+                        onSave={() => handleSave('draft')}
+                        autosaveStatus={autosaveStatus}
+                        lastSavedAt={lastSavedAt}
+                        minHeight="240px"
+                        placeholder="Write specification section markdown content..."
+                      />
+                    </div>
+                  ))
+                ) : (
+                  <div className="border-border bg-card text-muted-foreground rounded-2xl border border-dashed p-12 text-center font-mono text-sm">
+                    No custom specification sections added yet. Click &quot;Add Custom Section&quot;
+                    to begin.
                   </div>
-                ))
-              )
-            ) : (
-              <textarea
-                rows={18}
-                value={JSON.stringify(formData.sections, null, 2)}
-                onChange={(event) => handleSectionsJsonChange(event.target.value)}
-                className="w-full rounded-2xl border border-slate-800 bg-slate-950 p-4 font-mono text-xs leading-relaxed text-white focus:border-emerald-500 focus:outline-none"
-                aria-label="Structured PRD sections as JSON"
-              />
+                )}
+              </div>
+            )}
+
+            {sectionsMode === 'json' && (
+              <div className="space-y-2">
+                <textarea
+                  rows={18}
+                  value={sectionsJsonInput}
+                  onChange={(event) => handleSectionsJsonChange(event.target.value)}
+                  className="border-border bg-background w-full rounded-2xl border p-4 font-mono text-xs leading-relaxed text-white focus:border-emerald-500 focus:outline-none"
+                  aria-label="Structured PRD sections as JSON"
+                />
+                {jsonError ? (
+                  <p className="font-mono text-xs text-amber-400">{jsonError}</p>
+                ) : (
+                  <p className="font-mono text-xs text-emerald-400">Valid JSON object.</p>
+                )}
+              </div>
             )}
           </div>
         </div>
 
         {/* Sidebar Configuration Column */}
         <div className="space-y-6">
-          <div className="space-y-5 rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <h3 className="border-b border-slate-800 pb-2 font-mono text-sm uppercase tracking-wider text-slate-300">
+          <div className="border-border bg-card space-y-5 rounded-2xl border p-6">
+            <h3 className="border-border text-foreground border-b pb-2 font-mono text-sm uppercase tracking-wider">
               PRD Metadata & Lifecycle
             </h3>
 
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 Development Stage
               </label>
               <select
                 value={formData.stage}
                 onChange={(e) => handleFieldChange('stage', e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5 text-sm font-medium text-white focus:border-emerald-500 focus:outline-none"
+                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:border-emerald-500 focus:outline-none"
               >
                 <option value="In Development">In Development</option>
                 <option value="In Review">In Review</option>
@@ -433,19 +651,19 @@ export const EditPrdPage = () => {
             </div>
 
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 Access Visibility
               </label>
               <select
                 value={formData.visibility}
                 onChange={(e) => handleFieldChange('visibility', e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5 text-sm font-medium text-white focus:border-emerald-500 focus:outline-none"
+                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:border-emerald-500 focus:outline-none"
               >
                 <option value="public">Public (Indexed & Searchable)</option>
                 <option value="unlisted">Unlisted (Accessible via direct link)</option>
                 <option value="private">Private (Admin & Authenticated team only)</option>
               </select>
-              <p className="mt-1 text-[10px] text-slate-500">
+              <p className="text-muted-foreground mt-1 text-[10px]">
                 {formData.visibility === 'public' &&
                   'Visible on the public PRD library index page.'}
                 {formData.visibility === 'unlisted' &&
@@ -455,13 +673,13 @@ export const EditPrdPage = () => {
             </div>
 
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 Publish Status
               </label>
               <select
                 value={formData.status}
                 onChange={(e) => handleFieldChange('status', e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2.5 text-sm font-medium text-white focus:border-emerald-500 focus:outline-none"
+                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:border-emerald-500 focus:outline-none"
               >
                 <option value="draft">Draft</option>
                 <option value="published">Published</option>
@@ -470,24 +688,24 @@ export const EditPrdPage = () => {
             </div>
 
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 URL Slug
               </label>
               <input
                 type="text"
                 value={formData.slug}
                 onChange={(e) => handleFieldChange('slug', e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 font-mono text-xs text-emerald-300 focus:border-emerald-500 focus:outline-none"
+                className="border-border bg-background w-full rounded-xl border px-3 py-2 font-mono text-xs text-emerald-300 focus:border-emerald-500 focus:outline-none"
               />
             </div>
           </div>
 
           {/* PDF Download Attachment */}
-          <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-6">
-            <h3 className="border-b border-slate-800 pb-2 font-mono text-sm uppercase tracking-wider text-slate-300">
+          <div className="border-border bg-card space-y-4 rounded-2xl border p-6">
+            <h3 className="border-border text-foreground border-b pb-2 font-mono text-sm uppercase tracking-wider">
               PDF Spec Download URL
             </h3>
-            <p className="text-xs text-slate-400">
+            <p className="text-muted-foreground text-xs">
               Attach a downloadable PDF or Notion export for interviewers per PRD Section 5.
             </p>
 
@@ -497,12 +715,12 @@ export const EditPrdPage = () => {
                 placeholder="https://..."
                 value={formData.pdf_url}
                 onChange={(e) => handleFieldChange('pdf_url', e.target.value)}
-                className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-3 py-2 font-mono text-xs text-white"
+                className="border-border bg-background flex-1 rounded-xl border px-3 py-2 font-mono text-xs text-white"
               />
               <button
                 type="button"
                 onClick={() => setMediaPickerOpen(true)}
-                className="flex items-center gap-1.5 rounded-xl bg-slate-800 px-3 py-2 text-xs font-medium text-slate-200 hover:bg-slate-700"
+                className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium"
               >
                 <UploadCloud className="h-3.5 w-3.5 text-emerald-400" />
                 <span>Pick</span>

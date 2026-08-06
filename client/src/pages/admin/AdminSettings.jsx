@@ -34,7 +34,13 @@ export const AdminSettingsPage = () => {
       twitter: '',
       substack: '',
     },
-    footer_details: { copyright: '' },
+    footer_details: { copyright: '', location: 'Delhi, IN' },
+    navigation_labels: {
+      work: 'Work',
+      thinking: 'Product Thinking',
+      prds: 'PRDs',
+      about: 'About',
+    },
     consent_text: '',
   });
 
@@ -57,7 +63,16 @@ export const AdminSettingsPage = () => {
             twitter: item.social_links?.twitter || '',
             substack: item.social_links?.substack || '',
           },
-          footer_details: { copyright: item.footer_details?.copyright || '' },
+          footer_details: {
+            copyright: item.footer_details?.copyright || '',
+            location: item.footer_details?.location || 'Delhi, IN',
+          },
+          navigation_labels: {
+            work: item.navigation_labels?.work || 'Work',
+            thinking: item.navigation_labels?.thinking || 'Product Thinking',
+            prds: item.navigation_labels?.prds || 'PRDs',
+            about: item.navigation_labels?.about || 'About',
+          },
           consent_text: item.consent_text || '',
         });
       }
@@ -117,8 +132,8 @@ export const AdminSettingsPage = () => {
   if (loading) {
     return (
       <div className="flex flex-col items-center justify-center gap-3 py-24">
-        <Loader2 className="h-8 w-8 animate-spin text-indigo-400" />
-        <span className="font-mono text-xs uppercase text-slate-400">
+        <Loader2 className="text-primary h-8 w-8 animate-spin" />
+        <span className="text-muted-foreground font-mono text-xs uppercase">
           Loading Site Configuration...
         </span>
       </div>
@@ -128,16 +143,16 @@ export const AdminSettingsPage = () => {
   return (
     <div className="space-y-6 pb-20">
       {/* Header */}
-      <div className="flex flex-col justify-between gap-4 rounded-2xl border border-slate-800 bg-slate-900/60 p-6 sm:flex-row sm:items-center">
+      <div className="border-border bg-card flex flex-col justify-between gap-4 rounded-2xl border p-6 sm:flex-row sm:items-center">
         <div className="flex items-center gap-3">
-          <div className="rounded-xl border border-slate-700/60 bg-slate-800 p-3 text-slate-300">
+          <div className="border-border bg-secondary text-foreground rounded-xl border p-3">
             <SettingsIcon className="h-6 w-6" />
           </div>
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">
               Global Site Configuration
             </h1>
-            <p className="mt-0.5 text-sm text-slate-400">
+            <p className="text-muted-foreground mt-0.5 text-sm">
               Customize your profile identity, downloadable resume URL, social channels, and
               compliance notices
             </p>
@@ -148,7 +163,7 @@ export const AdminSettingsPage = () => {
           type="button"
           disabled={saving}
           onClick={handleSave}
-          className="flex items-center justify-center gap-2 rounded-xl bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white shadow-lg shadow-indigo-600/20 transition-all hover:bg-indigo-500 disabled:opacity-50"
+          className="bg-primary shadow-soft shadow-subtle hover:bg-primary/90 flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-all disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           <span>Save Changes</span>
@@ -171,16 +186,16 @@ export const AdminSettingsPage = () => {
 
       <form onSubmit={handleSave} className="space-y-6">
         {/* Section 1: Profile & Identity */}
-        <div className="space-y-5 rounded-2xl border border-slate-800 bg-slate-900 p-6">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-            <User className="h-4 w-4 text-indigo-400" />
+        <div className="border-border bg-card space-y-5 rounded-2xl border p-6">
+          <div className="border-border flex items-center gap-2 border-b pb-3">
+            <User className="text-primary h-4 w-4" />
             <h2 className="text-base font-bold text-white">Executive Profile & Positioning</h2>
           </div>
 
           <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-3">
             {/* Photo Preview & Picker */}
             <div className="space-y-3">
-              <label className="block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground block font-mono text-xs uppercase">
                 Profile Avatar / Photo
               </label>
               <div className="flex items-center gap-4">
@@ -188,10 +203,10 @@ export const AdminSettingsPage = () => {
                   <img
                     src={formData.profile_photo_url}
                     alt="Profile"
-                    className="h-20 w-20 shrink-0 rounded-2xl border border-slate-800 bg-slate-950 object-cover shadow-lg"
+                    className="border-border bg-background shadow-soft h-20 w-20 shrink-0 rounded-2xl border object-cover"
                   />
                 ) : (
-                  <div className="flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-dashed border-slate-800 bg-slate-950 text-slate-600">
+                  <div className="border-border bg-background text-muted-foreground flex h-20 w-20 shrink-0 items-center justify-center rounded-2xl border border-dashed">
                     <User className="h-8 w-8" />
                   </div>
                 )}
@@ -199,9 +214,9 @@ export const AdminSettingsPage = () => {
                   <button
                     type="button"
                     onClick={() => openMediaPicker('profile_photo_url')}
-                    className="flex w-full items-center justify-center gap-1.5 rounded-xl bg-slate-800 px-3 py-2 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-700"
+                    className="bg-secondary text-foreground hover:bg-secondary flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition-colors"
                   >
-                    <UploadCloud className="h-3.5 w-3.5 text-indigo-400" />
+                    <UploadCloud className="text-primary h-3.5 w-3.5" />
                     <span>Choose Photo</span>
                   </button>
                   {formData.profile_photo_url && (
@@ -220,7 +235,7 @@ export const AdminSettingsPage = () => {
             {/* Headline & Email */}
             <div className="space-y-4 md:col-span-2">
               <div>
-                <label className="mb-1.5 block font-mono text-xs uppercase text-slate-300">
+                <label className="text-foreground mb-1.5 block font-mono text-xs uppercase">
                   Headline / Positioning Statement
                 </label>
                 <input
@@ -228,12 +243,12 @@ export const AdminSettingsPage = () => {
                   placeholder="Senior Product & Program Manager | B2C Messaging & Scaled Systems"
                   value={formData.headline}
                   onChange={(e) => handleFieldChange('headline', e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-sm font-medium text-white focus:border-indigo-500 focus:outline-none"
+                  className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm font-medium text-white focus:outline-none"
                 />
               </div>
 
               <div>
-                <label className="mb-1.5 block font-mono text-xs uppercase text-slate-300">
+                <label className="text-foreground mb-1.5 block font-mono text-xs uppercase">
                   Public Contact Email
                 </label>
                 <input
@@ -241,14 +256,14 @@ export const AdminSettingsPage = () => {
                   placeholder="yashjha024@gmail.com"
                   value={formData.email}
                   onChange={(e) => handleFieldChange('email', e.target.value)}
-                  className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 font-mono text-sm text-indigo-300 focus:border-indigo-500 focus:outline-none"
+                  className="border-border bg-background text-primary focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-sm focus:outline-none"
                 />
               </div>
             </div>
           </div>
 
           <div>
-            <label className="mb-1.5 block font-mono text-xs uppercase text-slate-300">
+            <label className="text-foreground mb-1.5 block font-mono text-xs uppercase">
               Executive Biography Summary
             </label>
             <textarea
@@ -256,18 +271,18 @@ export const AdminSettingsPage = () => {
               placeholder="7+ years building zero-to-one product features and scaling engineering programs across multi-functional teams..."
               value={formData.biography}
               onChange={(e) => handleFieldChange('biography', e.target.value)}
-              className="w-full rounded-xl border border-slate-800 bg-slate-950 p-4 text-sm leading-relaxed text-white focus:border-indigo-500 focus:outline-none"
+              className="border-border bg-background focus:border-primary/40 w-full rounded-xl border p-4 text-sm leading-relaxed text-white focus:outline-none"
             />
           </div>
         </div>
 
         {/* Section 2: Resume & Evidence PDF */}
-        <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-6">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-            <FileText className="h-4 w-4 text-indigo-400" />
+        <div className="border-border bg-card space-y-4 rounded-2xl border p-6">
+          <div className="border-border flex items-center gap-2 border-b pb-3">
+            <FileText className="text-primary h-4 w-4" />
             <h2 className="text-base font-bold text-white">Resume PDF Download Attachment</h2>
           </div>
-          <p className="text-xs text-slate-400">
+          <p className="text-muted-foreground text-xs">
             Provides the direct PDF link downloaded when visitors click &quot;Download Resume&quot;
             in the navigation or on `/resume`.
           </p>
@@ -277,29 +292,29 @@ export const AdminSettingsPage = () => {
               placeholder="https://... or select PDF from Media Library"
               value={formData.resume_url}
               onChange={(e) => handleFieldChange('resume_url', e.target.value)}
-              className="flex-1 rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 font-mono text-sm text-white focus:border-indigo-500 focus:outline-none"
+              className="border-border bg-background focus:border-primary/40 flex-1 rounded-xl border px-4 py-2.5 font-mono text-sm text-white focus:outline-none"
             />
             <button
               type="button"
               onClick={() => openMediaPicker('resume_url')}
-              className="flex shrink-0 items-center gap-2 rounded-xl bg-slate-800 px-4 py-2.5 text-xs font-medium text-slate-200 transition-colors hover:bg-slate-700"
+              className="bg-secondary text-foreground hover:bg-secondary flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium transition-colors"
             >
-              <UploadCloud className="h-4 w-4 text-indigo-400" />
+              <UploadCloud className="text-primary h-4 w-4" />
               <span>Browse Media Library</span>
             </button>
           </div>
         </div>
 
         {/* Section 3: Social Networks & Channels */}
-        <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-6">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-            <Share2 className="h-4 w-4 text-indigo-400" />
+        <div className="border-border bg-card space-y-4 rounded-2xl border p-6">
+          <div className="border-border flex items-center gap-2 border-b pb-3">
+            <Share2 className="text-primary h-4 w-4" />
             <h2 className="text-base font-bold text-white">Social Channels & External Presence</h2>
           </div>
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 GitHub Profile URL
               </label>
               <input
@@ -307,12 +322,12 @@ export const AdminSettingsPage = () => {
                 placeholder="https://github.com/username"
                 value={formData.social_links.github}
                 onChange={(e) => handleSocialChange('github', e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 font-mono text-sm text-indigo-300 focus:border-indigo-500 focus:outline-none"
+                className="border-border bg-background text-primary focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-sm focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 LinkedIn Profile URL
               </label>
               <input
@@ -320,12 +335,12 @@ export const AdminSettingsPage = () => {
                 placeholder="https://linkedin.com/in/username"
                 value={formData.social_links.linkedin}
                 onChange={(e) => handleSocialChange('linkedin', e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 font-mono text-sm text-indigo-300 focus:border-indigo-500 focus:outline-none"
+                className="border-border bg-background text-primary focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-sm focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 Twitter / X URL
               </label>
               <input
@@ -333,12 +348,12 @@ export const AdminSettingsPage = () => {
                 placeholder="https://x.com/username"
                 value={formData.social_links.twitter}
                 onChange={(e) => handleSocialChange('twitter', e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 font-mono text-sm text-indigo-300 focus:border-indigo-500 focus:outline-none"
+                className="border-border bg-background text-primary focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-sm focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 Substack / Medium Blog URL
               </label>
               <input
@@ -346,22 +361,22 @@ export const AdminSettingsPage = () => {
                 placeholder="https://substack.com/@username"
                 value={formData.social_links.substack}
                 onChange={(e) => handleSocialChange('substack', e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 font-mono text-sm text-indigo-300 focus:border-indigo-500 focus:outline-none"
+                className="border-border bg-background text-primary focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-sm focus:outline-none"
               />
             </div>
           </div>
         </div>
 
         {/* Section 4: Site Footer & Compliance Notice */}
-        <div className="space-y-4 rounded-2xl border border-slate-800 bg-slate-900 p-6">
-          <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
-            <ShieldCheck className="h-4 w-4 text-indigo-400" />
+        <div className="border-border bg-card space-y-4 rounded-2xl border p-6">
+          <div className="border-border flex items-center gap-2 border-b pb-3">
+            <ShieldCheck className="text-primary h-4 w-4" />
             <h2 className="text-base font-bold text-white">Footer & Compliance Disclosures</h2>
           </div>
 
-          <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
+          <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 Footer Copyright Text
               </label>
               <input
@@ -374,12 +389,30 @@ export const AdminSettingsPage = () => {
                     copyright: e.target.value,
                   })
                 }
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
               />
             </div>
 
             <div>
-              <label className="mb-1.5 block font-mono text-xs uppercase text-slate-400">
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
+                Location Label
+              </label>
+              <input
+                type="text"
+                placeholder="e.g. Delhi, IN / Remote"
+                value={formData.footer_details.location}
+                onChange={(e) =>
+                  handleFieldChange('footer_details', {
+                    ...formData.footer_details,
+                    location: e.target.value,
+                  })
+                }
+                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
+              />
+            </div>
+
+            <div>
+              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 Cookie & Analytics Consent Disclosure
               </label>
               <input
@@ -387,9 +420,43 @@ export const AdminSettingsPage = () => {
                 placeholder="We use anonymous telemetry to measure case study engagement."
                 value={formData.consent_text}
                 onChange={(e) => handleFieldChange('consent_text', e.target.value)}
-                className="w-full rounded-xl border border-slate-800 bg-slate-950 px-4 py-2.5 text-sm text-white focus:border-indigo-500 focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
               />
             </div>
+          </div>
+        </div>
+
+        {/* Section 5: Navigation Bar Labels */}
+        <div className="border-border bg-card space-y-4 rounded-2xl border p-6">
+          <div className="border-border flex items-center gap-2 border-b pb-3">
+            <h2 className="text-base font-bold text-white">Main Navigation Labels</h2>
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
+            {['work', 'thinking', 'prds', 'about'].map((key) => (
+              <div key={key}>
+                <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
+                  {key === 'work'
+                    ? 'Work / Case Studies Label'
+                    : key === 'thinking'
+                      ? 'Product Thinking Label'
+                      : key === 'prds'
+                        ? 'PRDs Label'
+                        : 'About Label'}
+                </label>
+                <input
+                  type="text"
+                  value={formData.navigation_labels[key] || ''}
+                  onChange={(e) =>
+                    handleFieldChange('navigation_labels', {
+                      ...formData.navigation_labels,
+                      [key]: e.target.value,
+                    })
+                  }
+                  className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2 text-sm text-white focus:outline-none"
+                />
+              </div>
+            ))}
           </div>
         </div>
       </form>

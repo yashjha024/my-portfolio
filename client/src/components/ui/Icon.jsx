@@ -93,7 +93,7 @@ export const Icon = ({
   const LucideIcon = LucideIcons[name];
 
   if (!LucideIcon) {
-    console.warn(`Icon "${name}" not found in lucide-react.`);
+    console.warn(`Icon"${name}"not found in lucide-react.`);
     return null;
   }
 

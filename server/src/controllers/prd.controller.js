@@ -1,5 +1,12 @@
 import { supabase } from '../config/supabase.js';
-import { parsePagination, parseResource, prdSchema } from '../utils/validation.utils.js';
+import {
+  parsePagination,
+  parseResource,
+  prdSchema,
+  generatePreviewToken,
+  verifyPreviewToken,
+} from '../utils/validation.utils.js';
+import { logAuditAction } from '../utils/audit.utils.js';
 
 export const getPublicPrds = async (req, res, next) => {
   try {
@@ -36,20 +43,58 @@ export const getPublicPrds = async (req, res, next) => {
 
 export const getPrdBySlug = async (req, res, next) => {
   try {
-    const { data: prd, error } = await supabase
-      .from('prds')
-      .select('*')
-      .eq('slug', req.params.slug)
-      .eq('status', 'published')
-      .eq('visibility', 'public')
-      .single();
+    const { slug } = req.params;
+    const previewToken = req.query.preview_token || req.headers['x-preview-token'];
+    let query = supabase.from('prds').select('*').eq('slug', slug);
 
+    if (previewToken) {
+      if (!req.user || req.user.role !== 'owner') {
+        return res
+          .status(403)
+          .json({
+            success: false,
+            error: 'Forbidden: Draft preview requires owner authentication.',
+          });
+      }
+      if (!verifyPreviewToken(previewToken, slug, 'prd')) {
+        return res
+          .status(403)
+          .json({ success: false, error: 'Forbidden: Invalid or expired draft preview token.' });
+      }
+    } else {
+      query = query.eq('status', 'published').eq('visibility', 'public');
+    }
+
+    const { data: prd, error } = await query.single();
     if (error || !prd) {
       return res
         .status(404)
         .json({ success: false, error: 'PRD not found, private, or not published' });
     }
     res.status(200).json({ success: true, data: prd });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getPrdPreviewToken = async (req, res, next) => {
+  try {
+    const { data: prd, error } = await supabase
+      .from('prds')
+      .select('id, slug')
+      .eq('id', req.params.id)
+      .single();
+
+    if (error || !prd) {
+      return res.status(404).json({ success: false, error: 'PRD not found' });
+    }
+
+    const token = generatePreviewToken(prd, 'prd');
+    res.status(200).json({
+      success: true,
+      previewToken: token,
+      previewUrl: `/prds/${prd.slug}?preview_token=${token}`,
+    });
   } catch (error) {
     next(error);
   }
@@ -108,6 +153,14 @@ export const createPrd = async (req, res, next) => {
       return res.status(400).json({ success: false, error: error.message });
     }
 
+    logAuditAction({
+      req,
+      action: 'CREATE',
+      resourceType: 'PRD',
+      resourceId: data.id,
+      details: { title: data.title, status: data.status, visibility: data.visibility },
+    });
+
     res.status(201).json({ success: true, data });
   } catch (error) {
     next(error);
@@ -129,6 +182,14 @@ export const updatePrd = async (req, res, next) => {
       return res.status(400).json({ success: false, error: error?.message || 'PRD not found' });
     }
 
+    logAuditAction({
+      req,
+      action: 'UPDATE',
+      resourceType: 'PRD',
+      resourceId: data.id,
+      details: { title: data.title, status: data.status, visibility: data.visibility },
+    });
+
     res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);
@@ -141,6 +202,14 @@ export const deletePrd = async (req, res, next) => {
     if (error) {
       return res.status(400).json({ success: false, error: error.message });
     }
+
+    logAuditAction({
+      req,
+      action: 'DELETE',
+      resourceType: 'PRD',
+      resourceId: req.params.id,
+    });
+
     res.status(200).json({ success: true, message: 'PRD deleted successfully' });
   } catch (error) {
     next(error);

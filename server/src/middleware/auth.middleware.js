@@ -76,3 +76,55 @@ export const verifyAuth = async (req, res, next) => {
     return res.status(401).json({ success: false, error: 'Authentication failed.' });
   }
 };
+
+export const verifyAuthOptional = async (req, res, next) => {
+  try {
+    let accessToken = req.cookies?.['sb-access-token'];
+    let refreshToken = req.cookies?.['sb-refresh-token'];
+    const authHeader = req.headers.authorization;
+    if (!accessToken && authHeader && authHeader.startsWith('Bearer ')) {
+      accessToken = authHeader.split(' ')[1];
+    }
+    if (!accessToken && !refreshToken) {
+      req.user = null;
+      return next();
+    }
+    let authUser = null;
+    if (accessToken) {
+      const { data, error } = await supabase.auth.getUser(accessToken);
+      if (!error && data?.user) authUser = data.user;
+    }
+    if (!authUser && refreshToken) {
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession({
+        refresh_token: refreshToken,
+      });
+      if (!refreshError && refreshData?.session) {
+        authUser = refreshData.session.user;
+        setTokenCookies(res, refreshData.session.access_token, refreshData.session.refresh_token);
+      }
+    }
+    if (!authUser) {
+      req.user = null;
+      return next();
+    }
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('*')
+      .eq('id', authUser.id)
+      .single();
+    const ownerEmail = (process.env.OWNER_EMAIL || '').toLowerCase();
+    const isOwner = authUser.email?.toLowerCase() === ownerEmail && userProfile?.role === 'owner';
+    req.user = userProfile
+      ? { ...userProfile, role: isOwner ? 'owner' : 'visitor', is_admin: isOwner }
+      : {
+          id: authUser.id,
+          email: authUser.email,
+          role: 'visitor',
+          is_admin: isOwner,
+        };
+    next();
+  } catch (_err) {
+    req.user = null;
+    next();
+  }
+};
