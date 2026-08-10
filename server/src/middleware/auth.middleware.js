@@ -57,18 +57,21 @@ export const verifyAuth = async (req, res, next) => {
       .eq('id', authUser.id)
       .single();
 
-    const ownerEmail = process.env.OWNER_EMAIL.toLowerCase();
-    const isOwner = authUser.email?.toLowerCase() === ownerEmail && userProfile?.role === 'owner';
+    const ownerEmail = (process.env.OWNER_EMAIL || '').toLowerCase();
+    const isOwner = Boolean(ownerEmail && authUser.email?.toLowerCase() === ownerEmail);
 
-    req.user = userProfile
-      ? { ...userProfile, role: isOwner ? 'owner' : 'visitor' }
-      : {
-          id: authUser.id,
-          email: authUser.email,
-          full_name: authUser.user_metadata?.full_name || authUser.email?.split('@')[0] || 'User',
-          role: 'visitor',
-          avatar_url: authUser.user_metadata?.avatar_url || null,
-        };
+    req.user = {
+      id: authUser.id,
+      email: authUser.email,
+      full_name:
+        userProfile?.full_name ||
+        authUser.user_metadata?.full_name ||
+        authUser.email?.split('@')[0] ||
+        'User',
+      role: isOwner ? 'owner' : 'visitor',
+      avatar_url: userProfile?.avatar_url || authUser.user_metadata?.avatar_url || null,
+      is_admin: isOwner,
+    };
 
     next();
   } catch (err) {

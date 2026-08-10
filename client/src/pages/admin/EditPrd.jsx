@@ -68,8 +68,37 @@ export const EditPrdPage = () => {
 
       if (res.data?.success && res.data?.data) {
         const item = res.data.data;
-        const loadedSections =
-          item.sections && typeof item.sections === 'object' ? item.sections : {};
+        let loadedSections = item.sections;
+
+        // Coerce to canonical object if it's missing or an array
+        if (
+          !loadedSections ||
+          typeof loadedSections !== 'object' ||
+          Array.isArray(loadedSections)
+        ) {
+          loadedSections = {
+            requirements: [],
+            goals: [],
+            nonGoals: [],
+            metrics: [],
+            releaseGates: [],
+          };
+        } else {
+          // Ensure keys exist
+          loadedSections = {
+            requirements: Array.isArray(loadedSections.requirements)
+              ? loadedSections.requirements
+              : [],
+            goals: Array.isArray(loadedSections.goals) ? loadedSections.goals : [],
+            nonGoals: Array.isArray(loadedSections.nonGoals) ? loadedSections.nonGoals : [],
+            metrics: Array.isArray(loadedSections.metrics) ? loadedSections.metrics : [],
+            releaseGates: Array.isArray(loadedSections.releaseGates)
+              ? loadedSections.releaseGates
+              : [],
+            ...loadedSections,
+          };
+        }
+
         setFormData({
           title: item.title || '',
           slug: item.slug || '',
@@ -82,11 +111,7 @@ export const EditPrdPage = () => {
           related_case_study_id: item.related_case_study_id || '',
         });
         setSectionsJsonInput(JSON.stringify(loadedSections, null, 2));
-        if (Array.isArray(loadedSections)) {
-          setSectionsMode('custom_array');
-        } else {
-          setSectionsMode('canonical');
-        }
+        setSectionsMode('canonical');
         setLastSavedAt(item.updated_at || new Date().toISOString());
       }
     } catch (err) {

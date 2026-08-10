@@ -162,77 +162,56 @@ export const ArticleDetailPage = () => {
               <div className="space-y-16">
                 {/* Step 1: Current Experience & Observed Problem */}
                 <div className="space-y-3">
-                  <span className="text-xs font-mono font-bold text-primary uppercase tracking-wider block">
-                    Step 01. Current Experience &amp; Observed Problem
-                  </span>
-                  <h2 className="font-heading text-2xl font-bold text-foreground">
-                    The Coordination Chaos in Active Groups
+                  <h2 className="font-heading text-xl font-bold text-foreground">
+                    Current Experience & Observed Problem
                   </h2>
                   <MarkdownProse>{art.currentExperience}</MarkdownProse>
                 </div>
 
                 {/* Step 2: Target Audience & Evidence/Assumptions */}
                 <div className="space-y-3 border-t border-border/60 pt-8">
-                  <span className="text-xs font-mono font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
-                    <Users className="w-4 h-4" /> Step 02. Target Audience &amp; Assumptions
-                  </span>
-                  <h2 className="font-heading text-2xl font-bold text-foreground">
-                    Group Organizers &amp; Community Leaders
+                  <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
+                    <Users className="w-5 h-5 text-primary" /> Target Audience & Assumptions
                   </h2>
                   <MarkdownProse>{art.targetAudience}</MarkdownProse>
                 </div>
 
                 {/* Step 3: Proposed Feature & User Flow */}
                 <div className="space-y-3 border-t border-border/60 pt-8">
-                  <span className="text-xs font-mono font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
-                    <Sparkles className="w-4 h-4" /> Step 03. Proposed Feature &amp; User Flow
-                  </span>
-                  <h2 className="font-heading text-2xl font-bold text-foreground">
-                    Inline Smart Events Widget
+                  <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
+                    <Sparkles className="w-5 h-5 text-primary" /> Proposed Feature & User Flow
                   </h2>
                   <MarkdownProse>{art.proposedFeature}</MarkdownProse>
                 </div>
 
                 {/* Step 4: Why Now / Business Rationale */}
                 <div className="space-y-3 border-t border-border/60 pt-8">
-                  <span className="text-xs font-mono font-bold text-primary uppercase tracking-wider block">
-                    Step 04. Why Now / Business Rationale
-                  </span>
-                  <h2 className="font-heading text-2xl font-bold text-foreground">
-                    Defending Community Retention against Discord &amp; Telegram
+                  <h2 className="font-heading text-xl font-bold text-foreground">
+                    Why Now / Business Rationale
                   </h2>
                   <MarkdownProse>{art.whyNow}</MarkdownProse>
                 </div>
 
                 {/* Step 5: Edge Cases, Privacy, & Adoption Risks */}
                 <div className="space-y-3 border-t border-border/60 pt-8">
-                  <span className="text-xs font-mono font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
-                    <ShieldCheck className="w-4 h-4" /> Step 05. Edge Cases, Privacy &amp; Risks
-                  </span>
-                  <h2 className="font-heading text-2xl font-bold text-foreground">
-                    Mitigating Notification Fatigue &amp; Privacy Leaks
+                  <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
+                    <ShieldCheck className="w-5 h-5 text-primary" /> Edge Cases, Privacy & Risks
                   </h2>
                   <MarkdownProse>{art.edgeCases}</MarkdownProse>
                 </div>
 
                 {/* Step 6: MVP versus Future Scope */}
                 <div className="space-y-3 border-t border-border/60 pt-8">
-                  <span className="text-xs font-mono font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
-                    <Layers className="w-4 h-4" /> Step 06. MVP versus Future Scope
-                  </span>
-                  <h2 className="font-heading text-2xl font-bold text-foreground">
-                    Phased Rollout Strategy
+                  <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
+                    <Layers className="w-5 h-5 text-primary" /> MVP versus Future Scope
                   </h2>
                   <MarkdownProse>{art.mvpVsFuture}</MarkdownProse>
                 </div>
 
                 {/* Step 7: Success Metrics & Experiment Design */}
                 <div className="space-y-4 border-t border-border/60 pt-8">
-                  <span className="text-xs font-mono font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
-                    <CheckCircle className="w-4 h-4 text-success" /> Step 07. Success Metrics &amp; Experimentation
-                  </span>
-                  <h2 className="font-heading text-2xl font-bold text-foreground">
-                    Measuring Event Adoption &amp; RSVP Velocity
+                  <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
+                    <CheckCircle className="w-5 h-5 text-success" /> Success Metrics & Experimentation
                   </h2>
                   <div className="p-5 rounded-xl bg-card border border-border space-y-2">
                     <ul className="list-disc list-inside space-y-2 text-sm text-muted-foreground font-medium">
@@ -248,11 +227,8 @@ export const ArticleDetailPage = () => {
                 {/* Step 8: Annotated Prototype / Journey Diagram */}
                 {art.journeyFlow && (
                   <div className="space-y-4 border-t border-border/60 pt-8">
-                    <span className="text-xs font-mono font-bold text-primary uppercase tracking-wider flex items-center gap-1.5">
-                      <GitBranch className="w-4 h-4" /> Step 08. User Journey Architecture Diagram
-                    </span>
-                    <h2 className="font-heading text-2xl font-bold text-foreground">
-                      End-to-End Coordination Flow
+                    <h2 className="font-heading text-xl font-bold text-foreground flex items-center gap-2">
+                      <GitBranch className="w-5 h-5 text-primary" /> User Journey Architecture Diagram
                     </h2>
                     <div className="p-6 rounded-xl bg-muted font-mono text-xs sm:text-sm overflow-x-auto border border-border/80 whitespace-pre text-foreground leading-relaxed">
                       {art.journeyFlow}

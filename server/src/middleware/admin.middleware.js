@@ -7,7 +7,8 @@ export const verifyOwner = (req, res, next) => {
   if (
     !req.user ||
     req.user.role !== 'owner' ||
-    req.user.email?.toLowerCase() !== ownerEmail.toLowerCase()
+    !ownerEmail ||
+    req.user.email?.toLowerCase() !== ownerEmail
   ) {
     return res.status(403).json({
       success: false,

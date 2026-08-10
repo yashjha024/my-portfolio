@@ -101,7 +101,7 @@ app.use(requestLogger);
 app.use('/api', apiLimiter);
 
 // SEO Dynamic Feeds & Sitemaps
-app.use(['/api/seo', '/sitemap.xml', '/rss.xml'], seoRoutes);
+app.use(['/', '/api/seo'], seoRoutes);
 
 // Sensitive & Submission Route Rate Limits
 app.use('/api/auth', authLimiter, authRoutes);
@@ -129,10 +129,16 @@ const handleLiveness = (req, res) => {
 
 const handleReadiness = async (req, res) => {
   try {
+    const withTimeout = (promise, ms = 3000) =>
+      Promise.race([
+        promise,
+        new Promise((_, reject) => setTimeout(() => reject(new Error('Timeout')), ms)),
+      ]);
+
     // 1. Check Supabase Database non-destructively
     let dbHealthy = false;
     try {
-      const { error: dbError } = await supabase.from('users').select('id').limit(1);
+      const { error: dbError } = await withTimeout(supabase.from('users').select('id').limit(1));
       dbHealthy = !dbError || dbError.code === 'PGRST116';
     } catch {
       dbHealthy = false;
@@ -141,7 +147,9 @@ const handleReadiness = async (req, res) => {
     // 2. Check Supabase Storage
     let storageHealthy = false;
     try {
-      const { error: storageError } = await supabase.storage.getBucket('portfolio-media');
+      const { error: storageError } = await withTimeout(
+        supabase.storage.getBucket('portfolio-media')
+      );
       storageHealthy = !storageError || storageError.message?.includes('not found') === false;
     } catch {
       storageHealthy = false;
