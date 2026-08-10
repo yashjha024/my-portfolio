@@ -48,7 +48,8 @@ export const sendMagicLink = async (req, res) => {
  */
 export const getGoogleOAuthUrl = async (req, res) => {
   try {
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    const origin = req.get('origin');
+    const clientUrl = origin || process.env.CLIENT_URL || 'http://localhost:5173';
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
