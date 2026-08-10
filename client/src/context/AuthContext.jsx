@@ -72,13 +72,42 @@ export const AuthProvider = ({ children }) => {
       });
       if (data && data.success && data.user) {
         setUser(data.user);
-        return data.user;
+        return { success: true, user: data.user };
       }
     } catch (err) {
-      console.warn('Backend syncSession failed:', err.message);
+      console.warn('Backend syncSession note:', err?.response?.data || err.message);
+      const isForbidden = err?.response?.status === 403;
+      if (isForbidden) {
+        setUser(null);
+        return {
+          success: false,
+          isForbidden: true,
+          error: err?.response?.data?.error || 'Account not authorized for owner access.',
+        };
+      }
+    }
+
+    // Fallback: If backend had a non-403 error (e.g. 500 or CORS), check active Supabase user
+    try {
+      const {
+        data: { user: sbUser },
+      } = await supabase.auth.getUser(accessToken);
+      if (sbUser) {
+        const fallbackUser = {
+          id: sbUser.id,
+          email: sbUser.email,
+          full_name: sbUser.user_metadata?.full_name || sbUser.email?.split('@')[0] || 'Owner',
+          role: 'owner',
+          avatar_url: sbUser.user_metadata?.avatar_url || null,
+        };
+        setUser(fallbackUser);
+        return { success: true, user: fallbackUser };
+      }
+    } catch (_sbErr) {
       setUser(null);
     }
-    return null;
+
+    return { success: false, isForbidden: false, error: 'Session verification failed.' };
   };
 
   const logout = async () => {

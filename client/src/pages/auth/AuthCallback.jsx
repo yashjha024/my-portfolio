@@ -15,18 +15,23 @@ export const AuthCallback = () => {
 
     const processSession = async (session) => {
       if (!session?.access_token) return false;
-      const user = await syncSession(session.access_token, session.refresh_token);
-      if (user) {
+      const res = await syncSession(session.access_token, session.refresh_token);
+      if (res?.success) {
         if (mounted) navigate('/admin', { replace: true });
         return true;
       }
-      // If server rejected the session (unauthorized email)
-      await supabase.auth.signOut().catch(() => null);
-      if (mounted) {
-        const rejectedEmail = session.user?.email ? ` (${session.user.email})` : '';
-        setError(`Access Denied: Account${rejectedEmail} is not authorized for owner access.`);
+      if (res?.isForbidden) {
+        // Only sign out and lock out if server explicitly returned 403 Forbidden for unauthorized email
+        await supabase.auth.signOut().catch(() => null);
+        if (mounted) {
+          const rejectedEmail = session.user?.email ? ` (${session.user.email})` : '';
+          setError(`Access Denied: Account${rejectedEmail} is not authorized for owner access.`);
+        }
+        return false;
       }
-      return false;
+      // If temporary backend error (non-403), proceed if Supabase session is active
+      if (mounted) navigate('/admin', { replace: true });
+      return true;
     };
 
     const handleCallback = async () => {
