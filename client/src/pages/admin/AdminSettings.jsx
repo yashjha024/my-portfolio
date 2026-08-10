@@ -278,29 +278,92 @@ export const AdminSettingsPage = () => {
 
         {/* Section 2: Resume & Evidence PDF */}
         <div className="border-border bg-card space-y-4 rounded-2xl border p-6">
-          <div className="border-border flex items-center gap-2 border-b pb-3">
-            <FileText className="text-primary h-4 w-4" />
-            <h2 className="text-base font-bold text-white">Resume PDF Download Attachment</h2>
+          <div className="border-border flex items-center justify-between border-b pb-3">
+            <div className="flex items-center gap-2">
+              <FileText className="text-primary h-4 w-4" />
+              <h2 className="text-base font-bold text-white">Official Resume PDF Attachment</h2>
+            </div>
+            {formData.resume_url && (
+              <a
+                href={formData.resume_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-primary font-mono text-xs font-semibold hover:underline"
+              >
+                View Attached PDF ↗
+              </a>
+            )}
           </div>
-          <p className="text-muted-foreground text-xs">
-            Provides the direct PDF link downloaded when visitors click &quot;Download Resume&quot;
-            in the navigation or on `/resume`.
+          <p className="text-muted-foreground text-xs leading-relaxed">
+            Upload your official 1-page/2-page PDF resume. When visitors or recruiters click
+            &quot;Download PDF&quot; or &quot;Print&quot; on your `/resume` page, they will receive
+            this exact uploaded PDF file.
           </p>
-          <div className="flex items-center gap-3">
+
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
             <input
               type="text"
-              placeholder="https://... or select PDF from Media Library"
+              placeholder="Paste direct PDF URL or upload below..."
               value={formData.resume_url}
               onChange={(e) => handleFieldChange('resume_url', e.target.value)}
               className="border-border bg-background focus:border-primary/40 flex-1 rounded-xl border px-4 py-2.5 font-mono text-sm text-white focus:outline-none"
             />
+
+            <label className="bg-primary text-primary-foreground hover:bg-primary/90 flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold shadow-sm transition-all">
+              <UploadCloud className="h-4 w-4" />
+              <span>Upload New PDF</span>
+              <input
+                type="file"
+                accept=".pdf,application/pdf"
+                className="hidden"
+                onChange={async (e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  try {
+                    setSaving(true);
+                    setError(null);
+                    const uploadData = new FormData();
+                    uploadData.append('file', file);
+                    uploadData.append('folder', 'documents');
+                    uploadData.append(
+                      'alt',
+                      `${formData.headline || 'Yash Jha'} Official Resume PDF`
+                    );
+
+                    const res = await api.post('/media/upload', uploadData, {
+                      headers: { 'Content-Type': 'multipart/form-data' },
+                    });
+
+                    if (res.data?.success && res.data?.data?.url) {
+                      handleFieldChange('resume_url', res.data.data.url);
+                      setSuccessMsg(
+                        'PDF Resume uploaded successfully! Click "Save Settings" below to publish.'
+                      );
+                    } else if (res.data?.url) {
+                      handleFieldChange('resume_url', res.data.url);
+                      setSuccessMsg(
+                        'PDF Resume uploaded successfully! Click "Save Settings" below to publish.'
+                      );
+                    }
+                  } catch (err) {
+                    console.error('PDF Upload Error:', err);
+                    setError(
+                      err?.response?.data?.error || 'Failed to upload PDF resume. Please try again.'
+                    );
+                  } finally {
+                    setSaving(false);
+                    e.target.value = '';
+                  }
+                }}
+              />
+            </label>
+
             <button
               type="button"
               onClick={() => openMediaPicker('resume_url')}
-              className="bg-secondary text-foreground hover:bg-secondary flex shrink-0 items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium transition-colors"
+              className="bg-secondary text-foreground hover:bg-secondary border-border flex shrink-0 items-center justify-center gap-2 rounded-xl border px-4 py-2.5 text-xs font-semibold transition-colors"
             >
-              <UploadCloud className="text-primary h-4 w-4" />
-              <span>Browse Media Library</span>
+              <span>Browse Library</span>
             </button>
           </div>
         </div>

@@ -14,7 +14,11 @@ export const ResumePage = () => {
   const { data: profile } = usePortfolioData({ type: 'profile', delayMs: 100 });
 
   const handlePrint = () => {
-    window.print();
+    if (profile?.resumeUrl && (profile.resumeUrl.includes('.pdf') || profile.resumeUrl.startsWith('http'))) {
+      window.open(profile.resumeUrl, '_blank');
+    } else {
+      window.print();
+    }
   };
 
   const breadcrumbs = [
