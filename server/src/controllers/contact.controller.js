@@ -12,9 +12,12 @@ const contactSchema = z.object({
 
 const deliverContactEmail = async ({ name, email, subject, message }) => {
   if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY.includes('placeholder')) {
-    console.log(`[MOCK EMAIL] To: ${process.env.OWNER_EMAIL}, Subject: ${subject}`);
+    console.log(
+      `[MOCK EMAIL] To: ${process.env.OWNER_EMAIL || 'yashjha024@gmail.com'}, Subject: ${subject}`
+    );
     return true; // Mock success
   }
+  const recipient = process.env.CONTACT_EMAIL || process.env.OWNER_EMAIL || 'yashjha024@gmail.com';
   const response = await fetch('https://api.resend.com/emails', {
     method: 'POST',
     headers: {
@@ -23,10 +26,23 @@ const deliverContactEmail = async ({ name, email, subject, message }) => {
     },
     body: JSON.stringify({
       from: process.env.CONTACT_FROM_EMAIL || 'Portfolio Contact <onboarding@resend.dev>',
-      to: [process.env.CONTACT_EMAIL || process.env.OWNER_EMAIL],
+      to: [recipient],
       reply_to: email,
-      subject: `[Portfolio] ${subject}`,
-      text: `From: ${name} <${email}>\n\n${message}`,
+      subject: `[Portfolio Inquiry] ${subject}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; padding: 24px; border: 1px solid #E5E2DA; border-radius: 12px; background-color: #ffffff;">
+          <h2 style="color: #171717; font-size: 20px; font-weight: 700; margin-top: 0; margin-bottom: 16px;">New Portfolio Inquiry Received</h2>
+          <div style="background-color: #f9f9f8; padding: 16px; border-radius: 8px; margin-bottom: 20px;">
+            <p style="margin: 0 0 8px 0; color: #444; font-size: 14px;"><strong>From:</strong> ${name} &lt;<a href="mailto:${email}" style="color: #2563eb;">${email}</a>&gt;</p>
+            <p style="margin: 0; color: #444; font-size: 14px;"><strong>Subject:</strong> ${subject}</p>
+          </div>
+          <div style="padding: 16px 0; border-top: 1px solid #eee; border-bottom: 1px solid #eee; margin-bottom: 20px;">
+            <p style="margin: 0 0 8px 0; color: #666; font-size: 12px; text-transform: uppercase; font-weight: 600;">Message Content:</p>
+            <p style="margin: 0; color: #171717; font-size: 15px; line-height: 1.6; white-space: pre-wrap;">${message}</p>
+          </div>
+          <p style="font-size: 13px; color: #666; margin: 0;">💡 <strong>Tip:</strong> Click "Reply" in your email client to respond directly to ${name}.</p>
+        </div>
+      `,
     }),
   });
   if (!response.ok) {
