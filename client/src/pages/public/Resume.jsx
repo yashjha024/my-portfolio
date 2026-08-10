@@ -41,13 +41,19 @@ export const ResumePage = () => {
               <p className="text-xs text-muted-foreground">Formatted for recruiter scannability and 1-click PDF print/download.</p>
             </div>
             <div className="flex flex-wrap items-center gap-3">
-              {profile?.resumeUrl && (
+              {profile?.resumeUrl && (profile.resumeUrl.includes('.pdf') || profile.resumeUrl.startsWith('http')) ? (
                 <Button size="sm" asChild className="shadow-sm">
-                  <a href={profile.resumeUrl} download target="_blank" rel="noopener noreferrer">Download PDF</a>
+                  <a href={profile.resumeUrl} download target="_blank" rel="noopener noreferrer">
+                    Download PDF
+                  </a>
+                </Button>
+              ) : (
+                <Button size="sm" onClick={handlePrint} className="shadow-sm">
+                  Download PDF
                 </Button>
               )}
-              <Button size="sm" onClick={handlePrint} className="shadow-sm">
-                <Printer className="mr-2 w-4 h-4" /> Print / Save as PDF
+              <Button size="sm" onClick={handlePrint} variant="outline" className="shadow-sm">
+                <Printer className="mr-2 h-4 w-4" /> Print / Save as PDF
               </Button>
               <Button variant="outline" size="sm" asChild>
                 <NavLink to="/contact">Let&apos;s Connect</NavLink>
