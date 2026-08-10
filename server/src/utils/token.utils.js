@@ -5,12 +5,13 @@
 
 export const setTokenCookies = (res, accessToken, refreshToken) => {
   const isProduction = process.env.NODE_ENV === 'production';
+  const sameSite = isProduction ? 'none' : 'lax';
 
   if (accessToken) {
     res.cookie('sb-access-token', accessToken, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: 'lax',
+      sameSite,
       maxAge: 3600 * 1000, // 1 hour
       path: '/',
     });
@@ -20,7 +21,7 @@ export const setTokenCookies = (res, accessToken, refreshToken) => {
     res.cookie('sb-refresh-token', refreshToken, {
       httpOnly: true,
       secure: isProduction,
-      sameSite: 'lax',
+      sameSite,
       maxAge: 7 * 24 * 3600 * 1000, // 7 days
       path: '/',
     });
@@ -28,10 +29,11 @@ export const setTokenCookies = (res, accessToken, refreshToken) => {
 };
 
 export const clearTokenCookies = (res) => {
+  const isProduction = process.env.NODE_ENV === 'production';
   const cookieOptions = {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: isProduction,
+    sameSite: isProduction ? 'none' : 'lax',
     path: '/',
   };
 

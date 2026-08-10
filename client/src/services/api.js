@@ -1,4 +1,5 @@
 import axios from 'axios';
+import { supabase } from '../config/supabase.js';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_URL || '/api',
@@ -6,6 +7,21 @@ const api = axios.create({
   xsrfCookieName: 'csrf-token',
   xsrfHeaderName: 'X-CSRF-Token',
 });
+
+api.interceptors.request.use(
+  async (config) => {
+    try {
+      const { data } = await supabase.auth.getSession();
+      if (data?.session?.access_token) {
+        config.headers.Authorization = `Bearer ${data.session.access_token}`;
+      }
+    } catch (_e) {
+      // Ignore token retrieval errors
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 api.interceptors.response.use(
   (response) => response,

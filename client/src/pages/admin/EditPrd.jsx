@@ -374,6 +374,42 @@ export const EditPrdPage = () => {
         </div>
 
         <div className="flex flex-wrap items-center gap-2.5">
+          <label className="bg-secondary text-foreground hover:bg-secondary flex cursor-pointer items-center gap-1.5 rounded-xl px-3 py-2 text-xs font-semibold transition-colors">
+            <UploadCloud className="h-3.5 w-3.5 text-sky-400" />
+            <span>Import .md File</span>
+            <input
+              type="file"
+              accept=".md,.markdown,.txt"
+              className="hidden"
+              onChange={(e) => {
+                const file = e.target.files?.[0];
+                if (!file) return;
+                const reader = new FileReader();
+                reader.onload = (event) => {
+                  const text = event.target?.result;
+                  if (typeof text === 'string') {
+                    // Automatically extract title if first line starts with #
+                    const lines = text.split('\n');
+                    let extractedTitle = '';
+                    let bodyText = text;
+                    if (lines[0] && lines[0].startsWith('# ')) {
+                      extractedTitle = lines[0].replace(/^#\s+/, '').trim();
+                      bodyText = lines.slice(1).join('\n').trim();
+                    }
+                    setFormData((prev) => ({
+                      ...prev,
+                      title: extractedTitle || prev.title || file.name.replace(/\.[^/.]+$/, ''),
+                      context: bodyText || text,
+                    }));
+                    setAutosaveStatus('unsaved');
+                  }
+                };
+                reader.readAsText(file);
+                e.target.value = '';
+              }}
+            />
+          </label>
+
           {formData.slug && (
             <button
               type="button"
@@ -667,11 +703,21 @@ export const EditPrdPage = () => {
                 onChange={(e) => handleFieldChange('stage', e.target.value)}
                 className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:border-emerald-500 focus:outline-none"
               >
-                <option value="In Development">In Development</option>
-                <option value="In Review">In Review</option>
-                <option value="Approved">Approved</option>
-                <option value="Shipped">Shipped / Launched</option>
-                <option value="Archived">Archived</option>
+                <option value="In Development" className="bg-slate-900 font-semibold text-white">
+                  In Development
+                </option>
+                <option value="In Review" className="bg-slate-900 font-semibold text-white">
+                  In Review
+                </option>
+                <option value="Approved" className="bg-slate-900 font-semibold text-white">
+                  Approved
+                </option>
+                <option value="Shipped" className="bg-slate-900 font-semibold text-white">
+                  Shipped / Launched
+                </option>
+                <option value="Archived" className="bg-slate-900 font-semibold text-white">
+                  Archived
+                </option>
               </select>
             </div>
 
@@ -684,9 +730,15 @@ export const EditPrdPage = () => {
                 onChange={(e) => handleFieldChange('visibility', e.target.value)}
                 className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:border-emerald-500 focus:outline-none"
               >
-                <option value="public">Public (Indexed & Searchable)</option>
-                <option value="unlisted">Unlisted (Accessible via direct link)</option>
-                <option value="private">Private (Admin & Authenticated team only)</option>
+                <option value="public" className="bg-slate-900 font-semibold text-white">
+                  Public (Indexed &amp; Searchable)
+                </option>
+                <option value="unlisted" className="bg-slate-900 font-semibold text-white">
+                  Unlisted (Accessible via direct link)
+                </option>
+                <option value="private" className="bg-slate-900 font-semibold text-white">
+                  Private (Admin &amp; Authenticated team only)
+                </option>
               </select>
               <p className="text-muted-foreground mt-1 text-[10px]">
                 {formData.visibility === 'public' &&
@@ -706,9 +758,15 @@ export const EditPrdPage = () => {
                 onChange={(e) => handleFieldChange('status', e.target.value)}
                 className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:border-emerald-500 focus:outline-none"
               >
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="archived">Archived</option>
+                <option value="draft" className="bg-slate-900 font-semibold text-white">
+                  Draft
+                </option>
+                <option value="published" className="bg-slate-900 font-semibold text-white">
+                  Published
+                </option>
+                <option value="archived" className="bg-slate-900 font-semibold text-white">
+                  Archived
+                </option>
               </select>
             </div>
 

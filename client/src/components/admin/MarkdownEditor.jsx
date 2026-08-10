@@ -427,16 +427,16 @@ export const MarkdownEditor = ({
                 <span className="hidden lg:inline">Code</span>
               </button>
               {codeDropdownOpen && (
-                <div className="border-border bg-card shadow-soft absolute left-0 top-full z-50 mt-1 w-44 space-y-0.5 rounded-xl border p-1.5 font-mono text-xs">
-                  <div className="text-muted-foreground px-2 py-1 text-[10px] font-bold uppercase">
-                    Language
+                <div className="border-border absolute left-0 top-full z-50 mt-1 w-44 space-y-0.5 rounded-xl border bg-slate-900 p-1.5 font-mono text-xs text-white shadow-xl">
+                  <div className="px-2 py-1 text-[10px] font-bold uppercase text-slate-400">
+                    Select Language
                   </div>
                   {['javascript', 'python', 'sql', 'json', 'bash', 'html', 'css'].map((lang) => (
                     <button
                       key={lang}
                       type="button"
                       onClick={() => insertCodeBlock(lang)}
-                      className="text-foreground hover:bg-primary w-full rounded-lg px-2.5 py-1.5 text-left capitalize transition-colors hover:text-white"
+                      className="w-full rounded-lg px-2.5 py-1.5 text-left font-semibold capitalize text-slate-100 transition-colors hover:bg-emerald-600 hover:text-white"
                     >
                       {lang}
                     </button>
@@ -518,13 +518,35 @@ export const MarkdownEditor = ({
 
           {/* Right Media Upload Group */}
           <div className="flex items-center gap-2">
+            <label className="bg-secondary text-foreground hover:bg-secondary flex cursor-pointer items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold shadow-sm transition-colors">
+              <UploadCloud className="h-3.5 w-3.5 text-sky-400" />
+              <span>Import .md</span>
+              <input
+                type="file"
+                accept=".md,.markdown,.txt"
+                className="hidden"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (!file) return;
+                  const reader = new FileReader();
+                  reader.onload = (event) => {
+                    const text = event.target?.result;
+                    if (typeof text === 'string') {
+                      onChange?.(text);
+                    }
+                  };
+                  reader.readAsText(file);
+                  e.target.value = '';
+                }}
+              />
+            </label>
             <button
               type="button"
               onClick={() => {
                 setMediaPickerType('image');
                 setMediaPickerOpen(true);
               }}
-              className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium shadow-sm transition-colors"
+              className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold shadow-sm transition-colors"
               title="Insert Image from Media Library"
             >
               <ImageIcon className="text-primary h-3.5 w-3.5" />
@@ -536,7 +558,7 @@ export const MarkdownEditor = ({
                 setMediaPickerType('pdf');
                 setMediaPickerOpen(true);
               }}
-              className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium shadow-sm transition-colors"
+              className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-semibold shadow-sm transition-colors"
               title="Attach Downloadable PDF Spec"
             >
               <FileText className="h-3.5 w-3.5 text-emerald-400" />
