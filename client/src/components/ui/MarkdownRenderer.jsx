@@ -375,7 +375,7 @@ export const MarkdownRenderer = ({ content = '', className = '' }) => {
         );
       } else if (first.type === 'bold') {
         parts.push(
-          <strong key={idx++} className="font-bold text-white">
+          <strong key={idx++} className="text-foreground font-bold">
             {m[1]}
           </strong>
         );
@@ -399,11 +399,11 @@ export const MarkdownRenderer = ({ content = '', className = '' }) => {
         if (block.type === 'heading') {
           const Tag = `h${block.level}`;
           const styles = {
-            1: 'text-3xl sm:text-4xl font-bold text-white tracking-tight mt-10 mb-4 border-b border-border pb-3',
-            2: 'text-2xl sm:text-3xl font-bold text-white tracking-tight mt-8 mb-3 border-b border-border pb-2',
-            3: 'text-xl sm:text-2xl font-bold text-white tracking-tight mt-6 mb-2.5',
-            4: 'text-lg sm:text-xl font-bold text-white mt-5 mb-2',
-            5: 'text-base font-bold text-white mt-4 mb-1.5 font-mono uppercase tracking-wider',
+            1: 'text-3xl sm:text-4xl font-bold text-foreground tracking-tight mt-10 mb-4 border-b border-border pb-3',
+            2: 'text-2xl sm:text-3xl font-bold text-foreground tracking-tight mt-8 mb-3 border-b border-border pb-2',
+            3: 'text-xl sm:text-2xl font-bold text-foreground tracking-tight mt-6 mb-2.5',
+            4: 'text-lg sm:text-xl font-bold text-foreground mt-5 mb-2',
+            5: 'text-base font-bold text-foreground mt-4 mb-1.5 font-mono uppercase tracking-wider',
             6: 'text-sm font-bold text-muted-foreground mt-3 mb-1 font-mono uppercase tracking-widest',
           };
           return (
