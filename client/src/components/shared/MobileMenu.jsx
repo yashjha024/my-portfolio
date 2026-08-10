@@ -43,7 +43,7 @@ export const MobileMenu = ({ isOpen, onClose, navLinks }) => {
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             onClick={onClose}
-            className="bg-foreground/10 fixed inset-0 z-40 md:hidden"
+            className="bg-background/80 pointer-events-auto fixed inset-0 z-40 backdrop-blur-md md:hidden"
             aria-hidden="true"
           />
           <motion.nav
@@ -52,12 +52,12 @@ export const MobileMenu = ({ isOpen, onClose, navLinks }) => {
             animate={{ y: 0, opacity: 1 }}
             exit={{ y: -12, opacity: 0 }}
             transition={{ duration: 0.18, ease: 'easeOut' }}
-            className="border-border bg-card shadow-soft fixed inset-x-4 top-[76px] z-50 rounded-2xl border p-6 sm:inset-x-6 md:hidden"
+            className="border-border bg-card pointer-events-auto fixed inset-x-4 top-[72px] z-50 rounded-2xl border p-5 shadow-xl sm:inset-x-6 sm:top-[84px] md:hidden"
             aria-label="Mobile Navigation Menu"
             aria-modal="true"
             role="dialog"
           >
-            <div className="flex flex-col space-y-3">
+            <div className="flex flex-col space-y-2">
               {navLinks.map((link) => (
                 <NavLink
                   key={link.to}
@@ -66,23 +66,31 @@ export const MobileMenu = ({ isOpen, onClose, navLinks }) => {
                   onClick={onClose}
                   className={({ isActive }) =>
                     cn(
-                      'flex min-h-[44px] items-center rounded-xl px-4 py-3 text-base font-medium transition-colors',
+                      'flex min-h-[48px] items-center rounded-xl px-4 py-3 text-base font-semibold transition-all duration-150',
                       isActive
-                        ? 'bg-secondary text-foreground border-border border font-bold'
-                        : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
+                        ? 'border-border bg-secondary text-foreground shadow-subtle border font-extrabold'
+                        : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground'
                     )
                   }
                 >
                   {link.label}
                 </NavLink>
               ))}
-              <div className="border-border flex flex-col gap-3 border-t pt-4 sm:flex-row">
+              <div className="border-border mt-2 flex flex-col gap-2.5 border-t pt-4 sm:flex-row">
                 <Button
                   asChild
-                  className="bg-foreground text-background hover:bg-foreground/90 min-h-[44px] w-full justify-center rounded-xl font-semibold"
+                  className="bg-foreground text-background shadow-soft hover:bg-foreground/90 min-h-[48px] w-full justify-center rounded-xl font-bold"
                   onClick={onClose}
                 >
-                  <NavLink to="/resume">Resume</NavLink>
+                  <NavLink to="/resume">View Resume</NavLink>
+                </Button>
+                <Button
+                  asChild
+                  variant="outline"
+                  className="min-h-[48px] w-full justify-center rounded-xl font-bold"
+                  onClick={onClose}
+                >
+                  <NavLink to="/contact">Let&apos;s Talk</NavLink>
                 </Button>
               </div>
             </div>

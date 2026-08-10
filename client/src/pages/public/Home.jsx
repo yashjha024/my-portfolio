@@ -83,18 +83,18 @@ export const Home = () => {
               </p>
 
               {/* Improved CTA Buttons */}
-              <div className="pt-4 flex flex-wrap items-center gap-4">
-                <Button asChild size="lg" className="rounded-2xl bg-foreground text-background hover:bg-foreground/90 px-8 py-6 text-base font-bold shadow-soft transition-transform active:scale-[0.98]">
+              <div className="flex flex-col sm:flex-row flex-wrap items-stretch sm:items-center gap-3 pt-4">
+                <Button asChild size="lg" className="w-full sm:w-auto rounded-2xl bg-foreground text-background hover:bg-foreground/90 px-6 sm:px-8 py-6 text-base font-bold shadow-soft transition-transform active:scale-[0.98] justify-center">
                   <NavLink to="/work">
-                    Explore Case Studies <ArrowRight className="ml-2 w-5 h-5" />
+                    Explore Case Studies <ArrowRight className="ml-2 w-5 h-5 shrink-0" />
                   </NavLink>
                 </Button>
-                <Button variant="outline" size="lg" asChild className="rounded-2xl border border-border bg-card hover:bg-secondary px-8 py-6 text-base font-bold shadow-subtle transition-transform active:scale-[0.98]">
+                <Button variant="outline" size="lg" asChild className="w-full sm:w-auto rounded-2xl border border-border bg-card hover:bg-secondary px-6 sm:px-8 py-6 text-base font-bold shadow-subtle transition-transform active:scale-[0.98] justify-center">
                   <NavLink to="/resume">
                     Interactive Resume
                   </NavLink>
                 </Button>
-                <Button variant="ghost" size="lg" asChild className="rounded-2xl px-6 py-6 text-base font-semibold text-muted-foreground hover:text-foreground">
+                <Button variant="ghost" size="lg" asChild className="w-full sm:w-auto rounded-2xl px-6 py-6 text-base font-semibold text-muted-foreground hover:text-foreground justify-center">
                   <NavLink to="/contact">Let&apos;s Talk →</NavLink>
                 </Button>
               </div>
