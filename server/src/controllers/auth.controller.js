@@ -12,7 +12,14 @@ export const sendMagicLink = async (req, res) => {
         .status(400)
         .json({ success: false, error: 'Please provide a valid email address.' });
     }
-    if (email.toLowerCase() !== process.env.OWNER_EMAIL.toLowerCase()) {
+    const ownerEmail = (process.env.OWNER_EMAIL || '').toLowerCase().trim();
+    if (!ownerEmail) {
+      return res
+        .status(500)
+        .json({ success: false, error: 'Server configuration error: OWNER_EMAIL is missing.' });
+    }
+
+    if (email.toLowerCase() !== ownerEmail) {
       return res
         .status(403)
         .json({ success: false, error: 'This account is not authorized for the owner console.' });
@@ -91,7 +98,15 @@ export const setSession = async (req, res) => {
         .json({ success: false, error: 'Invalid or expired Supabase access token.' });
     }
 
-    const ownerEmail = process.env.OWNER_EMAIL.toLowerCase();
+    const ownerEmail = (process.env.OWNER_EMAIL || '').toLowerCase().trim();
+
+    if (!ownerEmail) {
+      console.error('CRITICAL: OWNER_EMAIL is not set in backend environment variables.');
+      return res
+        .status(500)
+        .json({ success: false, error: 'Server configuration error: OWNER_EMAIL is missing.' });
+    }
+
     if (!authUser.email || authUser.email.toLowerCase() !== ownerEmail) {
       return res
         .status(403)
