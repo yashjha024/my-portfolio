@@ -171,7 +171,7 @@ export const AdminLayout = () => {
       </aside>
 
       {/* Mobile Top Navbar */}
-      <header className="border-border bg-card sticky top-0 z-40 flex items-center justify-between border-b p-4 md:hidden">
+      <header className="border-border bg-card sticky top-0 z-50 flex items-center justify-between border-b p-4 md:hidden">
         <div className="flex items-center gap-2">
           <div className="bg-primary text-primary-foreground flex h-7 w-7 items-center justify-center rounded-lg text-xs font-bold">
             CMS
@@ -181,6 +181,7 @@ export const AdminLayout = () => {
         <button
           onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
           className="text-muted-foreground hover:bg-secondary hover:text-foreground rounded-lg p-2 transition-colors"
+          aria-label="Toggle Mobile Navigation Menu"
         >
           {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
         </button>
@@ -188,7 +189,24 @@ export const AdminLayout = () => {
 
       {/* Mobile Menu Drawer */}
       {mobileMenuOpen && (
-        <div className="bg-background fixed inset-0 z-30 flex flex-col pt-16 md:hidden">
+        <div className="bg-background fixed inset-0 z-40 flex flex-col pt-16 md:hidden">
+          <div className="border-border bg-card border-b p-4">
+            <div className="flex items-center gap-3">
+              <div className="bg-primary/10 text-primary flex h-9 w-9 shrink-0 items-center justify-center rounded-full text-xs font-bold">
+                {user.email?.[0]?.toUpperCase() || 'E'}
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-foreground truncate text-sm font-semibold">
+                  {user.full_name || user.email}
+                </p>
+                <span className="text-success inline-flex items-center gap-1 font-mono text-xs font-medium uppercase">
+                  <UserCheck className="h-3 w-3" />
+                  {user.role || 'Owner'}
+                </span>
+              </div>
+            </div>
+          </div>
+
           <nav className="flex-1 space-y-1 overflow-y-auto p-4">
             {navItems.map((item) => {
               const Icon = item.icon;
@@ -201,7 +219,7 @@ export const AdminLayout = () => {
                   className={({ isActive }) =>
                     `flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all ${
                       isActive
-                        ? 'bg-primary text-primary-foreground font-semibold'
+                        ? 'bg-primary text-primary-foreground font-semibold shadow-sm'
                         : 'text-muted-foreground hover:bg-secondary hover:text-foreground'
                     }`
                   }
@@ -215,7 +233,8 @@ export const AdminLayout = () => {
               );
             })}
           </nav>
-          <div className="border-border flex gap-2 border-t p-4">
+
+          <div className="border-border bg-card flex gap-2 border-t p-4">
             <a
               href="/"
               target="_blank"
@@ -226,7 +245,10 @@ export const AdminLayout = () => {
               <ExternalLink className="h-4 w-4" />
             </a>
             <button
-              onClick={logout}
+              onClick={() => {
+                setMobileMenuOpen(false);
+                logout();
+              }}
               className="flex flex-1 items-center justify-center gap-2 rounded-xl border border-rose-500/20 bg-rose-500/10 py-3 text-sm font-medium text-rose-500"
             >
               <LogOut className="h-4 w-4" />

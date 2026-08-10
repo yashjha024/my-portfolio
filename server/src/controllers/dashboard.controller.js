@@ -55,12 +55,18 @@ export const getDashboardStats = async (req, res) => {
         .select('id, title, slug, status, stage, updated_at')
         .order('updated_at', { ascending: false })
         .limit(5),
-      supabase
-        .from('audit_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(20)
-        .catch(() => ({ data: [] })),
+      (async () => {
+        try {
+          const res = await supabase
+            .from('audit_logs')
+            .select('*')
+            .order('created_at', { ascending: false })
+            .limit(20);
+          return { data: res.data || [] };
+        } catch (_e) {
+          return { data: [] };
+        }
+      })(),
     ]);
 
     const recentActivity = [
