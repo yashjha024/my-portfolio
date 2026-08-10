@@ -12,6 +12,7 @@ export const navLinks = [
   { to: '/thinking', label: 'Product Thinking' },
   { to: '/prds', label: 'PRDs' },
   { to: '/about', label: 'About' },
+  { to: '/contact', label: 'Contact' },
 ];
 
 export const Header = () => {
@@ -24,6 +25,7 @@ export const Header = () => {
     { to: '/thinking', label: profile?.navLabels?.thinking || 'Product Thinking' },
     { to: '/prds', label: profile?.navLabels?.prds || 'PRDs' },
     { to: '/about', label: profile?.navLabels?.about || 'About' },
+    { to: '/contact', label: 'Contact' },
   ];
 
   return (
