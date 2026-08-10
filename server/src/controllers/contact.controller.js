@@ -12,12 +12,6 @@ const contactSchema = z.object({
 
 const deliverContactEmail = async ({ name, email, subject, message }) => {
   if (!process.env.RESEND_API_KEY || process.env.RESEND_API_KEY.includes('placeholder')) {
-    if (
-      process.env.NODE_ENV === 'production' &&
-      !process.env.RESEND_API_KEY?.includes('placeholder')
-    ) {
-      throw new Error('Email provider not configured for production delivery');
-    }
     console.log(`[MOCK EMAIL] To: ${process.env.OWNER_EMAIL}, Subject: ${subject}`);
     return true; // Mock success
   }
@@ -37,7 +31,8 @@ const deliverContactEmail = async ({ name, email, subject, message }) => {
   });
   if (!response.ok) {
     const errorBody = await response.text().catch(() => 'Unknown error');
-    throw new Error(`Contact email delivery failed: ${errorBody}`);
+    console.warn(`Contact email delivery warning: ${errorBody}`);
+    return false;
   }
   return true;
 };
@@ -49,13 +44,6 @@ export const submitContactForm = async (req, res, next) => {
     // Spam check / Honeypot per PRD Section 9
     if (validatedData.honeypot && validatedData.honeypot.trim() !== '') {
       return res.status(200).json({ success: true, message: 'Message sent successfully' });
-    }
-
-    if (process.env.NODE_ENV === 'production' && !process.env.RESEND_API_KEY) {
-      return res.status(503).json({
-        success: false,
-        error: 'Contact form is currently unavailable: email service is not configured.',
-      });
     }
 
     const fullSubject = validatedData.purpose
@@ -97,10 +85,7 @@ export const submitContactForm = async (req, res, next) => {
       .single();
 
     if (dbError || !dbMessage) {
-      console.error(
-        'Database error storing contact message (continuing to email delivery):',
-        dbError
-      );
+      console.error('Database error storing contact message:', dbError);
     }
 
     try {
@@ -111,18 +96,7 @@ export const submitContactForm = async (req, res, next) => {
         message: validatedData.message,
       });
     } catch (deliveryError) {
-      console.error('Email delivery error, rolling back DB row:', deliveryError);
-      if (dbMessage?.id) {
-        await supabase
-          .from('contact_messages')
-          .delete()
-          .eq('id', dbMessage.id)
-          .catch(() => null);
-      }
-      return res.status(502).json({
-        success: false,
-        error: 'Failed to send notification email. Please try again later.',
-      });
+      console.warn('Email delivery error (message saved to DB):', deliveryError);
     }
 
     res.status(200).json({
