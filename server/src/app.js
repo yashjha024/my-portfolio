@@ -40,9 +40,23 @@ app.use(
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
   })
 );
+const isAllowedOrigin = (origin) => {
+  if (!origin) return true;
+  const configured = process.env.CLIENT_URL || 'http://localhost:5173';
+  if (origin === configured) return true;
+  if (origin.endsWith('.vercel.app')) return true;
+  return false;
+};
+
 app.use(
   cors({
-    origin: process.env.CLIENT_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      if (isAllowedOrigin(origin)) {
+        callback(null, true);
+      } else {
+        callback(null, false);
+      }
+    },
     credentials: true,
   })
 );
@@ -78,8 +92,7 @@ app.get('/api/csrf-token', (req, res) => {
 app.use((req, res, next) => {
   if (['POST', 'PUT', 'PATCH', 'DELETE'].includes(req.method) && req.path !== '/api/contact') {
     const origin = req.get('origin');
-    const allowedOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
-    if (origin && origin !== allowedOrigin) {
+    if (origin && !isAllowedOrigin(origin)) {
       return res.status(403).json({ success: false, error: 'Invalid request origin.' });
     }
 
