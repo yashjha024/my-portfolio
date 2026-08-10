@@ -54,26 +54,13 @@ export const AuthProvider = ({ children }) => {
 
   const sendMagicLink = async (email) => {
     try {
-      // Initiate directly via client Supabase SDK first
-      const { error } = await supabase.auth.signInWithOtp({
-        email,
-        options: {
-          redirectTo: `${window.location.origin}/auth/callback`,
-        },
-      });
-      if (error) throw error;
-      return { success: true, message: 'Magic link sent successfully. Please check your inbox.' };
+      const { data } = await api.post('/auth/magic-link', { email });
+      return data;
     } catch (err) {
-      console.warn('Client OTP sign-in warning, trying server API endpoint:', err.message);
-      try {
-        const { data } = await api.post('/auth/magic-link', { email });
-        return data;
-      } catch (backendErr) {
-        return {
-          success: false,
-          error: backendErr?.response?.data?.error || err.message || 'Error sending magic link.',
-        };
-      }
+      return {
+        success: false,
+        error: err?.response?.data?.error || err.message || 'Error sending magic link.',
+      };
     }
   };
 
