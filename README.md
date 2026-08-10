@@ -1,147 +1,126 @@
-# Product Management Portfolio Platform — Production MERN Codebase
+# Product Management Portfolio Platform — Production Codebase
 
-A production-grade, interview-ready **Product Management Portfolio Platform** built strictly to the specifications of the Product Requirements Document (`product-management-portfolio-prd.md`) using a modern **MERN Stack** (MongoDB Atlas, Express.js, React 19 + Vite, Node.js) written in pure **JavaScript (`.js` / `.jsx`)**.
+A production-grade, interview-ready **Product Management Portfolio Platform** built strictly for product leaders, hiring managers, and recruiters using a modern **Full-Stack JavaScript Architecture** (Supabase PostgreSQL, Supabase Auth, Express.js API, React 19 + Vite, Tailwind CSS, Framer Motion).
+
+---
+
+## ✨ Key Features & Capabilities
+
+### 📄 PRD Spec Management & Markdown Importer
+
+- **Live Markdown Editor**: Split-screen live preview with syntax highlighting, mermaid diagrams, custom callouts, and drag-and-drop media uploads.
+- **Import Markdown (`.md`) Files**: One-click import tool to upload pre-existing `.md`, `.markdown`, or `.txt` spec files directly into the PRD editor with auto-extracted title headers.
+- **Granular Spec Access & Visibility**: Toggle development stage (_In Development_, _In Review_, _Approved_, _Shipped_) and access level (_Public_, _Unlisted direct-link_, _Private_).
+- **Downloadable PDF Specs**: Attach and download full PDF specification artifacts.
+
+### 📬 Resend Email Delivery & Contact Inbox
+
+- **Direct Inbox Delivery**: Contact form inquiries are automatically forwarded to `yashjha024@gmail.com` via **Resend API**.
+- **One-Click Reply**: Native `reply_to` configuration allowing one-click responses directly from your Gmail inbox.
+- **Spam & Deduplication Guard**: Honeypot bot protection and 5-minute submission deduplication.
+- **Admin Inquiries Management**: All inquiries are saved to Supabase database and readable in **Admin → Inquiries & Inbox** (`/admin/messages`).
+
+### 🎨 Editorial Public Portfolio & Redesigned Footer
+
+- **Warm Editorial Visual System**: Restrained typography, subtle off-white background palette, thin borders, and responsive grid layouts.
+- **Product-Focused Footer**: Identity block (_Product • AI • Technology_), positioning statement, quick explore navigation (`/work`, `/thinking`, `/prds`, `/about`), and smooth _Back to Top_ scrolling.
+- **Discreet Public Interface**: Exposes product work and case studies while keeping admin access secured via protected `/admin` and `/login` routes.
+
+### 🔐 Supabase Auth Architecture
+
+- **Google OAuth 2.0 + Passwordless Magic Link OTP**: Reactivated Supabase Auth for single-click Google sign-in and passwordless email links.
+- **Strict Server Owner Authorization**: Middleware verifies authenticated session tokens against `OWNER_EMAIL` (`yashjha024@gmail.com`) and automatically revokes unauthorized access attempts.
 
 ---
 
 ## 🏗️ Architecture Overview
 
-The platform uses a monorepo structure with distinct `client/` and `server/` packages:
+The platform uses a clean monorepo structure with distinct `client/` and `server/` packages:
 
 ```text
 portfolio/
-├── client/                 # React 19 + Vite + Tailwind CSS + shadcn/ui + Framer Motion (SPA)
+├── client/                 # React 19 + Vite + Tailwind CSS + Framer Motion (SPA)
 │   ├── src/
-│   │   ├── components/     # UI primitives & shared navigation guards (`ProtectedAdminRoute`)
-│   │   ├── context/        # `AuthContext` (Google OAuth login, profile verification, logout)
+│   │   ├── components/     # UI primitives, MarkdownEditor, AdminLayout, shared Footer
+│   │   ├── context/        # `AuthContext` (Supabase Auth session sync & owner checks)
 │   │   ├── pages/
-│   │   │   ├── public/     # Public portfolio pages (`/`, `/work`, `/thinking`, `/prds`, etc.)
-│   │   │   └── admin/      # Private owner console (`/admin`, `/admin/work`, `/admin/media`, etc.)
-│   │   ├── services/       # Axios client with automatic HTTP-Only token refresh interceptor
-│   │   └── utils/          # shadcn `cn()` helper & utilities
+│   │   │   ├── public/     # Public portfolio pages (`/`, `/work`, `/thinking`, `/prds`, `/about`, `/contact`)
+│   │   │   ├── admin/      # Private owner console (`/admin`, `/admin/work`, `/admin/prds`, `/admin/messages`)
+│   │   │   └── auth/       # Auth callback & login screens (`/login`, `/auth/callback`)
+│   │   ├── services/       # Axios client with automatic Bearer token interceptor
+│   │   └── utils/          # Formatting & helper utilities
 │   ├── index.html
-│   └── vite.config.js      # Proxy setup (`/api` -> `http://localhost:5000`)
-├── server/                 # Express.js API + MongoDB Atlas + Cloudinary + Google OAuth
+│   └── vite.config.js
+├── server/                 # Express.js API + Supabase PostgreSQL + Resend Email API
 │   ├── src/
-│   │   ├── config/         # MongoDB Atlas (`db.js`), Cloudinary (`cloudinary.js`), Passport OAuth (`passport.js`)
-│   │   ├── controllers/    # API logic (`auth`, `work`, `thinking`, `prd`, `media`, `contact`)
-│   │   ├── middleware/     # Secure cookie auth verification (`auth.middleware.js`), admin access guard (`admin.middleware.js`)
-│   │   ├── models/         # Mongoose schemas (`User`, `CaseStudy`, `Article`, `Prd`)
-│   │   ├── routes/         # Express REST routers
-│   │   └── utils/          # JWT generation and HTTP-Only SameSite cookie handling (`token.utils.js`)
-│   ├── server.js           # Server startup script
-│   └── package.json
-└── package.json            # Workspace orchestration runner (`dev`, `lint`, `format`)
+│   │   ├── config/         # Supabase client (`supabase.js`)
+│   │   ├── controllers/    # Controllers (`auth`, `work`, `thinking`, `prd`, `media`, `messages`, `contact`)
+│   │   ├── middleware/     # Auth verification (`auth.middleware.js`), owner access guard (`admin.middleware.js`)
+│   │   ├── routes/         # Express REST API routes
+│   │   └── utils/          # Token cookie handling & utilities
+│   └── server.js           # Server entry point
+└── vercel.json             # Vercel SPA rewrite configuration
 ```
 
 ---
 
-## 🔐 Security & Authentication Architecture
+## 🌐 Production Deployment Architecture
 
-1. **Google OAuth 2.0 (`passport-google-oauth20`)**:
-   - Passwordless, secure sign-in via Google.
-   - Automatically assigns `admin` role if the Google email matches `OWNER_EMAIL` in server environment variables.
-2. **Dual JWT Tokens via Secure HTTP-Only Cookies**:
-   - **Access Token (15m expiration)**: Stored in an `httpOnly`, `secure`, `sameSite: 'strict'` cookie. Prevents XSS token theft.
-   - **Refresh Token (7d expiration)**: Verified against the database; automatically rotates access tokens without prompting the user to log in again.
-3. **Admin Middleware Guard (`verifyAdmin`)**:
-   - Strictly enforces server-side authorization on every content mutation (`POST`, `PUT`, `DELETE`) and media upload (`/api/media/upload`).
-4. **Cloudinary Secure Uploads (`multer-storage-cloudinary`)**:
-   - Direct server-side validated uploads strictly limiting file size and allowed formats (`jpg`, `png`, `webp`, `pdf`).
+- **Frontend SPA**: Deployed on **Vercel** (`https://yashjha.vercel.app`)
+- **Backend API**: Deployed on **Railway** (`https://portfolio-server-production-4788.up.railway.app`)
+- **Database & Authentication**: **Supabase** (PostgreSQL & Supabase Auth)
+- **Transactional Email**: **Resend** (`https://api.resend.com`)
 
 ---
 
-## 🚀 Getting Started
+## 🚀 Getting Started Locally
 
-### 1. Prerequisites
+### 1. Environment Variables Configuration
 
-- **Node.js** (v20+ recommended)
-- **MongoDB Atlas** database cluster
-- **Google Cloud Console** OAuth 2.0 Client ID & Secret
-- **Cloudinary** Account for media/file storage
-
-### 2. Environment Variables Configuration
-
-Copy `server/.env.example` to `server/.env` and fill in your credentials:
-
-```bash
-cp server/.env.example server/.env
-```
+Configure `server/.env`:
 
 ```env
 PORT=5000
 NODE_ENV=development
 CLIENT_URL=http://localhost:5173
 
-# MongoDB Atlas
-MONGODB_URI=mongodb+srv://username:password@cluster.mongodb.net/portfolio?retryWrites=true&w=majority
+# Supabase PostgreSQL & Auth
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
 
-# JWT Secrets
-JWT_ACCESS_SECRET=your_secret_access_key
-JWT_REFRESH_SECRET=your_secret_refresh_key
-
-# Google OAuth 2.0 Credentials
-GOOGLE_CLIENT_ID=your_client_id.apps.googleusercontent.com
-GOOGLE_CLIENT_SECRET=your_client_secret
-GOOGLE_CALLBACK_URL=http://localhost:5000/api/auth/google/callback
-
-# Cloudinary Setup
-CLOUDINARY_CLOUD_NAME=your_cloud_name
-CLOUDINARY_API_KEY=your_api_key
-CLOUDINARY_API_SECRET=your_api_secret
-
-# Admin Owner Email
+# Owner Email
 OWNER_EMAIL=yashjha024@gmail.com
+
+# Resend Transactional Email Delivery
+RESEND_API_KEY=re_your_api_key
+CONTACT_EMAIL=yashjha024@gmail.com
 ```
 
-### 3. Install Dependencies
+### 2. Install Dependencies & Run
 
-From the project root:
+From project root:
 
 ```bash
+# Install dependencies
 npm install
+
+# Run Frontend and Backend concurrently
+npm run dev
 ```
 
----
-
-## 🛠️ Development & Build Commands
-
-- **Run both Client and Server concurrently:**
-
-  ```bash
-  npm run dev
-  ```
-  - Frontend: `http://localhost:5173`
-  - Backend API: `http://localhost:5000`
-
-- **Run Server Only:**
-
-  ```bash
-  npm run dev:server
-  ```
-
-- **Run Client Only:**
-
-  ```bash
-  npm run dev:client
-  ```
-
-- **Verify Frontend Build:**
-
-  ```bash
-  npm run build
-  ```
-
-- **Lint & Format Codebase:**
-  ```bash
-  npm run lint
-  npm run format
-  ```
+- Frontend SPA: `http://localhost:5173`
+- Backend API: `http://localhost:5000`
 
 ---
 
-## 📜 Alignment with PRD Scope
+## 🛠️ Verification & Build Commands
 
-- **Public Experience**: Strict separation between public published items (`status: 'published'`) and unlisted/private PRD artifacts (`visibility: ['public', 'unlisted', 'private']`).
-- **Private Admin Console**: Complete CRUD support for Case Studies, Product Thinking articles, PRD libraries, and Cloudinary media assets accessible exclusively by the authenticated `admin` profile.
-- **Spam Protection**: Contact form controller includes server-side Zod validation and a honeypot field per PRD Section 9.
+```bash
+# Verify Frontend Production Build
+npm run build --prefix client
+
+# Lint and Format Codebase
+npm run lint
+npm run format
+```
