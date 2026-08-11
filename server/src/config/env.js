@@ -20,14 +20,20 @@ const validateEnv = () => {
     );
   }
 
+  const cleanEmail = (str) =>
+    (str || '')
+      .toLowerCase()
+      .replace(/^['"]|['"]$/g, '')
+      .trim();
+
   return {
     PORT: process.env.PORT || 5000,
     NODE_ENV: process.env.NODE_ENV || 'development',
     CLIENT_URL: process.env.CLIENT_URL || 'http://localhost:5173',
     SUPABASE_URL: supabaseUrl,
     SUPABASE_SERVICE_ROLE_KEY: supabaseServiceKey,
-    OWNER_EMAIL: ownerEmail.toLowerCase(),
-    CONTACT_EMAIL: process.env.CONTACT_EMAIL || ownerEmail,
+    OWNER_EMAIL: cleanEmail(ownerEmail),
+    CONTACT_EMAIL: cleanEmail(process.env.CONTACT_EMAIL || ownerEmail),
     RESEND_API_KEY: process.env.RESEND_API_KEY || '',
   };
 };
