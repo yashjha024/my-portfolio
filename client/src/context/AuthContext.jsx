@@ -14,6 +14,8 @@ export const AuthProvider = ({ children }) => {
       // This is critical on page refresh since HTTP-only cookies set by the Railway
       // backend may not be forwarded by the Vercel proxy on subsequent requests.
       let bearerToken = null;
+      let sbUserFromSession = null;
+
       if (supabase) {
         try {
           const {
@@ -21,40 +23,60 @@ export const AuthProvider = ({ children }) => {
           } = await supabase.auth.getSession();
           if (session?.access_token) {
             bearerToken = session.access_token;
+            sbUserFromSession = session.user;
           }
         } catch (_e) {
           // Ignore session retrieval errors
         }
       }
 
-      // Call /auth/me — the Axios interceptor will attach the Bearer token from
-      // supabase.auth.getSession() automatically. We additionally pass it explicitly
-      // to ensure it is present even if the interceptor timing differs.
-      const config = bearerToken ? { headers: { Authorization: `Bearer ${bearerToken}` } } : {};
-
-      const { data } = await api.get('/auth/me', config);
-      if (data && data.success && data.user) {
-        setUser(data.user);
-        return data.user;
+      // Try calling /auth/me with explicit Bearer token
+      let meSuccess = false;
+      if (bearerToken) {
+        try {
+          const { data } = await api.get('/auth/me', {
+            headers: { Authorization: `Bearer ${bearerToken}` },
+          });
+          if (data && data.success && data.user) {
+            setUser(data.user);
+            meSuccess = true;
+            return data.user;
+          }
+        } catch (apiErr) {
+          console.warn('Backend /auth/me note:', apiErr?.response?.data || apiErr.message);
+        }
       }
 
-      // If the server returned no valid user but we have a Supabase session,
-      // construct the user from Supabase session data as a resilient fallback.
+      if (!meSuccess) {
+        try {
+          const { data } = await api.get('/auth/me');
+          if (data && data.success && data.user) {
+            setUser(data.user);
+            return data.user;
+          }
+        } catch (_e) {
+          // Ignore fallback error
+        }
+      }
+
+      // Resilient Fallback: If backend /auth/me failed or returned non-200, check active Supabase owner session
       if (bearerToken && supabase) {
         try {
           const {
             data: { user: sbUser },
           } = await supabase.auth.getUser(bearerToken);
+          const activeUser = sbUser || sbUserFromSession;
           const ownerEmail = (import.meta.env.VITE_OWNER_EMAIL || 'yashjha024@gmail.com')
             .toLowerCase()
             .trim();
-          if (sbUser?.email?.toLowerCase().trim() === ownerEmail) {
+          if (activeUser?.email?.toLowerCase().trim() === ownerEmail) {
             const fallbackUser = {
-              id: sbUser.id,
-              email: sbUser.email,
-              full_name: sbUser.user_metadata?.full_name || sbUser.email?.split('@')[0] || 'Owner',
+              id: activeUser.id,
+              email: activeUser.email,
+              full_name:
+                activeUser.user_metadata?.full_name || activeUser.email?.split('@')[0] || 'Owner',
               role: 'owner',
-              avatar_url: sbUser.user_metadata?.avatar_url || null,
+              avatar_url: activeUser.user_metadata?.avatar_url || null,
             };
             setUser(fallbackUser);
             return fallbackUser;
@@ -66,8 +88,6 @@ export const AuthProvider = ({ children }) => {
 
       setUser(null);
     } catch (_error) {
-      // Server verification is the authority for owner access. A local Supabase
-      // session never grants a role while the API is unavailable.
       setUser(null);
     } finally {
       setLoading(false);
