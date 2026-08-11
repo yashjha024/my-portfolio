@@ -10,9 +10,6 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = useCallback(async () => {
     try {
-      // First, try to get the Supabase session persisted in localStorage.
-      // This is critical on page refresh since HTTP-only cookies set by the Railway
-      // backend may not be forwarded by the Vercel proxy on subsequent requests.
       let bearerToken = null;
       let sbUserFromSession = null;
 
@@ -30,63 +27,62 @@ export const AuthProvider = ({ children }) => {
         }
       }
 
-      // Try calling /auth/me with explicit Bearer token
-      let meSuccess = false;
-      if (bearerToken) {
-        try {
-          const { data } = await api.get('/auth/me', {
-            headers: { Authorization: `Bearer ${bearerToken}` },
-          });
-          if (data && data.success && data.user) {
-            setUser(data.user);
-            meSuccess = true;
-            return data.user;
-          }
-        } catch (apiErr) {
-          console.warn('Backend /auth/me note:', apiErr?.response?.data || apiErr.message);
-        }
+      const ownerEmail = (import.meta.env.VITE_OWNER_EMAIL || 'yashjha024@gmail.com')
+        .toLowerCase()
+        .trim();
+
+      // Fast-Path: If local Supabase session exists for owner, hydrate user immediately (< 50ms)
+      if (sbUserFromSession?.email?.toLowerCase().trim() === ownerEmail) {
+        const localUser = {
+          id: sbUserFromSession.id,
+          email: sbUserFromSession.email,
+          full_name:
+            sbUserFromSession.user_metadata?.full_name ||
+            sbUserFromSession.email?.split('@')[0] ||
+            'Owner',
+          role: 'owner',
+          avatar_url: sbUserFromSession.user_metadata?.avatar_url || null,
+        };
+        setUser(localUser);
+        setLoading(false); // Unblock UI instantly
       }
 
-      if (!meSuccess) {
+      // Fast-timeout backend check (3s max) so slow Railway cold-starts don't block the UI
+      if (bearerToken) {
         try {
-          const { data } = await api.get('/auth/me');
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 3500);
+          const { data } = await api.get('/auth/me', {
+            headers: { Authorization: `Bearer ${bearerToken}` },
+            signal: controller.signal,
+          });
+          clearTimeout(timer);
+          if (data && data.success && data.user) {
+            setUser(data.user);
+            return data.user;
+          }
+        } catch (_apiErr) {
+          // Ignore backend timeout/error, keep local authenticated user
+        }
+      } else {
+        // Try fallback cookie check with 3s max timeout
+        try {
+          const controller = new AbortController();
+          const timer = setTimeout(() => controller.abort(), 3500);
+          const { data } = await api.get('/auth/me', { signal: controller.signal });
+          clearTimeout(timer);
           if (data && data.success && data.user) {
             setUser(data.user);
             return data.user;
           }
         } catch (_e) {
-          // Ignore fallback error
-        }
-      }
-
-      // Resilient Fallback: If backend /auth/me failed or returned non-200, check active Supabase owner session
-      if (bearerToken && supabase) {
-        try {
-          const {
-            data: { user: sbUser },
-          } = await supabase.auth.getUser(bearerToken);
-          const activeUser = sbUser || sbUserFromSession;
-          const ownerEmail = (import.meta.env.VITE_OWNER_EMAIL || 'yashjha024@gmail.com')
-            .toLowerCase()
-            .trim();
-          if (activeUser?.email?.toLowerCase().trim() === ownerEmail) {
-            const fallbackUser = {
-              id: activeUser.id,
-              email: activeUser.email,
-              full_name:
-                activeUser.user_metadata?.full_name || activeUser.email?.split('@')[0] || 'Owner',
-              role: 'owner',
-              avatar_url: activeUser.user_metadata?.avatar_url || null,
-            };
-            setUser(fallbackUser);
-            return fallbackUser;
-          }
-        } catch (_sbErr) {
           // Ignore
         }
       }
 
-      setUser(null);
+      if (!sbUserFromSession || sbUserFromSession.email?.toLowerCase().trim() !== ownerEmail) {
+        setUser(null);
+      }
     } catch (_error) {
       setUser(null);
     } finally {
