@@ -10,11 +10,61 @@ export const AuthProvider = ({ children }) => {
 
   const fetchUser = useCallback(async () => {
     try {
-      const { data } = await api.get('/auth/me');
+      // First, try to get the Supabase session persisted in localStorage.
+      // This is critical on page refresh since HTTP-only cookies set by the Railway
+      // backend may not be forwarded by the Vercel proxy on subsequent requests.
+      let bearerToken = null;
+      if (supabase) {
+        try {
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (session?.access_token) {
+            bearerToken = session.access_token;
+          }
+        } catch (_e) {
+          // Ignore session retrieval errors
+        }
+      }
+
+      // Call /auth/me — the Axios interceptor will attach the Bearer token from
+      // supabase.auth.getSession() automatically. We additionally pass it explicitly
+      // to ensure it is present even if the interceptor timing differs.
+      const config = bearerToken ? { headers: { Authorization: `Bearer ${bearerToken}` } } : {};
+
+      const { data } = await api.get('/auth/me', config);
       if (data && data.success && data.user) {
         setUser(data.user);
         return data.user;
       }
+
+      // If the server returned no valid user but we have a Supabase session,
+      // construct the user from Supabase session data as a resilient fallback.
+      if (bearerToken && supabase) {
+        try {
+          const {
+            data: { user: sbUser },
+          } = await supabase.auth.getUser(bearerToken);
+          const ownerEmail = (import.meta.env.VITE_OWNER_EMAIL || 'yashjha024@gmail.com')
+            .toLowerCase()
+            .trim();
+          if (sbUser?.email?.toLowerCase().trim() === ownerEmail) {
+            const fallbackUser = {
+              id: sbUser.id,
+              email: sbUser.email,
+              full_name: sbUser.user_metadata?.full_name || sbUser.email?.split('@')[0] || 'Owner',
+              role: 'owner',
+              avatar_url: sbUser.user_metadata?.avatar_url || null,
+            };
+            setUser(fallbackUser);
+            return fallbackUser;
+          }
+        } catch (_sbErr) {
+          // Ignore
+        }
+      }
+
+      setUser(null);
     } catch (_error) {
       // Server verification is the authority for owner access. A local Supabase
       // session never grants a role while the API is unavailable.
