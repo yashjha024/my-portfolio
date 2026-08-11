@@ -147,7 +147,7 @@ export const ManageThinkingPage = () => {
             <BookOpen className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">
+            <h1 className="text-2xl font-bold tracking-tight text-[#171717]">
               Product Thinking Articles
             </h1>
             <p className="text-muted-foreground mt-0.5 text-sm">
@@ -174,7 +174,7 @@ export const ManageThinkingPage = () => {
             placeholder="Search title, excerpt, or body..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="border-border bg-background placeholder:text-muted-foreground w-full rounded-xl border py-2 pl-10 pr-4 text-sm text-white transition-colors focus:border-violet-500 focus:outline-none"
+            className="border-border bg-background placeholder:text-muted-foreground w-full rounded-xl border py-2 pl-10 pr-4 text-sm text-[#171717] transition-colors focus:border-violet-500 focus:outline-none"
           />
         </form>
 
@@ -188,7 +188,7 @@ export const ManageThinkingPage = () => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="border-border bg-background rounded-xl border px-3 py-1.5 text-xs font-medium text-white focus:border-violet-500 focus:outline-none"
+              className="border-border bg-background rounded-xl border px-3 py-1.5 text-xs font-medium text-[#171717] focus:border-violet-500 focus:outline-none"
             >
               <option value="all">All Statuses</option>
               <option value="published">Published</option>
@@ -205,7 +205,7 @@ export const ManageThinkingPage = () => {
                 setTypeFilter(e.target.value);
                 setPage(1);
               }}
-              className="border-border bg-background rounded-xl border px-3 py-1.5 text-xs font-medium text-white focus:border-violet-500 focus:outline-none"
+              className="border-border bg-background rounded-xl border px-3 py-1.5 text-xs font-medium text-[#171717] focus:border-violet-500 focus:outline-none"
             >
               <option value="all">All Types</option>
               <option value="teardown">Teardown</option>
@@ -235,11 +235,11 @@ export const ManageThinkingPage = () => {
           </div>
         ) : error ? (
           <div className="p-12 text-center">
-            <AlertCircle className="mx-auto mb-2 h-8 w-8 text-rose-400" />
-            <p className="font-medium text-rose-300">{error}</p>
+            <AlertCircle className="mx-auto mb-2 h-8 w-8 text-rose-500" />
+            <p className="font-medium text-rose-600">{error}</p>
             <button
               onClick={fetchArticles}
-              className="bg-secondary text-foreground hover:bg-secondary mt-4 rounded-xl px-4 py-2 font-mono text-xs"
+              className="bg-secondary text-foreground hover:bg-secondary mt-4 rounded-xl px-4 py-2 font-mono text-xs font-semibold"
             >
               Retry Connection
             </button>
@@ -247,7 +247,7 @@ export const ManageThinkingPage = () => {
         ) : articles.length === 0 ? (
           <div className="p-16 text-center">
             <BookOpen className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
-            <h3 className="mb-1 text-base font-bold text-white">No Articles Found</h3>
+            <h3 className="mb-1 text-base font-bold text-[#171717]">No Articles Found</h3>
             <p className="text-muted-foreground mx-auto mb-6 max-w-sm text-xs">
               No product teardowns or feature proposals match your current filters.
             </p>
@@ -276,7 +276,7 @@ export const ManageThinkingPage = () => {
                 {articles.map((item) => (
                   <tr key={item.id} className="hover:bg-secondary group transition-colors">
                     <td className="px-5 py-4">
-                      <div className="font-bold text-white transition-colors group-hover:text-violet-300">
+                      <div className="font-bold text-[#171717] transition-colors group-hover:text-violet-600">
                         {item.title}
                       </div>
                       <div className="text-muted-foreground mt-0.5 font-mono text-xs">

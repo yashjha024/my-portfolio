@@ -120,7 +120,7 @@ export const ManageMessagesPage = () => {
         <div>
           <div className="mb-1 flex items-center gap-2">
             <MessageSquare className="text-primary h-6 w-6" />
-            <h1 className="font-heading text-2xl font-bold tracking-tight text-white">
+            <h1 className="font-heading text-2xl font-bold tracking-tight text-[#171717]">
               Inquiries & Inbox
             </h1>
           </div>
@@ -145,7 +145,7 @@ export const ManageMessagesPage = () => {
               className={`rounded-lg px-3 py-1.5 font-mono text-xs uppercase capitalize transition-colors ${
                 activeTab === tab
                   ? 'bg-primary font-bold text-white shadow-sm'
-                  : 'text-muted-foreground hover:bg-secondary hover:text-white'
+                  : 'text-muted-foreground hover:bg-secondary hover:text-[#171717]'
               }`}
             >
               {tab === 'all' ? 'All Messages' : tab}
@@ -160,14 +160,14 @@ export const ManageMessagesPage = () => {
             placeholder="Search name, email, subject, keyword..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
-            className="border-border bg-background placeholder:text-muted-foreground focus:border-primary/40 w-full rounded-xl border py-2 pl-10 pr-4 text-sm text-white transition-colors focus:outline-none"
+            className="border-border bg-background placeholder:text-muted-foreground focus:border-primary/40 w-full rounded-xl border py-2 pl-10 pr-4 text-sm text-[#171717] transition-colors focus:outline-none"
           />
         </div>
       </div>
 
       {error && (
-        <div className="flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-300">
-          <AlertCircle className="h-5 w-5 shrink-0 text-rose-400" />
+        <div className="flex items-center gap-2 rounded-xl border border-rose-500/30 bg-rose-500/10 p-4 text-sm text-rose-600">
+          <AlertCircle className="h-5 w-5 shrink-0 text-rose-600" />
           <span>{error}</span>
         </div>
       )}
@@ -184,11 +184,11 @@ export const ManageMessagesPage = () => {
           <div className="text-primary mx-auto flex h-12 w-12 items-center justify-center rounded-2xl bg-indigo-500/10">
             <Inbox className="h-6 w-6" />
           </div>
-          <h3 className="text-base font-bold text-white">No Inquiries Found</h3>
+          <h3 className="text-base font-bold text-[#171717]">No Inquiries Found</h3>
           <p className="text-muted-foreground mx-auto max-w-sm text-xs leading-relaxed">
             {searchQuery
               ? 'No messages matched your search query. Try broadening your keywords.'
-              : `There are currently no messages marked as"${activeTab}".`}
+              : `There are currently no messages marked as "${activeTab}".`}
           </p>
         </div>
       ) : (
@@ -208,15 +208,15 @@ export const ManageMessagesPage = () => {
                   }}
                   className={`cursor-pointer rounded-xl border p-4 transition-all ${
                     isSelected
-                      ? 'border-primary/40 bg-indigo-950/40 shadow-md'
+                      ? 'border-primary/40 bg-indigo-50/50 shadow-sm'
                       : 'border-border bg-card hover:border-border hover:bg-secondary'
                   }`}
                 >
                   <div className="mb-1.5 flex items-center justify-between gap-2">
-                    <span className="truncate text-sm font-bold text-white">{m.name}</span>
+                    <span className="truncate text-sm font-bold text-[#171717]">{m.name}</span>
                     <StatusBadge status={m.status} variant={getStatusBadgeVariant(m.status)} />
                   </div>
-                  <p className="text-primary mb-2 truncate font-mono text-xs">
+                  <p className="text-primary mb-2 truncate font-mono text-xs font-medium">
                     {m.subject || 'General Inquiry'}
                   </p>
                   <p className="text-muted-foreground mb-3 line-clamp-2 text-xs leading-relaxed">
@@ -237,7 +237,7 @@ export const ManageMessagesPage = () => {
               <div className="border-border flex flex-col items-start justify-between gap-4 border-b pb-4 sm:flex-row sm:items-center">
                 <div>
                   <div className="mb-1 flex items-center gap-2">
-                    <h2 className="text-lg font-bold tracking-tight text-white">
+                    <h2 className="text-lg font-bold tracking-tight text-[#171717]">
                       {selectedMessage.subject}
                     </h2>
                     <StatusBadge
@@ -250,7 +250,7 @@ export const ManageMessagesPage = () => {
                       <User className="text-primary h-3.5 w-3.5" />
                       {selectedMessage.name}
                     </span>
-                    <span className="text-primary flex items-center gap-1.5">
+                    <span className="text-primary flex items-center gap-1.5 font-medium">
                       <Mail className="h-3.5 w-3.5" />
                       <a href={`mailto:${selectedMessage.email}`} className="hover:underline">
                         {selectedMessage.email}
@@ -270,7 +270,7 @@ export const ManageMessagesPage = () => {
                   <button
                     onClick={() => deleteMessageItem(selectedMessage.id)}
                     disabled={actionLoading}
-                    className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-2.5 py-2 text-xs text-rose-300 transition-colors hover:bg-rose-500/20"
+                    className="rounded-xl border border-rose-500/30 bg-rose-500/10 px-2.5 py-2 text-xs text-rose-600 transition-colors hover:bg-rose-500/20"
                     title="Delete Inquiry"
                   >
                     <Trash2 className="h-3.5 w-3.5" />
@@ -279,7 +279,7 @@ export const ManageMessagesPage = () => {
               </div>
 
               {/* Message Body Content */}
-              <div className="border-border bg-background text-foreground whitespace-pre-wrap rounded-xl border p-5 font-sans text-sm leading-relaxed">
+              <div className="border-border bg-background whitespace-pre-wrap rounded-xl border p-5 font-sans text-sm leading-relaxed text-[#171717]">
                 {selectedMessage.message}
               </div>
 
@@ -307,7 +307,7 @@ export const ManageMessagesPage = () => {
                       className={`flex items-center gap-1 rounded-lg px-2.5 py-1.5 font-mono text-xs uppercase transition-colors ${
                         selectedMessage.status === st
                           ? 'bg-secondary text-muted-foreground cursor-not-allowed font-bold opacity-60'
-                          : 'border-border bg-background text-foreground hover:border-border border hover:text-white'
+                          : 'border-border bg-background hover:border-border border text-[#171717] hover:text-black'
                       }`}
                     >
                       {selectedMessage.status === st && <Check className="text-primary h-3 w-3" />}

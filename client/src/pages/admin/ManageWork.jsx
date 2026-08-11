@@ -162,7 +162,9 @@ export const ManageWorkPage = () => {
             <Briefcase className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">Case Studies & Work</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-[#171717]">
+              Case Studies & Work
+            </h1>
             <p className="text-muted-foreground mt-0.5 text-sm">
               Manage your portfolio case studies, shipped projects, and program evidence (
               {totalCount} total)
@@ -187,7 +189,7 @@ export const ManageWorkPage = () => {
             placeholder="Search by title, domain, or summary..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="border-border bg-background placeholder:text-muted-foreground focus:border-primary/40 w-full rounded-xl border py-2 pl-10 pr-4 text-sm text-white transition-colors focus:outline-none"
+            className="border-border bg-background placeholder:text-muted-foreground focus:border-primary/40 w-full rounded-xl border py-2 pl-10 pr-4 text-sm text-[#171717] transition-colors focus:outline-none"
           />
         </form>
 
@@ -201,7 +203,7 @@ export const ManageWorkPage = () => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="border-border bg-background focus:border-primary/40 rounded-xl border px-3 py-1.5 text-xs font-medium text-white focus:outline-none"
+              className="border-border bg-background focus:border-primary/40 rounded-xl border px-3 py-1.5 text-xs font-medium text-[#171717] focus:outline-none"
             >
               <option value="all">All Statuses</option>
               <option value="published">Published</option>
@@ -218,7 +220,7 @@ export const ManageWorkPage = () => {
                 setTypeFilter(e.target.value);
                 setPage(1);
               }}
-              className="border-border bg-background focus:border-primary/40 rounded-xl border px-3 py-1.5 text-xs font-medium text-white focus:outline-none"
+              className="border-border bg-background focus:border-primary/40 rounded-xl border px-3 py-1.5 text-xs font-medium text-[#171717] focus:outline-none"
             >
               <option value="all">All Types</option>
               <option value="shipped_project">Shipped Project</option>
@@ -248,11 +250,11 @@ export const ManageWorkPage = () => {
           </div>
         ) : error ? (
           <div className="p-12 text-center">
-            <AlertCircle className="mx-auto mb-2 h-8 w-8 text-rose-400" />
-            <p className="font-medium text-rose-300">{error}</p>
+            <AlertCircle className="mx-auto mb-2 h-8 w-8 text-rose-500" />
+            <p className="font-medium text-rose-600">{error}</p>
             <button
               onClick={fetchCaseStudies}
-              className="bg-secondary text-foreground hover:bg-secondary mt-4 rounded-xl px-4 py-2 font-mono text-xs"
+              className="bg-secondary text-foreground hover:bg-secondary mt-4 rounded-xl px-4 py-2 font-mono text-xs font-semibold"
             >
               Retry Connection
             </button>
@@ -260,7 +262,7 @@ export const ManageWorkPage = () => {
         ) : caseStudies.length === 0 ? (
           <div className="p-16 text-center">
             <Briefcase className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
-            <h3 className="mb-1 text-base font-bold text-white">No Case Studies Found</h3>
+            <h3 className="mb-1 text-base font-bold text-[#171717]">No Case Studies Found</h3>
             <p className="text-muted-foreground mx-auto mb-6 max-w-sm text-xs">
               You don&apos;t have any case studies matching your filter criteria yet. Start building
               your portfolio evidence!
@@ -291,7 +293,7 @@ export const ManageWorkPage = () => {
                 {caseStudies.map((item) => (
                   <tr key={item.id} className="hover:bg-secondary group transition-colors">
                     <td className="px-5 py-4">
-                      <div className="group-hover:text-primary flex items-center gap-2 font-bold text-white transition-colors">
+                      <div className="group-hover:text-primary flex items-center gap-2 font-bold text-[#171717] transition-colors">
                         <span>{item.title}</span>
                         {item.featured && (
                           <span className="rounded border border-amber-500/20 bg-amber-500/10 px-1.5 py-0.5 font-mono text-[10px] uppercase text-amber-400">

@@ -8,16 +8,15 @@ import { setTokenCookies } from '../utils/token.utils.js';
  */
 export const verifyAuth = async (req, res, next) => {
   try {
-    let accessToken = req.cookies['sb-access-token'];
-    let refreshToken = req.cookies['sb-refresh-token'];
-
-    // Check Authorization header if cookie is absent
     const authHeader = req.headers.authorization;
-    if (!accessToken && authHeader && authHeader.startsWith('Bearer ')) {
-      accessToken = authHeader.split(' ')[1];
+    let headerToken = null;
+    if (authHeader && authHeader.startsWith('Bearer ')) {
+      headerToken = authHeader.split(' ')[1];
     }
+    const cookieToken = req.cookies?.['sb-access-token'];
+    const refreshToken = req.cookies?.['sb-refresh-token'];
 
-    if (!accessToken && !refreshToken) {
+    if (!headerToken && !cookieToken && !refreshToken) {
       return res
         .status(401)
         .json({ success: false, error: 'Unauthorized: No authentication tokens found.' });
@@ -25,14 +24,23 @@ export const verifyAuth = async (req, res, next) => {
 
     let authUser = null;
 
-    if (accessToken) {
-      const { data, error } = await supabase.auth.getUser(accessToken);
+    // 1. Try Bearer header token first
+    if (headerToken) {
+      const { data, error } = await supabase.auth.getUser(headerToken);
       if (!error && data?.user) {
         authUser = data.user;
       }
     }
 
-    // If access token failed or expired, attempt token refresh via refresh_token
+    // 2. Try cookie token if header token wasn't provided or failed
+    if (!authUser && cookieToken) {
+      const { data, error } = await supabase.auth.getUser(cookieToken);
+      if (!error && data?.user) {
+        authUser = data.user;
+      }
+    }
+
+    // 3. Try refresh token if access token attempts failed
     if (!authUser && refreshToken) {
       const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession({
         refresh_token: refreshToken,

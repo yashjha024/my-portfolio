@@ -149,7 +149,7 @@ export const AdminSettingsPage = () => {
             <SettingsIcon className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">
+            <h1 className="text-2xl font-bold tracking-tight text-[#171717]">
               Global Site Configuration
             </h1>
             <p className="text-muted-foreground mt-0.5 text-sm">
@@ -171,15 +171,15 @@ export const AdminSettingsPage = () => {
       </div>
 
       {successMsg && (
-        <div className="animate-fadeIn flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-300">
-          <Check className="h-5 w-5 shrink-0 text-emerald-400" />
+        <div className="animate-fadeIn flex items-center gap-3 rounded-xl border border-emerald-500/20 bg-emerald-500/10 p-4 text-sm text-emerald-600">
+          <Check className="h-5 w-5 shrink-0 text-emerald-600" />
           <span>{successMsg}</span>
         </div>
       )}
 
       {error && (
-        <div className="flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-300">
-          <AlertCircle className="h-5 w-5 shrink-0" />
+        <div className="flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-600">
+          <AlertCircle className="h-5 w-5 shrink-0 text-rose-600" />
           <span>{error}</span>
         </div>
       )}
@@ -189,7 +189,7 @@ export const AdminSettingsPage = () => {
         <div className="border-border bg-card space-y-5 rounded-2xl border p-6">
           <div className="border-border flex items-center gap-2 border-b pb-3">
             <User className="text-primary h-4 w-4" />
-            <h2 className="text-base font-bold text-white">Executive Profile & Positioning</h2>
+            <h2 className="text-base font-bold text-[#171717]">Executive Profile & Positioning</h2>
           </div>
 
           <div className="grid grid-cols-1 items-start gap-6 md:grid-cols-3">
@@ -223,7 +223,7 @@ export const AdminSettingsPage = () => {
                     <button
                       type="button"
                       onClick={() => handleFieldChange('profile_photo_url', '')}
-                      className="w-full py-1 font-mono text-[11px] text-rose-400 hover:text-rose-300"
+                      className="w-full py-1 font-mono text-[11px] text-rose-500 hover:text-rose-600"
                     >
                       Remove Avatar
                     </button>
@@ -243,7 +243,7 @@ export const AdminSettingsPage = () => {
                   placeholder="Senior Product & Program Manager | B2C Messaging & Scaled Systems"
                   value={formData.headline}
                   onChange={(e) => handleFieldChange('headline', e.target.value)}
-                  className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm font-medium text-white focus:outline-none"
+                  className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm font-medium text-[#171717] focus:outline-none"
                 />
               </div>
 
@@ -256,7 +256,7 @@ export const AdminSettingsPage = () => {
                   placeholder="yashjha024@gmail.com"
                   value={formData.email}
                   onChange={(e) => handleFieldChange('email', e.target.value)}
-                  className="border-border bg-background text-primary focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-sm focus:outline-none"
+                  className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-sm text-[#171717] focus:outline-none"
                 />
               </div>
             </div>
@@ -271,7 +271,7 @@ export const AdminSettingsPage = () => {
               placeholder="7+ years building zero-to-one product features and scaling engineering programs across multi-functional teams..."
               value={formData.biography}
               onChange={(e) => handleFieldChange('biography', e.target.value)}
-              className="border-border bg-background focus:border-primary/40 w-full rounded-xl border p-4 text-sm leading-relaxed text-white focus:outline-none"
+              className="border-border bg-background focus:border-primary/40 w-full rounded-xl border p-4 text-sm leading-relaxed text-[#171717] focus:outline-none"
             />
           </div>
         </div>
@@ -281,7 +281,7 @@ export const AdminSettingsPage = () => {
           <div className="border-border flex items-center justify-between border-b pb-3">
             <div className="flex items-center gap-2">
               <FileText className="text-primary h-4 w-4" />
-              <h2 className="text-base font-bold text-white">Official Resume PDF Attachment</h2>
+              <h2 className="text-base font-bold text-[#171717]">Official Resume PDF Attachment</h2>
             </div>
             {formData.resume_url && (
               <a
@@ -306,7 +306,7 @@ export const AdminSettingsPage = () => {
               placeholder="Paste direct PDF URL or upload below..."
               value={formData.resume_url}
               onChange={(e) => handleFieldChange('resume_url', e.target.value)}
-              className="border-border bg-background focus:border-primary/40 flex-1 rounded-xl border px-4 py-2.5 font-mono text-sm text-white focus:outline-none"
+              className="border-border bg-background focus:border-primary/40 flex-1 rounded-xl border px-4 py-2.5 font-mono text-sm text-[#171717] focus:outline-none"
             />
 
             <label className="bg-primary text-primary-foreground hover:bg-primary/90 flex shrink-0 cursor-pointer items-center justify-center gap-2 rounded-xl px-4 py-2.5 text-xs font-bold shadow-sm transition-all">
@@ -372,7 +372,9 @@ export const AdminSettingsPage = () => {
         <div className="border-border bg-card space-y-4 rounded-2xl border p-6">
           <div className="border-border flex items-center gap-2 border-b pb-3">
             <Share2 className="text-primary h-4 w-4" />
-            <h2 className="text-base font-bold text-white">Social Channels & External Presence</h2>
+            <h2 className="text-base font-bold text-[#171717]">
+              Social Channels & External Presence
+            </h2>
           </div>
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -385,7 +387,7 @@ export const AdminSettingsPage = () => {
                 placeholder="https://github.com/username"
                 value={formData.social_links.github}
                 onChange={(e) => handleSocialChange('github', e.target.value)}
-                className="border-border bg-background text-primary focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-sm focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-sm text-[#171717] focus:outline-none"
               />
             </div>
 
@@ -398,7 +400,7 @@ export const AdminSettingsPage = () => {
                 placeholder="https://linkedin.com/in/username"
                 value={formData.social_links.linkedin}
                 onChange={(e) => handleSocialChange('linkedin', e.target.value)}
-                className="border-border bg-background text-primary focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-sm focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-sm text-[#171717] focus:outline-none"
               />
             </div>
 
@@ -411,7 +413,7 @@ export const AdminSettingsPage = () => {
                 placeholder="https://x.com/username"
                 value={formData.social_links.twitter}
                 onChange={(e) => handleSocialChange('twitter', e.target.value)}
-                className="border-border bg-background text-primary focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-sm focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-sm text-[#171717] focus:outline-none"
               />
             </div>
 
@@ -424,7 +426,7 @@ export const AdminSettingsPage = () => {
                 placeholder="https://substack.com/@username"
                 value={formData.social_links.substack}
                 onChange={(e) => handleSocialChange('substack', e.target.value)}
-                className="border-border bg-background text-primary focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-sm focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-sm text-[#171717] focus:outline-none"
               />
             </div>
           </div>
@@ -434,7 +436,7 @@ export const AdminSettingsPage = () => {
         <div className="border-border bg-card space-y-4 rounded-2xl border p-6">
           <div className="border-border flex items-center gap-2 border-b pb-3">
             <ShieldCheck className="text-primary h-4 w-4" />
-            <h2 className="text-base font-bold text-white">Footer & Compliance Disclosures</h2>
+            <h2 className="text-base font-bold text-[#171717]">Footer & Compliance Disclosures</h2>
           </div>
 
           <div className="grid grid-cols-1 gap-5 md:grid-cols-3">
@@ -452,7 +454,7 @@ export const AdminSettingsPage = () => {
                     copyright: e.target.value,
                   })
                 }
-                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-[#171717] focus:outline-none"
               />
             </div>
 
@@ -470,7 +472,7 @@ export const AdminSettingsPage = () => {
                     location: e.target.value,
                   })
                 }
-                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-[#171717] focus:outline-none"
               />
             </div>
 
@@ -483,7 +485,7 @@ export const AdminSettingsPage = () => {
                 placeholder="We use anonymous telemetry to measure case study engagement."
                 value={formData.consent_text}
                 onChange={(e) => handleFieldChange('consent_text', e.target.value)}
-                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-[#171717] focus:outline-none"
               />
             </div>
           </div>
@@ -492,7 +494,7 @@ export const AdminSettingsPage = () => {
         {/* Section 5: Navigation Bar Labels */}
         <div className="border-border bg-card space-y-4 rounded-2xl border p-6">
           <div className="border-border flex items-center gap-2 border-b pb-3">
-            <h2 className="text-base font-bold text-white">Main Navigation Labels</h2>
+            <h2 className="text-base font-bold text-[#171717]">Main Navigation Labels</h2>
           </div>
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
@@ -516,7 +518,7 @@ export const AdminSettingsPage = () => {
                       [key]: e.target.value,
                     })
                   }
-                  className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2 text-sm text-white focus:outline-none"
+                  className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2 text-sm text-[#171717] focus:outline-none"
                 />
               </div>
             ))}
