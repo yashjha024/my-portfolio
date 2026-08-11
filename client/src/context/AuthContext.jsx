@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import api from '../services/api.js';
 import { supabase } from '../config/supabase.js';
 
@@ -8,7 +8,7 @@ export const AuthProvider = ({ children }) => {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const fetchUser = async () => {
+  const fetchUser = useCallback(async () => {
     try {
       const { data } = await api.get('/auth/me');
       if (data && data.success && data.user) {
@@ -22,13 +22,13 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     fetchUser();
-  }, []);
+  }, [fetchUser]);
 
-  const loginWithGoogle = async () => {
+  const loginWithGoogle = useCallback(async () => {
     try {
       // Initiate directly from client Supabase SDK so PKCE code_verifier is preserved in browser storage
       const { error } = await supabase.auth.signInWithOAuth({
@@ -50,9 +50,9 @@ export const AuthProvider = ({ children }) => {
         throw err;
       }
     }
-  };
+  }, []);
 
-  const sendMagicLink = async (email) => {
+  const sendMagicLink = useCallback(async (email) => {
     try {
       const { data } = await api.post('/auth/magic-link', { email });
       return data;
@@ -62,9 +62,9 @@ export const AuthProvider = ({ children }) => {
         error: err?.response?.data?.error || err.message || 'Error sending magic link.',
       };
     }
-  };
+  }, []);
 
-  const syncSession = async (accessToken, refreshToken) => {
+  const syncSession = useCallback(async (accessToken, refreshToken) => {
     try {
       const { data } = await api.post('/auth/session', {
         access_token: accessToken,
@@ -133,9 +133,9 @@ export const AuthProvider = ({ children }) => {
     }
 
     return { success: false, isForbidden: false, error: 'Session verification failed.' };
-  };
+  }, []);
 
-  const logout = async () => {
+  const logout = useCallback(async () => {
     try {
       await api.post('/auth/logout').catch(() => null);
       await supabase.auth.signOut().catch(() => null);
@@ -143,28 +143,27 @@ export const AuthProvider = ({ children }) => {
       setUser(null);
       window.location.href = '/login';
     }
-  };
+  }, []);
 
   const isOwner = user?.role === 'owner';
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        role: user?.role || null,
-        isOwner,
-        isAdmin: isOwner,
-        loading,
-        loginWithGoogle,
-        sendMagicLink,
-        syncSession,
-        logout,
-        fetchUser,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const value = useMemo(
+    () => ({
+      user,
+      role: user?.role || null,
+      isOwner,
+      isAdmin: isOwner,
+      loading,
+      loginWithGoogle,
+      sendMagicLink,
+      syncSession,
+      logout,
+      fetchUser,
+    }),
+    [user, isOwner, loading, loginWithGoogle, sendMagicLink, syncSession, logout, fetchUser]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
 
 export const useAuth = () => {

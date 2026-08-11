@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { supabase } from '../../config/supabase.js';
@@ -9,28 +9,32 @@ export const AuthCallback = () => {
   const navigate = useNavigate();
   const { syncSession, fetchUser } = useAuth();
   const [error, setError] = useState(null);
+  const handledRef = useRef(false);
 
   useEffect(() => {
-    let mounted = true;
+    let active = true;
 
     const processSession = async (session) => {
-      if (!session?.access_token) return false;
+      if (!session?.access_token || handledRef.current) return false;
+      handledRef.current = true;
+
       const res = await syncSession(session.access_token, session.refresh_token);
       if (res?.success) {
-        if (mounted) navigate('/admin', { replace: true });
+        navigate('/admin', { replace: true });
         return true;
       }
+
       if (res?.isForbidden) {
-        // Only sign out and lock out if server explicitly returned 403 Forbidden for unauthorized email
-        await supabase.auth.signOut().catch(() => null);
-        if (mounted) {
+        await supabase?.auth?.signOut()?.catch(() => null);
+        if (active) {
           const rejectedEmail = session.user?.email ? ` (${session.user.email})` : '';
           setError(`Access Denied: Account${rejectedEmail} is not authorized for owner access.`);
         }
         return false;
       }
+
       // If temporary backend error (non-403), proceed if Supabase session is active
-      if (mounted) navigate('/admin', { replace: true });
+      navigate('/admin', { replace: true });
       return true;
     };
 
@@ -38,75 +42,90 @@ export const AuthCallback = () => {
       try {
         // If URL contains PKCE ?code= parameter, exchange it for session explicitly
         if (window.location.search.includes('code=')) {
-          const { error: exchangeError } = await supabase.auth
-            .exchangeCodeForSession(window.location.href)
-            .catch(() => ({ error: null }));
-          if (exchangeError) {
-            console.warn('PKCE code exchange note:', exchangeError.message);
+          const searchParams = new URLSearchParams(window.location.search);
+          const code = searchParams.get('code');
+          if (code && supabase) {
+            const { data, error: exchangeError } = await supabase.auth
+              .exchangeCodeForSession(code)
+              .catch(() => ({ data: null, error: null }));
+            if (data?.session) {
+              const done = await processSession(data.session);
+              if (done) return;
+            }
+            if (exchangeError) {
+              console.warn('PKCE code exchange note:', exchangeError.message);
+            }
           }
         }
 
         // First check active Supabase auth session from URL or storage
-        const {
-          data: { session },
-          error: sessionError,
-        } = await supabase.auth.getSession();
+        if (supabase) {
+          const {
+            data: { session },
+            error: sessionError,
+          } = await supabase.auth.getSession();
 
-        if (sessionError) {
-          console.warn('Session check note:', sessionError.message);
-        }
+          if (sessionError) {
+            console.warn('Session check note:', sessionError.message);
+          }
 
-        if (session?.access_token) {
-          const success = await processSession(session);
-          if (success) return;
+          if (session?.access_token) {
+            const done = await processSession(session);
+            if (done) return;
+          }
         }
 
         // Listen for auth state change event (e.g., hash token parsing by Supabase JS)
-        const { data: authListener } = supabase.auth.onAuthStateChange(
-          async (event, newSession) => {
-            if (
-              event === 'SIGNED_IN' ||
-              event === 'TOKEN_REFRESHED' ||
-              event === 'INITIAL_SESSION'
-            ) {
-              if (newSession?.access_token) {
+        let authSubscription = null;
+        if (supabase) {
+          const { data: authListener } = supabase.auth.onAuthStateChange(
+            async (event, newSession) => {
+              if (
+                (event === 'SIGNED_IN' ||
+                  event === 'TOKEN_REFRESHED' ||
+                  event === 'INITIAL_SESSION') &&
+                newSession?.access_token
+              ) {
                 await processSession(newSession);
               }
             }
-          }
-        );
+          );
+          authSubscription = authListener?.subscription;
+        }
 
-        // Timeout fallback after 4.5 seconds
+        // Timeout fallback after 4 seconds
         const timeoutId = setTimeout(async () => {
-          if (mounted && !error) {
+          if (!handledRef.current && active) {
             const userProfile = await fetchUser();
             if (userProfile) {
+              handledRef.current = true;
               navigate('/admin', { replace: true });
             } else {
               setError('Access Denied: Session verification failed or email unauthorized.');
             }
           }
-        }, 4500);
+        }, 4000);
 
         return () => {
           clearTimeout(timeoutId);
-          authListener?.subscription?.unsubscribe();
+          authSubscription?.unsubscribe();
         };
       } catch (err) {
         console.error('Auth callback processing error:', err);
-        if (mounted) {
-          await supabase.auth.signOut().catch(() => null);
+        if (active) {
+          await supabase?.auth?.signOut()?.catch(() => null);
           setError(err.message || 'Failed to complete authentication. Please try again.');
         }
       }
     };
 
-    handleCallback();
+    const cleanupPromise = handleCallback();
 
     return () => {
-      mounted = false;
+      active = false;
+      cleanupPromise.then((cleanup) => cleanup && cleanup());
     };
-  }, [navigate, syncSession, fetchUser, error]);
+  }, [navigate, syncSession, fetchUser]);
 
   return (
     <div className="flex min-h-screen flex-col items-center justify-center bg-[#F7F5F0] p-4 selection:bg-[#171717] selection:text-white">
