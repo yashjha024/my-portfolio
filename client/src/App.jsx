@@ -84,6 +84,12 @@ const ManageMessagesPage = React.lazy(() =>
 const AdminSettingsPage = React.lazy(() =>
   import('./pages/admin/AdminSettings.jsx').then((m) => ({ default: m.AdminSettingsPage }))
 );
+const ManageExperiencePage = React.lazy(() =>
+  import('./pages/admin/ManageExperience.jsx').then((m) => ({ default: m.ManageExperiencePage }))
+);
+const ManageEducationPage = React.lazy(() =>
+  import('./pages/admin/ManageEducation.jsx').then((m) => ({ default: m.ManageEducationPage }))
+);
 
 export default function App() {
   return (
@@ -132,6 +138,8 @@ export default function App() {
                 <Route path="/admin/prds/:id" element={<EditPrdPage />} />
                 <Route path="/admin/prds/edit/:id" element={<EditPrdPage />} />
 
+                <Route path="/admin/experience" element={<ManageExperiencePage />} />
+                <Route path="/admin/education" element={<ManageEducationPage />} />
                 <Route path="/admin/media" element={<ManageMediaPage />} />
                 <Route path="/admin/messages" element={<ManageMessagesPage />} />
                 <Route path="/admin/settings" element={<AdminSettingsPage />} />

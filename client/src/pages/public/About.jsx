@@ -129,6 +129,56 @@ export const AboutPage = () => {
         </Container>
       </Section>
 
+      {/* Education & Academic Foundation Section */}
+      {about?.educations && about.educations.length > 0 && (
+        <Section className="py-16 sm:py-20 border-t border-border/60 bg-background">
+          <Container>
+            <div className="max-w-3xl mx-auto space-y-6">
+              <div>
+                <Badge variant="outline" className="mb-2">
+                  Academic Background
+                </Badge>
+                <h2 className="font-heading text-3xl font-bold tracking-tight text-foreground sm:text-4xl">
+                  Education &amp; Credentials
+                </h2>
+              </div>
+
+              <div className="space-y-6">
+                {about.educations.map((item) => (
+                  <div
+                    key={item.id}
+                    className="p-6 rounded-2xl border border-border bg-card space-y-2 shadow-subtle"
+                  >
+                    <div className="flex flex-wrap items-center justify-between gap-2">
+                      <h3 className="font-heading text-lg font-bold text-foreground">
+                        {item.degree} {item.field_of_study ? `in ${item.field_of_study}` : ''}
+                      </h3>
+                      <span className="font-mono text-xs text-muted-foreground">
+                        {item.start_date || ''} {item.end_date ? `– ${item.end_date}` : ''}
+                      </span>
+                    </div>
+
+                    <p className="text-sm font-medium text-primary">{item.institution}</p>
+
+                    {item.gpa && (
+                      <p className="text-xs font-mono font-semibold text-emerald-600">
+                        Academic Performance: {item.gpa}
+                      </p>
+                    )}
+
+                    {item.description && (
+                      <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed pt-1">
+                        {item.description}
+                      </p>
+                    )}
+                  </div>
+                ))}
+              </div>
+            </div>
+          </Container>
+        </Section>
+      )}
+
       {/* Skills & Domains Matrix */}
       <Section variant="muted" className="py-16 border-t border-border/60">
         <Container>

@@ -16,6 +16,7 @@ import {
   ChevronRight,
   UserCheck,
   MessageSquare,
+  GraduationCap,
 } from 'lucide-react';
 
 export const AdminLayout = () => {
@@ -75,6 +76,8 @@ export const AdminLayout = () => {
     { name: 'Case Studies', path: '/admin/work', icon: Briefcase },
     { name: 'Thinking Articles', path: '/admin/thinking', icon: BookOpen },
     { name: 'PRD Library', path: '/admin/prds', icon: FileText },
+    { name: 'Experience', path: '/admin/experience', icon: Briefcase },
+    { name: 'Education', path: '/admin/education', icon: GraduationCap },
     { name: 'Media Library', path: '/admin/media', icon: ImageIcon },
     { name: 'Inquiries & Inbox', path: '/admin/messages', icon: MessageSquare },
     { name: 'Site Settings', path: '/admin/settings', icon: Settings },

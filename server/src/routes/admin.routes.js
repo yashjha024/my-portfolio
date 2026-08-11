@@ -22,6 +22,18 @@ import {
   updateMessageStatus,
   deleteMessage,
 } from '../controllers/messages.controller.js';
+import {
+  getAdminExperiences,
+  createExperience,
+  updateExperience,
+  deleteExperience,
+} from '../controllers/experience.controller.js';
+import {
+  getAdminEducations,
+  createEducation,
+  updateEducation,
+  deleteEducation,
+} from '../controllers/education.controller.js';
 
 const router = express.Router();
 
@@ -61,5 +73,17 @@ router.put('/settings', updateSettings);
 router.get('/messages', getAdminMessages);
 router.put('/messages/:id/status', updateMessageStatus);
 router.delete('/messages/:id', deleteMessage);
+
+// Experience CMS
+router.get('/experiences', getAdminExperiences);
+router.post('/experiences', createExperience);
+router.put('/experiences/:id', updateExperience);
+router.delete('/experiences/:id', deleteExperience);
+
+// Education CMS
+router.get('/educations', getAdminEducations);
+router.post('/educations', createEducation);
+router.put('/educations/:id', updateEducation);
+router.delete('/educations/:id', deleteEducation);
 
 export default router;

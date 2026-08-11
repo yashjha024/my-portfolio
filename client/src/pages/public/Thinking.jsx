@@ -60,7 +60,7 @@ export const ThinkingIndexPage = () => {
               Product Thinking
             </h1>
             <p className="text-base sm:text-lg text-muted-foreground leading-relaxed">
-              Writing is thinking. Here are my detailed architectural teardowns (such as improving WhatsApp group coordination) along with strategy essays on developer experience, platform economics, and 0-to-1 execution.
+              Writing is thinking. Here are my detailed architectural teardowns along with strategy essays on developer experience, platform economics, and 0-to-1 execution.
             </p>
           </div>
         </Container>

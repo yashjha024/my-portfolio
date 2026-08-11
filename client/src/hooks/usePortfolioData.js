@@ -98,12 +98,15 @@ const fetchAllData = async () => {
   if (cachePromise) return cachePromise;
 
   cachePromise = (async () => {
-    const [workRes, thinkingRes, prdsRes, settingsRes] = await Promise.allSettled([
-      api.get('/work?limit=100'),
-      api.get('/thinking?limit=100'),
-      api.get('/prds?limit=100'),
-      api.get('/settings'),
-    ]);
+    const [workRes, thinkingRes, prdsRes, settingsRes, experiencesRes, educationsRes] =
+      await Promise.allSettled([
+        api.get('/work?limit=100'),
+        api.get('/thinking?limit=100'),
+        api.get('/prds?limit=100'),
+        api.get('/settings'),
+        api.get('/experiences'),
+        api.get('/educations'),
+      ]);
     const responses = [workRes, thinkingRes, prdsRes, settingsRes];
     const unavailable = responses.some((result) => result.status === 'rejected');
     if (unavailable && demoEnabled) return demoData;
@@ -112,6 +115,31 @@ const fetchAllData = async () => {
       settingsRes.status === 'fulfilled' && settingsRes.value.data?.success
         ? settingsRes.value.data.data
         : null;
+
+    const liveExperiences =
+      experiencesRes.status === 'fulfilled' && experiencesRes.value.data?.success
+        ? array(experiencesRes.value.data.data)
+        : null;
+
+    const liveEducations =
+      educationsRes.status === 'fulfilled' && educationsRes.value.data?.success
+        ? array(educationsRes.value.data.data)
+        : null;
+
+    const dynamicTimeline =
+      liveExperiences && liveExperiences.length > 0
+        ? liveExperiences.map((item) => ({
+            id: item.id,
+            date: `${item.start_date} - ${item.is_present ? 'Present' : item.end_date || 'Present'}`,
+            title: `${item.title} — ${item.organization}`,
+            description: item.description,
+            location: item.location,
+            employmentType: item.employment_type,
+            logoUrl: item.logo_url,
+            impactMetrics: item.impact_metrics || [],
+          }))
+        : aboutData.timeline;
+
     const result = {
       profile: settings
         ? {
@@ -161,7 +189,11 @@ const fetchAllData = async () => {
         prdsRes.status === 'fulfilled' && prdsRes.value.data?.success
           ? array(prdsRes.value.data.data).map(toPrdDto)
           : [],
-      about: aboutData,
+      about: {
+        ...aboutData,
+        timeline: dynamicTimeline,
+        educations: liveEducations || [],
+      },
       unavailable,
     };
     cachedData = result;
