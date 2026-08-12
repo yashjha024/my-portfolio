@@ -98,7 +98,14 @@ export const settingsSchema = z
     profile_photo_url: url,
     headline: text(240),
     biography: text(),
-    email: z.string().email().or(z.literal('')).nullable().optional(),
+    email: z
+      .string()
+      .trim()
+      .email()
+      .or(z.literal(''))
+      .transform((e) => (e === '' ? null : e))
+      .nullable()
+      .optional(),
     resume_url: url,
     social_links: z.record(z.string().trim().max(2048)).optional(),
     navigation_labels: z.record(z.string().trim().min(1).max(80)).optional(),
