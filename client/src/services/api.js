@@ -2,7 +2,7 @@ import axios from 'axios';
 import { supabase } from '../config/supabase.js';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/api',
+  baseURL: '/api',
   withCredentials: true,
   xsrfCookieName: 'csrf-token',
   xsrfHeaderName: 'X-CSRF-Token',
