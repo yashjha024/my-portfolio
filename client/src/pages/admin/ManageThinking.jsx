@@ -151,8 +151,8 @@ export const ManageThinkingPage = () => {
               Product Thinking Articles
             </h1>
             <p className="text-muted-foreground mt-0.5 text-sm">
-              Manage product teardowns, WhatsApp feature proposals, and strategic essays (
-              {totalCount} total)
+              Manage product teardowns, feature proposals, and essays. Published articles appear on
+              the public /thinking page ({totalCount} total).
             </p>
           </div>
         </div>

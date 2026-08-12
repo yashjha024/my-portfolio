@@ -30,8 +30,10 @@ CREATE TABLE IF NOT EXISTS educations (
     institution TEXT NOT NULL CHECK (char_length(institution) >= 2),
     degree TEXT NOT NULL CHECK (char_length(degree) >= 2),
     field_of_study TEXT,
+    location TEXT,
     start_date TEXT,
     end_date TEXT,
+    is_present BOOLEAN NOT NULL DEFAULT false,
     gpa TEXT,
     description TEXT,
     sort_order INT NOT NULL DEFAULT 0,
@@ -134,14 +136,16 @@ VALUES
 )
 ON CONFLICT DO NOTHING;
 
-INSERT INTO educations (institution, degree, field_of_study, start_date, end_date, gpa, description, sort_order, status)
+INSERT INTO educations (institution, degree, field_of_study, location, start_date, end_date, is_present, gpa, description, sort_order, status)
 VALUES 
 (
   'Birla Institute of Technology (BIT), Mesra',
   'B.Tech',
   'Artificial Intelligence & Machine Learning',
+  'Ranchi, JH',
   'Nov 2022',
   'June 2026',
+  false,
   '8.2 / 10',
   'Coursework: Statistics, Analysis of Algorithms, Data Structures, Machine Learning, Deep Learning. Certifications: Google Advanced Data Analytics (May 2024), Google Business Intelligence (June 2024).',
   1,

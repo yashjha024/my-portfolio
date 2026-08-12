@@ -59,11 +59,8 @@ export const EditPrdPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await api.get(`/prds/${id}?admin=true`).catch(async () => {
-        const allRes = await api.get('/admin/prds?limit=100');
-        const match = (allRes.data?.data || []).find((p) => p.id === id || p.slug === id);
-        if (match) return { data: { success: true, data: match } };
-        throw new Error('PRD not found');
+      const res = await api.get(`/admin/prds/${id}`).catch(async () => {
+        return api.get(`/prds/${id}`);
       });
 
       if (res.data?.success && res.data?.data) {

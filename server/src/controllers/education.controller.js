@@ -70,8 +70,10 @@ export const createEducation = async (req, res) => {
       institution,
       degree,
       field_of_study,
+      location,
       start_date,
       end_date,
+      is_present,
       gpa,
       description,
       sort_order,
@@ -89,8 +91,10 @@ export const createEducation = async (req, res) => {
       institution: institution.trim(),
       degree: degree.trim(),
       field_of_study: field_of_study ? field_of_study.trim() : null,
+      location: location ? location.trim() : null,
       start_date: start_date ? start_date.trim() : null,
       end_date: end_date ? end_date.trim() : null,
+      is_present: Boolean(is_present),
       gpa: gpa ? gpa.trim() : null,
       description: description ? description.trim() : null,
       sort_order: Number.isInteger(Number(sort_order)) ? Number(sort_order) : 0,
@@ -128,8 +132,10 @@ export const updateEducation = async (req, res) => {
       institution,
       degree,
       field_of_study,
+      location,
       start_date,
       end_date,
+      is_present,
       gpa,
       description,
       sort_order,
@@ -141,8 +147,10 @@ export const updateEducation = async (req, res) => {
     if (degree !== undefined) payload.degree = degree.trim();
     if (field_of_study !== undefined)
       payload.field_of_study = field_of_study ? field_of_study.trim() : null;
+    if (location !== undefined) payload.location = location ? location.trim() : null;
     if (start_date !== undefined) payload.start_date = start_date ? start_date.trim() : null;
     if (end_date !== undefined) payload.end_date = end_date ? end_date.trim() : null;
+    if (is_present !== undefined) payload.is_present = Boolean(is_present);
     if (gpa !== undefined) payload.gpa = gpa ? gpa.trim() : null;
     if (description !== undefined) payload.description = description ? description.trim() : null;
     if (sort_order !== undefined) payload.sort_order = Number(sort_order) || 0;

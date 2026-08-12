@@ -154,7 +154,8 @@ export const AboutPage = () => {
                         {item.degree} {item.field_of_study ? `in ${item.field_of_study}` : ''}
                       </h3>
                       <span className="font-mono text-xs text-muted-foreground">
-                        {item.start_date || ''} {item.end_date ? `– ${item.end_date}` : ''}
+                        {item.start_date ? `${item.start_date} – ` : ''}
+                        {item.is_present ? 'Present' : item.end_date || ''}
                       </span>
                     </div>
 

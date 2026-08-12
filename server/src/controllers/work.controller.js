@@ -51,12 +51,10 @@ export const getCaseStudyBySlug = async (req, res, next) => {
 
     if (previewToken) {
       if (!req.user || req.user.role !== 'owner') {
-        return res
-          .status(403)
-          .json({
-            success: false,
-            error: 'Forbidden: Draft preview requires owner authentication.',
-          });
+        return res.status(403).json({
+          success: false,
+          error: 'Forbidden: Draft preview requires owner authentication.',
+        });
       }
       if (!verifyPreviewToken(previewToken, slug, 'work')) {
         return res
@@ -130,6 +128,28 @@ export const getAdminCaseStudies = async (req, res, next) => {
       totalPages: Math.ceil((count || 0) / Number(limit)),
       data: data || [],
     });
+  } catch (error) {
+    next(error);
+  }
+};
+
+export const getAdminCaseStudyById = async (req, res, next) => {
+  try {
+    const { id } = req.params;
+    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id);
+    let query = supabase.from('case_studies').select('*');
+    if (isUuid) {
+      query = query.eq('id', id);
+    } else {
+      query = query.eq('slug', id);
+    }
+
+    const { data, error } = await query.single();
+    if (error || !data) {
+      return res.status(404).json({ success: false, error: 'Case study not found' });
+    }
+
+    return res.status(200).json({ success: true, data });
   } catch (error) {
     next(error);
   }

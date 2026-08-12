@@ -150,8 +150,8 @@ export const ManagePrdsPage = () => {
           <div>
             <h1 className="text-2xl font-bold tracking-tight text-white">PRD Library & Specs</h1>
             <p className="text-muted-foreground mt-0.5 text-sm">
-              Manage functional specifications, requirements docs, and gated downloads ({totalCount}{' '}
-              total)
+              Create and publish product requirements documents, stages, and PDF downloads shown in
+              the public /prds library ({totalCount} total).
             </p>
           </div>
         </div>

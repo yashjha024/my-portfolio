@@ -42,11 +42,8 @@ export const EditThinkingPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await api.get(`/thinking/${id}?admin=true`).catch(async () => {
-        const allRes = await api.get('/admin/thinking?limit=100');
-        const match = (allRes.data?.data || []).find((a) => a.id === id || a.slug === id);
-        if (match) return { data: { success: true, data: match } };
-        throw new Error('Article not found');
+      const res = await api.get(`/admin/thinking/${id}`).catch(async () => {
+        return api.get(`/thinking/${id}`);
       });
 
       if (res.data?.success && res.data?.data) {

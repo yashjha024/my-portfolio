@@ -81,12 +81,8 @@ export const EditWorkPage = () => {
     try {
       setLoading(true);
       setError(null);
-      const res = await api.get(`/work/${id}?admin=true`).catch(async () => {
-        // Fallback if ID is slug or admin lookup required
-        const allRes = await api.get('/admin/work?limit=100');
-        const match = (allRes.data?.data || []).find((c) => c.id === id || c.slug === id);
-        if (match) return { data: { success: true, data: match } };
-        throw new Error('Case study not found');
+      const res = await api.get(`/admin/work/${id}`).catch(async () => {
+        return api.get(`/work/${id}`);
       });
 
       if (res.data?.success && res.data?.data) {

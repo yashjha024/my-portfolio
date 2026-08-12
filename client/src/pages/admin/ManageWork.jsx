@@ -166,8 +166,8 @@ export const ManageWorkPage = () => {
               Case Studies & Work
             </h1>
             <p className="text-muted-foreground mt-0.5 text-sm">
-              Manage your portfolio case studies, shipped projects, and program evidence (
-              {totalCount} total)
+              Manage flagship case studies, shipped projects, and metrics. Published entries appear
+              on the public /work page ({totalCount} total).
             </p>
           </div>
         </div>

@@ -207,8 +207,8 @@ export const ManageExperiencePage = () => {
               Career Experience CMS
             </h1>
             <p className="text-muted-foreground mt-0.5 text-sm">
-              Manage work timeline entries, roles, company metrics, and display ordering (
-              {experiences.length} total)
+              Manage professional work history, roles, impact metrics, and logos shown on your
+              public /about page timeline ({experiences.length} total).
             </p>
           </div>
         </div>

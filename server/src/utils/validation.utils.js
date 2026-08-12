@@ -80,7 +80,7 @@ export const prdSchema = z
   .object({
     slug: slug.optional(),
     title: z.string().trim().min(3).max(180).optional(),
-    stage: z.enum(['In Development', 'Approved', 'Archived']).optional(),
+    stage: z.string().trim().max(80).optional(),
     visibility: z.enum(['public', 'unlisted', 'private']).optional(),
     context: z.string().trim().min(10).max(20000).optional(),
     sections: z

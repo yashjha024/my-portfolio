@@ -14,8 +14,9 @@ import {
   RefreshCw,
   X,
   Check,
+  Building,
+  MapPin,
   Calendar,
-  Award,
 } from 'lucide-react';
 
 export const ManageEducationPage = () => {
@@ -35,13 +36,15 @@ export const ManageEducationPage = () => {
   const [itemToDelete, setItemToDelete] = useState(null);
   const [deleting, setDeleting] = useState(false);
 
-  // Form State
+  // Form Data State
   const [formData, setFormData] = useState({
     institution: '',
     degree: '',
     field_of_study: '',
+    location: '',
     start_date: '',
-    end_date: '',
+    end_date: 'Present',
+    is_present: false,
     gpa: '',
     description: '',
     sort_order: 0,
@@ -83,8 +86,10 @@ export const ManageEducationPage = () => {
       institution: '',
       degree: '',
       field_of_study: '',
+      location: '',
       start_date: '',
-      end_date: '',
+      end_date: 'Present',
+      is_present: true,
       gpa: '',
       description: '',
       sort_order: educations.length + 1,
@@ -99,8 +104,10 @@ export const ManageEducationPage = () => {
       institution: item.institution || '',
       degree: item.degree || '',
       field_of_study: item.field_of_study || '',
+      location: item.location || '',
       start_date: item.start_date || '',
-      end_date: item.end_date || '',
+      end_date: item.end_date || 'Present',
+      is_present: Boolean(item.is_present || item.end_date === 'Present'),
       gpa: item.gpa || '',
       description: item.description || '',
       sort_order: item.sort_order || 0,
@@ -188,12 +195,10 @@ export const ManageEducationPage = () => {
             <GraduationCap className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-[#171717]">
-              Education & Academic CMS
-            </h1>
+            <h1 className="text-2xl font-bold tracking-tight text-[#171717]">Education CMS</h1>
             <p className="text-muted-foreground mt-0.5 text-sm">
-              Manage degrees, academic honors, GPA, and course certifications ({educations.length}{' '}
-              total)
+              Manage academic background, degrees, field of study, and GPAs shown on your public
+              /about page ({educations.length} total).
             </p>
           </div>
         </div>
@@ -202,7 +207,7 @@ export const ManageEducationPage = () => {
           className="bg-primary shadow-soft shadow-subtle hover:bg-primary/90 flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-all"
         >
           <Plus className="h-4 w-4" />
-          <span>Add Academic Record</span>
+          <span>Add Education</span>
         </button>
       </div>
 
@@ -250,7 +255,7 @@ export const ManageEducationPage = () => {
           <div className="flex flex-col items-center justify-center gap-3 py-20">
             <Loader2 className="text-primary h-8 w-8 animate-spin" />
             <span className="text-muted-foreground font-mono text-xs uppercase">
-              Loading academic records...
+              Loading education records...
             </span>
           </div>
         ) : error ? (
@@ -269,14 +274,14 @@ export const ManageEducationPage = () => {
             <GraduationCap className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
             <h3 className="mb-1 text-base font-bold text-[#171717]">No Education Records Found</h3>
             <p className="text-muted-foreground mx-auto mb-6 max-w-sm text-xs">
-              Add your degree and academic history to display on your About page.
+              Add your first education record to display on your About page timeline.
             </p>
             <button
               onClick={openCreateModal}
               className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium text-white"
             >
               <Plus className="h-4 w-4" />
-              <span>Add Academic Record</span>
+              <span>Add Your First Education</span>
             </button>
           </div>
         ) : (
@@ -288,35 +293,39 @@ export const ManageEducationPage = () => {
               >
                 <div className="flex items-start gap-4">
                   <div className="border-border bg-secondary/80 text-muted-foreground flex h-12 w-12 shrink-0 items-center justify-center rounded-xl border font-bold">
-                    <GraduationCap className="h-5 w-5" />
+                    <Building className="h-5 w-5" />
                   </div>
 
                   <div className="space-y-1">
                     <div className="flex flex-wrap items-center gap-2">
-                      <h3 className="font-bold text-[#171717]">
-                        {item.degree} {item.field_of_study ? `in ${item.field_of_study}` : ''}
-                      </h3>
+                      <h3 className="font-bold text-[#171717]">{item.degree}</h3>
                       <span className="text-muted-foreground text-xs">— {item.institution}</span>
                       <StatusBadge status={item.status} />
                     </div>
 
                     <div className="text-muted-foreground flex flex-wrap items-center gap-3 font-mono text-xs">
-                      {(item.start_date || item.end_date) && (
+                      {item.start_date || item.end_date ? (
                         <span className="flex items-center gap-1">
                           <Calendar className="h-3 w-3" />
-                          {item.start_date || ''} {item.end_date ? `– ${item.end_date}` : ''}
+                          {item.start_date && `${item.start_date} – `}
+                          {item.is_present ? 'Present' : item.end_date}
+                        </span>
+                      ) : null}
+                      {item.location && (
+                        <span className="flex items-center gap-1">
+                          <MapPin className="h-3 w-3" />
+                          {item.location}
                         </span>
                       )}
-                      {item.gpa && (
-                        <span className="flex items-center gap-1 font-semibold text-emerald-600">
-                          <Award className="h-3 w-3" />
-                          GPA: {item.gpa}
-                        </span>
-                      )}
+                      {item.gpa && <span className="flex items-center gap-1">GPA: {item.gpa}</span>}
                       <span className="border-border bg-background rounded border px-1.5 py-0.5 text-[10px]">
                         Order #{item.sort_order}
                       </span>
                     </div>
+
+                    {item.field_of_study && (
+                      <p className="text-sm font-medium text-[#171717]">{item.field_of_study}</p>
+                    )}
 
                     {item.description && (
                       <p className="text-muted-foreground line-clamp-2 max-w-2xl text-xs leading-relaxed">
@@ -357,10 +366,10 @@ export const ManageEducationPage = () => {
       {/* Create / Edit Modal */}
       {modalOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
-          <div className="border-border bg-card shadow-soft max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl border p-6">
+          <div className="border-border bg-card shadow-soft max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-2xl border p-6">
             <div className="border-border flex items-center justify-between border-b pb-4">
               <h2 className="text-lg font-bold text-[#171717]">
-                {editingItem ? 'Edit Academic Record' : 'Add Academic Record'}
+                {editingItem ? 'Edit Education Record' : 'Add New Education'}
               </h2>
               <button
                 onClick={() => setModalOpen(false)}
@@ -371,21 +380,21 @@ export const ManageEducationPage = () => {
             </div>
 
             <form onSubmit={handleSave} className="mt-4 space-y-4">
-              <div>
-                <label className="text-muted-foreground mb-1 block font-mono text-xs uppercase">
-                  Institution / University *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. Birla Institute of Technology (BIT), Mesra"
-                  value={formData.institution}
-                  onChange={(e) => setFormData({ ...formData, institution: e.target.value })}
-                  className="border-border bg-background w-full rounded-xl border px-3.5 py-2 text-sm text-[#171717] focus:outline-none"
-                />
-              </div>
-
               <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
+                  <label className="text-muted-foreground mb-1 block font-mono text-xs uppercase">
+                    Institution *
+                  </label>
+                  <input
+                    type="text"
+                    required
+                    placeholder="e.g. NIT Patna"
+                    value={formData.institution}
+                    onChange={(e) => setFormData({ ...formData, institution: e.target.value })}
+                    className="border-border bg-background w-full rounded-xl border px-3.5 py-2 text-sm text-[#171717] focus:outline-none"
+                  />
+                </div>
+
                 <div>
                   <label className="text-muted-foreground mb-1 block font-mono text-xs uppercase">
                     Degree *
@@ -399,29 +408,44 @@ export const ManageEducationPage = () => {
                     className="border-border bg-background w-full rounded-xl border px-3.5 py-2 text-sm text-[#171717] focus:outline-none"
                   />
                 </div>
+              </div>
 
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="text-muted-foreground mb-1 block font-mono text-xs uppercase">
-                    Field of Study / Specialization
+                    Field of Study
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Artificial Intelligence & Machine Learning"
+                    placeholder="e.g. Computer Science"
                     value={formData.field_of_study}
                     onChange={(e) => setFormData({ ...formData, field_of_study: e.target.value })}
                     className="border-border bg-background w-full rounded-xl border px-3.5 py-2 text-sm text-[#171717] focus:outline-none"
                   />
                 </div>
+
+                <div>
+                  <label className="text-muted-foreground mb-1 block font-mono text-xs uppercase">
+                    Location
+                  </label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Patna, BR"
+                    value={formData.location}
+                    onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+                    className="border-border bg-background w-full rounded-xl border px-3.5 py-2 text-sm text-[#171717] focus:outline-none"
+                  />
+                </div>
               </div>
 
-              <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                 <div>
                   <label className="text-muted-foreground mb-1 block font-mono text-xs uppercase">
                     Start Date
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. Nov 2022"
+                    placeholder="e.g. Aug 2022"
                     value={formData.start_date}
                     onChange={(e) => setFormData({ ...formData, start_date: e.target.value })}
                     className="border-border bg-background w-full rounded-xl border px-3.5 py-2 text-sm text-[#171717] focus:outline-none"
@@ -429,27 +453,61 @@ export const ManageEducationPage = () => {
                 </div>
 
                 <div>
+                  <div className="mb-1 flex items-center justify-between">
+                    <label className="text-muted-foreground block font-mono text-xs uppercase">
+                      End Date
+                    </label>
+                    <label className="flex cursor-pointer items-center gap-1.5 text-xs">
+                      <input
+                        type="checkbox"
+                        checked={formData.is_present}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            is_present: e.target.checked,
+                            end_date: e.target.checked ? 'Present' : '',
+                          })
+                        }
+                        className="border-border rounded"
+                      />
+                      <span className="font-mono text-xs text-[#171717]">Presently Enrolled</span>
+                    </label>
+                  </div>
+                  <input
+                    type="text"
+                    disabled={formData.is_present}
+                    placeholder={formData.is_present ? 'Present' : 'e.g. June 2026'}
+                    value={formData.is_present ? 'Present' : formData.end_date}
+                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                    className="border-border bg-background w-full rounded-xl border px-3.5 py-2 text-sm text-[#171717] focus:outline-none disabled:opacity-50"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                <div>
                   <label className="text-muted-foreground mb-1 block font-mono text-xs uppercase">
-                    End / Grad Date
+                    GPA / Grade
                   </label>
                   <input
                     type="text"
-                    placeholder="e.g. June 2026"
-                    value={formData.end_date}
-                    onChange={(e) => setFormData({ ...formData, end_date: e.target.value })}
+                    placeholder="e.g. 8.5/10"
+                    value={formData.gpa}
+                    onChange={(e) => setFormData({ ...formData, gpa: e.target.value })}
                     className="border-border bg-background w-full rounded-xl border px-3.5 py-2 text-sm text-[#171717] focus:outline-none"
                   />
                 </div>
 
                 <div>
                   <label className="text-muted-foreground mb-1 block font-mono text-xs uppercase">
-                    GPA / Score (Optional)
+                    Display Sort Order
                   </label>
                   <input
-                    type="text"
-                    placeholder="e.g. 8.2 / 10"
-                    value={formData.gpa}
-                    onChange={(e) => setFormData({ ...formData, gpa: e.target.value })}
+                    type="number"
+                    value={formData.sort_order}
+                    onChange={(e) =>
+                      setFormData({ ...formData, sort_order: Number(e.target.value) })
+                    }
                     className="border-border bg-background w-full rounded-xl border px-3.5 py-2 text-sm text-[#171717] focus:outline-none"
                   />
                 </div>
@@ -457,11 +515,11 @@ export const ManageEducationPage = () => {
 
               <div>
                 <label className="text-muted-foreground mb-1 block font-mono text-xs uppercase">
-                  Description / Highlights / Coursework
+                  Description / Activities
                 </label>
                 <textarea
                   rows={3}
-                  placeholder="Coursework: Statistics, Analysis of Algorithms, Data Structures, Machine Learning..."
+                  placeholder="Coursework, societies, achievements..."
                   value={formData.description}
                   onChange={(e) => setFormData({ ...formData, description: e.target.value })}
                   className="border-border bg-background w-full rounded-xl border p-3 text-sm leading-relaxed text-[#171717] focus:outline-none"
@@ -469,34 +527,18 @@ export const ManageEducationPage = () => {
               </div>
 
               <div className="flex items-center justify-between border-t pt-4">
-                <div className="flex items-center gap-4">
-                  <div className="flex items-center gap-2">
-                    <label className="text-muted-foreground font-mono text-xs uppercase">
-                      Status:
-                    </label>
-                    <select
-                      value={formData.status}
-                      onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                      className="border-border bg-background rounded-xl border px-3 py-1.5 text-xs font-medium text-[#171717]"
-                    >
-                      <option value="published">Published</option>
-                      <option value="draft">Draft</option>
-                    </select>
-                  </div>
-
-                  <div className="flex items-center gap-1.5">
-                    <label className="text-muted-foreground font-mono text-xs uppercase">
-                      Order:
-                    </label>
-                    <input
-                      type="number"
-                      value={formData.sort_order}
-                      onChange={(e) =>
-                        setFormData({ ...formData, sort_order: Number(e.target.value) })
-                      }
-                      className="border-border bg-background w-16 rounded-xl border px-2 py-1 text-xs text-[#171717]"
-                    />
-                  </div>
+                <div className="flex items-center gap-2">
+                  <label className="text-muted-foreground font-mono text-xs uppercase">
+                    Status:
+                  </label>
+                  <select
+                    value={formData.status}
+                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                    className="border-border bg-background rounded-xl border px-3 py-1.5 text-xs font-medium text-[#171717]"
+                  >
+                    <option value="published">Published</option>
+                    <option value="draft">Draft</option>
+                  </select>
                 </div>
 
                 <div className="flex gap-2">
@@ -517,7 +559,7 @@ export const ManageEducationPage = () => {
                     ) : (
                       <Check className="h-4 w-4" />
                     )}
-                    <span>Save Academic Record</span>
+                    <span>Save Education</span>
                   </button>
                 </div>
               </div>
@@ -531,7 +573,7 @@ export const ManageEducationPage = () => {
         isOpen={deleteModalOpen}
         onClose={() => setDeleteModalOpen(false)}
         onConfirm={handleDelete}
-        title="Delete Academic Record"
+        title="Delete Education Record"
         description={
           itemToDelete
             ? `Are you sure you want to delete "${itemToDelete.degree} at ${itemToDelete.institution}"? This action cannot be undone.`

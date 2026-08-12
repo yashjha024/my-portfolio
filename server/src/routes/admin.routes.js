@@ -4,17 +4,25 @@ import { verifyOwner } from '../middleware/admin.middleware.js';
 import { getDashboardStats, getAuditLogs } from '../controllers/dashboard.controller.js';
 import {
   getAdminCaseStudies,
+  getAdminCaseStudyById,
   createCaseStudy,
   updateCaseStudy,
   deleteCaseStudy,
 } from '../controllers/work.controller.js';
 import {
   getAdminArticles,
+  getAdminArticleById,
   createArticle,
   updateArticle,
   deleteArticle,
 } from '../controllers/thinking.controller.js';
-import { getAdminPrds, createPrd, updatePrd, deletePrd } from '../controllers/prd.controller.js';
+import {
+  getAdminPrds,
+  getAdminPrdById,
+  createPrd,
+  updatePrd,
+  deletePrd,
+} from '../controllers/prd.controller.js';
 import mediaRoutes from './media.routes.js';
 import { getAdminSettings, updateSettings } from '../controllers/settings.controller.js';
 import {
@@ -46,18 +54,21 @@ router.get('/audit-logs', getAuditLogs);
 
 // Work / Case Studies CMS
 router.get('/work', getAdminCaseStudies);
+router.get('/work/:id', getAdminCaseStudyById);
 router.post('/work', createCaseStudy);
 router.put('/work/:id', updateCaseStudy);
 router.delete('/work/:id', deleteCaseStudy);
 
 // Thinking / Articles CMS
 router.get('/thinking', getAdminArticles);
+router.get('/thinking/:id', getAdminArticleById);
 router.post('/thinking', createArticle);
 router.put('/thinking/:id', updateArticle);
 router.delete('/thinking/:id', deleteArticle);
 
 // PRDs CMS
 router.get('/prds', getAdminPrds);
+router.get('/prds/:id', getAdminPrdById);
 router.post('/prds', createPrd);
 router.put('/prds/:id', updatePrd);
 router.delete('/prds/:id', deletePrd);
