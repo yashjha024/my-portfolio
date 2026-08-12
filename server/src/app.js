@@ -16,6 +16,7 @@ import thinkingRoutes from './routes/thinking.routes.js';
 import prdRoutes from './routes/prd.routes.js';
 import mediaRoutes from './routes/media.routes.js';
 import contactRoutes from './routes/contact.routes.js';
+import settingsRoutes from './routes/settings.routes.js';
 import experienceRoutes from './routes/experience.routes.js';
 import educationRoutes from './routes/education.routes.js';
 import adminRoutes from './routes/admin.routes.js';
