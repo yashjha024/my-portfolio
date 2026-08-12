@@ -143,8 +143,11 @@ const fetchAllData = async () => {
     const result = {
       profile: settings
         ? {
-            name: settings.headline?.split(' | ')[0] || 'Yash Jha',
-            role: settings.headline || 'Product Manager & Architecture Specialist',
+            name: profileData.name || 'Yash Jha',
+            role:
+              settings.headline && settings.headline.trim() !== 'Yash Jha'
+                ? settings.headline
+                : 'Product Professional & AI/ML Engineer',
             bio:
               settings.biography ||
               'A product portfolio with case studies, product thinking, and delivery evidence.',

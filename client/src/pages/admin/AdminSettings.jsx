@@ -236,7 +236,7 @@ export const AdminSettingsPage = () => {
             <div className="space-y-4 md:col-span-2">
               <div>
                 <label className="text-foreground mb-1.5 block font-mono text-xs uppercase">
-                  Headline / Positioning Statement
+                  Professional Headline (Subtitle below Name)
                 </label>
                 <input
                   type="text"
