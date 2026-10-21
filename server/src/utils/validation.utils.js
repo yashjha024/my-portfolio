@@ -18,6 +18,9 @@ const slug = z
   .trim()
   .regex(/^[a-z0-9-]{3,120}$/, 'Invalid slug');
 const status = z.enum(['draft', 'published', 'archived']);
+// Form inputs send '' for "not set"; store NULL instead of coercing '' to 0 or failing uuid checks
+const emptyToNull = (schema) =>
+  z.preprocess((value) => (value === '' ? null : value), schema.nullable()).optional();
 
 export const caseStudySchema = z
   .object({
@@ -55,7 +58,7 @@ export const caseStudySchema = z
     prd_snapshot: z.record(z.unknown()).optional(),
     delivery: text(),
     outcome_learning: text(),
-    year: z.coerce.number().int().min(1900).max(2200).optional().nullable(),
+    year: emptyToNull(z.coerce.number().int().min(1900).max(2200)),
     skills: z.array(z.string().trim().min(1).max(80)).max(50).optional(),
     related_work: z.array(z.record(z.unknown())).max(50).optional(),
   })
@@ -89,7 +92,7 @@ export const prdSchema = z
       .or(z.array(z.record(z.unknown())))
       .optional(),
     pdf_url: url,
-    related_case_study_id: z.string().uuid().nullable().optional(),
+    related_case_study_id: emptyToNull(z.string().uuid()),
     status: status.optional(),
   })
   .strict();

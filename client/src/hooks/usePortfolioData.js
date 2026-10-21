@@ -60,7 +60,8 @@ export const toPrdDto = (item) => ({
   ...item,
   pdfUrl: item.pdf_url ?? item.pdfUrl ?? null,
   relatedCaseStudyId: item.related_case_study_id ?? item.relatedCaseStudyId ?? null,
-  sections: object(item.sections),
+  // Sections are either the canonical object or a custom-sections array (see utils/prdSections.js)
+  sections: Array.isArray(item.sections) ? item.sections : object(item.sections),
 });
 
 const defaultProfileDto = {

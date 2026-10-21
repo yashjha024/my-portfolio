@@ -4,6 +4,21 @@ import api from '../../services/api.js';
 import { AutosaveIndicator } from '../../components/admin/AutosaveIndicator.jsx';
 import { MediaPickerModal } from '../../components/admin/MediaPickerModal.jsx';
 import { MarkdownEditor } from '../../components/admin/MarkdownEditor.jsx';
+import { useEditorSave } from '../../hooks/useEditorSave.js';
+import { useUnsavedChangesGuard, useSaveShortcut } from '../../hooks/useUnsavedChangesGuard.js';
+import { buildPrdPayload, describeSaveError } from '../../utils/editorPayload.js';
+import {
+  parseSections,
+  parseSectionsJson,
+  sectionsToJson,
+  setProblem,
+  addCanonicalItem,
+  updateCanonicalItem,
+  removeCanonicalItem,
+  addCustomSection,
+  updateCustomSection,
+  removeCustomSection,
+} from '../../utils/prdSections.js';
 import {
   Save,
   Eye,
@@ -16,21 +31,34 @@ import {
   Loader2,
 } from 'lucide-react';
 
+// Must match the prd_stage enum in supabase/migrations/20260715000001_initial_schema.sql
+const PRD_STAGES = ['In Development', 'Approved', 'Archived'];
+const REQUIREMENT_PRIORITIES = ['P0', 'P1', 'P2', 'P3'];
+const LIST_LABELS = {
+  goals: 'Goals',
+  nonGoals: 'Explicit Non-Goals',
+  requirements: 'Requirements',
+  metrics: 'Success Metrics',
+  releaseGates: 'Release Gates & Quality Checklists',
+};
+
+const inputClass =
+  'border-border bg-background w-full rounded-xl border px-3.5 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none';
+
 export const EditPrdPage = () => {
   const { id } = useParams();
   const isNew = !id || id === 'new';
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(!isNew);
-  const [saving, setSaving] = useState(false);
-  const [autosaveStatus, setAutosaveStatus] = useState('saved');
-  const [lastSavedAt, setLastSavedAt] = useState(null);
   const [error, setError] = useState(null);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
-  const [sectionsMode, setSectionsMode] = useState('canonical'); // 'canonical' | 'json' | 'custom_array'
-  const [sectionsJsonInput, setSectionsJsonInput] = useState(
-    '{\n"requirements": [],\n"goals": [],\n"nonGoals": [],\n"metrics": [],\n"releaseGates": []\n}'
-  );
+  const [caseStudyOptions, setCaseStudyOptions] = useState([]);
+
+  // Sections: one model holding canonical lists and custom sections side by side
+  const [sectionsModel, setSectionsModel] = useState(() => parseSections(null));
+  const [sectionsView, setSectionsView] = useState('canonical'); // 'canonical' | 'custom' | 'json'
+  const [jsonText, setJsonText] = useState('');
   const [jsonError, setJsonError] = useState(null);
 
   const [formData, setFormData] = useState({
@@ -40,19 +68,46 @@ export const EditPrdPage = () => {
     visibility: 'unlisted',
     status: 'draft',
     context: '',
-    sections: {
-      requirements: [],
-      goals: [],
-      nonGoals: [],
-      metrics: [],
-      releaseGates: [],
-    },
     pdf_url: '',
     related_case_study_id: '',
   });
 
-  const initialMount = useRef(true);
-  const autosaveTimeout = useRef(null);
+  // Latest editor state for the save controller (timers fire after renders, never with stale data)
+  const latestRef = useRef({});
+  latestRef.current = { formData, sectionsModel, sectionsView, jsonText };
+
+  const editorSave = useEditorSave({
+    prepare: ({ status }) => {
+      const latest = latestRef.current;
+      return buildPrdPayload(
+        latest.formData,
+        {
+          model: latest.sectionsModel,
+          jsonMode: latest.sectionsView === 'json',
+          jsonText: latest.jsonText,
+        },
+        { status }
+      );
+    },
+    persist: async (payload) => {
+      const res = isNew
+        ? await api.post('/admin/prds', payload)
+        : await api.put(`/admin/prds/${id}`, payload);
+      if (!res.data?.success)
+        throw new Error(res.data?.error || 'Failed to save PRD specification.');
+      return res.data.data;
+    },
+    // Autosave only drafts; published/archived edits go live only through an explicit Save
+    canAutosave: () => !isNew && latestRef.current.formData.status === 'draft',
+  });
+  const saving = editorSave.state.saving;
+  const autosaveStatus = editorSave.indicatorStatus;
+  const lastSavedAt = editorSave.state.lastSavedAt;
+  const saveError = editorSave.state.error
+    ? describeSaveError(editorSave.state.error, 'Failed to save PRD specification.')
+    : null;
+
+  useUnsavedChangesGuard(editorSave.state.dirty || saving);
 
   const fetchPrd = useCallback(async () => {
     if (isNew) return;
@@ -65,36 +120,7 @@ export const EditPrdPage = () => {
 
       if (res.data?.success && res.data?.data) {
         const item = res.data.data;
-        let loadedSections = item.sections;
-
-        // Coerce to canonical object if it's missing or an array
-        if (
-          !loadedSections ||
-          typeof loadedSections !== 'object' ||
-          Array.isArray(loadedSections)
-        ) {
-          loadedSections = {
-            requirements: [],
-            goals: [],
-            nonGoals: [],
-            metrics: [],
-            releaseGates: [],
-          };
-        } else {
-          // Ensure keys exist
-          loadedSections = {
-            requirements: Array.isArray(loadedSections.requirements)
-              ? loadedSections.requirements
-              : [],
-            goals: Array.isArray(loadedSections.goals) ? loadedSections.goals : [],
-            nonGoals: Array.isArray(loadedSections.nonGoals) ? loadedSections.nonGoals : [],
-            metrics: Array.isArray(loadedSections.metrics) ? loadedSections.metrics : [],
-            releaseGates: Array.isArray(loadedSections.releaseGates)
-              ? loadedSections.releaseGates
-              : [],
-            ...loadedSections,
-          };
-        }
+        const model = parseSections(item.sections);
 
         setFormData({
           title: item.title || '',
@@ -103,13 +129,15 @@ export const EditPrdPage = () => {
           visibility: item.visibility || 'unlisted',
           status: item.status || 'draft',
           context: item.context || '',
-          sections: loadedSections,
           pdf_url: item.pdf_url || '',
           related_case_study_id: item.related_case_study_id || '',
         });
-        setSectionsJsonInput(JSON.stringify(loadedSections, null, 2));
-        setSectionsMode('canonical');
-        setLastSavedAt(item.updated_at || new Date().toISOString());
+        setSectionsModel(model);
+        setSectionsView(model.primaryShape === 'custom' ? 'custom' : 'canonical');
+        setJsonText(sectionsToJson(model));
+        setJsonError(null);
+        // Loading is not an edit: establish the saved baseline without scheduling any write
+        editorSave.markClean(item.updated_at || null);
       }
     } catch (err) {
       console.error('Failed to fetch PRD:', err);
@@ -117,11 +145,26 @@ export const EditPrdPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [id, isNew]);
+  }, [id, isNew, editorSave.markClean]);
 
   useEffect(() => {
     fetchPrd();
   }, [fetchPrd]);
+
+  useEffect(() => {
+    let cancelled = false;
+    api
+      .get('/admin/work?limit=100')
+      .then((res) => {
+        if (!cancelled && res.data?.success) setCaseStudyOptions(res.data.data || []);
+      })
+      .catch(() => {
+        // The selector still shows the stored link; options are a convenience
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const handleTitleChange = (e) => {
     const val = e.target.value;
@@ -135,204 +178,245 @@ export const EditPrdPage = () => {
       }
       return next;
     });
-    setAutosaveStatus('unsaved');
+    editorSave.markDirty();
   };
 
   const handleFieldChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setAutosaveStatus('unsaved');
+    editorSave.markDirty();
+  };
+
+  const updateSections = (updater) => {
+    setSectionsModel((prev) => updater(prev));
+    editorSave.markDirty();
+  };
+
+  const switchSectionsView = (nextView) => {
+    if (nextView === sectionsView) return;
+    if (sectionsView === 'json') {
+      // Leaving Raw JSON: apply it, or stay put so invalid edits are never silently discarded
+      const parsed = parseSectionsJson(jsonText);
+      if (parsed.error) {
+        setJsonError(`${parsed.error} Fix it or undo your edits before switching views.`);
+        return;
+      }
+      setSectionsModel(parsed.model);
+    }
+    if (nextView === 'json') {
+      // Always start from the current structured content, never from stale JSON text
+      setJsonText(sectionsToJson(sectionsModel));
+      setJsonError(null);
+    }
+    setSectionsView(nextView);
   };
 
   const handleSectionsJsonChange = (value) => {
-    setSectionsJsonInput(value);
-    setAutosaveStatus('unsaved');
-    try {
-      const parsed = JSON.parse(value);
-      if (parsed && typeof parsed === 'object') {
-        handleFieldChange('sections', parsed);
-        setJsonError(null);
-      } else {
-        setJsonError('PRD sections must be a valid JSON object or array.');
-      }
-    } catch {
-      setJsonError('Typing JSON... (Must be valid JSON before saving)');
+    setJsonText(value);
+    editorSave.markDirty();
+    const parsed = parseSectionsJson(value);
+    if (parsed.error) {
+      setJsonError(`${parsed.error} Saving is blocked until it is fixed.`);
+    } else {
+      setSectionsModel(parsed.model);
+      setJsonError(null);
     }
   };
 
-  // Debounced Autosave
-  useEffect(() => {
-    if (initialMount.current) {
-      initialMount.current = false;
+  /**
+   * Save the PRD.
+   * - no argument: plain Save, keeps the current publication status (new items are created as drafts)
+   * - 'draft' / 'published': explicit status transition
+   */
+  const handleSave = async (targetStatus = null) => {
+    setError(null);
+    const currentStatus = latestRef.current.formData.status;
+    if (
+      !isNew &&
+      targetStatus === 'draft' &&
+      currentStatus === 'published' &&
+      !window.confirm('Saving as draft will unpublish this PRD from the public site. Continue?')
+    ) {
       return;
     }
-    if (isNew || formData.status !== 'draft') return;
+    const status = targetStatus || (isNew ? 'draft' : undefined);
+    const outcome = await editorSave.save(status ? { status } : {});
+    if (!outcome.ok) return; // error state and message come from the save controller
 
-    if (autosaveTimeout.current) clearTimeout(autosaveTimeout.current);
-
-    autosaveTimeout.current = setTimeout(async () => {
-      try {
-        if (sectionsMode === 'json') {
-          try {
-            JSON.parse(sectionsJsonInput);
-          } catch {
-            return; // Don't autosave while JSON is malformed
-          }
-        }
-        setAutosaveStatus('saving');
-        await api.put(`/admin/prds/${id}`, formData);
-        setAutosaveStatus('saved');
-        setLastSavedAt(new Date().toISOString());
-      } catch (err) {
-        console.error('Autosave failed:', err);
-        setAutosaveStatus('error');
-      }
-    }, 3000);
-
-    return () => clearTimeout(autosaveTimeout.current);
-  }, [formData, id, isNew, sectionsMode, sectionsJsonInput]);
-
-  const validateForm = () => {
-    if (!formData.title || formData.title.trim().length < 3) {
-      alert('PRD Title must be at least 3 characters long.');
-      return false;
+    const saved = outcome.result;
+    if (saved?.status) {
+      latestRef.current.formData = { ...latestRef.current.formData, status: saved.status };
+      setFormData((prev) => ({ ...prev, status: saved.status }));
     }
-    if (!formData.slug || !/^[a-z0-9-]+$/.test(formData.slug)) {
-      alert('Slug must contain only lowercase letters, numbers, and hyphens.');
-      return false;
-    }
-    if (!formData.context || formData.context.trim().length < 15) {
-      alert('Please provide at least 15 characters of background overview context.');
-      return false;
-    }
-    if (sectionsMode === 'json') {
-      try {
-        const parsed = JSON.parse(sectionsJsonInput);
-        if (!parsed || typeof parsed !== 'object') {
-          alert('PRD sections JSON must evaluate to a JSON object or array.');
-          return false;
-        }
-      } catch {
-        alert(
-          'PRD sections contains JSON syntax errors. Please check your formatting before saving.'
-        );
-        return false;
-      }
-    }
-    return true;
-  };
-
-  const handleSave = async (targetStatus = null) => {
-    if (!validateForm()) return;
-
-    try {
-      setSaving(true);
-      setError(null);
-      const payload = { ...formData };
-      if (sectionsMode === 'json') {
-        payload.sections = JSON.parse(sectionsJsonInput);
-      }
-      if (targetStatus) payload.status = targetStatus;
-
-      let res;
-      if (isNew) {
-        res = await api.post('/admin/prds', payload);
-      } else {
-        res = await api.put(`/admin/prds/${id}`, payload);
-      }
-
-      if (res.data?.success) {
-        setAutosaveStatus('saved');
-        setLastSavedAt(new Date().toISOString());
-        if (isNew && res.data.data?.id) {
-          navigate(`/admin/prds/edit/${res.data.data.id}`, { replace: true });
-        }
-      }
-    } catch (err) {
-      console.error('Save error:', err);
-      setError(err?.response?.data?.error || 'Failed to save PRD specification.');
-    } finally {
-      setSaving(false);
+    editorSave.refreshAutosave();
+    if (isNew && saved?.id) {
+      navigate(`/admin/prds/edit/${saved.id}`, { replace: true });
     }
   };
 
-  const addSection = () => {
-    if (!Array.isArray(formData.sections)) {
+  useSaveShortcut(() => handleSave());
+
+  const handleImportMarkdown = (file) => {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const text = event.target?.result;
+      if (typeof text !== 'string') return;
+      const current = latestRef.current.formData;
+      if (
+        current.context.trim() &&
+        !window.confirm('Importing replaces the current background context. Continue?')
+      ) {
+        return;
+      }
+      // Automatically extract title if first line starts with #
+      const lines = text.split('\n');
+      let extractedTitle = '';
+      let bodyText = text;
+      if (lines[0] && lines[0].startsWith('# ')) {
+        extractedTitle = lines[0].replace(/^#\s+/, '').trim();
+        bodyText = lines.slice(1).join('\n').trim();
+      }
       setFormData((prev) => ({
         ...prev,
-        sections: [
-          {
-            title: 'Section 1: Core Functional Requirements',
-            content: '### Requirements Table\n- [ ] User can authenticate effortlessly...',
-          },
-        ],
+        title: extractedTitle || prev.title || file.name.replace(/\.[^/.]+$/, ''),
+        context: bodyText || text,
       }));
-      setSectionsMode('custom_array');
-      setAutosaveStatus('unsaved');
-      return;
+      editorSave.markDirty();
+    };
+    reader.readAsText(file);
+  };
+
+  const renderCanonicalItem = (key, itemVal, idx) => {
+    const update = (patch) => updateSections((m) => updateCanonicalItem(m, key, idx, patch));
+
+    if (typeof itemVal === 'string') {
+      return (
+        <input
+          type="text"
+          value={itemVal}
+          onChange={(e) => update(e.target.value)}
+          aria-label={`${LIST_LABELS[key]} item ${idx + 1}`}
+          className={`${inputClass} flex-1`}
+        />
+      );
     }
-    setFormData((prev) => ({
-      ...prev,
-      sections: [
-        ...prev.sections,
-        {
-          title: `Section ${prev.sections.length + 1}: Core Functional Requirements`,
-          content:
-            '### Requirements Table\n- [ ] User can authenticate effortlessly\n- [ ] System handles high concurrent throughput...',
-        },
-      ],
-    }));
-    setAutosaveStatus('unsaved');
-  };
 
-  const updateSection = (index, field, value) => {
-    if (!Array.isArray(formData.sections)) return;
-    setFormData((prev) => {
-      const list = [...prev.sections];
-      list[index] = { ...list[index], [field]: value };
-      return { ...prev, sections: list };
-    });
-    setAutosaveStatus('unsaved');
-  };
+    if (!itemVal || typeof itemVal !== 'object' || Array.isArray(itemVal)) {
+      return (
+        <p className="text-muted-foreground flex-1 font-mono text-[11px]">
+          Unsupported value — edit this item in Raw JSON.
+        </p>
+      );
+    }
 
-  const removeSection = (index) => {
-    if (!Array.isArray(formData.sections)) return;
-    setFormData((prev) => ({
-      ...prev,
-      sections: prev.sections.filter((_, i) => i !== index),
-    }));
-    setAutosaveStatus('unsaved');
-  };
+    if (key === 'requirements') {
+      return (
+        <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-12">
+          <input
+            type="text"
+            value={itemVal.id || ''}
+            onChange={(e) => update({ id: e.target.value })}
+            placeholder="REQ-001"
+            aria-label={`Requirement ${idx + 1} ID`}
+            className={`${inputClass} font-mono md:col-span-2`}
+          />
+          <select
+            value={itemVal.priority || ''}
+            onChange={(e) => update({ priority: e.target.value })}
+            aria-label={`Requirement ${idx + 1} priority`}
+            className={`${inputClass} md:col-span-2`}
+          >
+            <option value="">—</option>
+            {REQUIREMENT_PRIORITIES.map((priority) => (
+              <option key={priority} value={priority}>
+                {priority}
+              </option>
+            ))}
+          </select>
+          <input
+            type="text"
+            value={itemVal.name || itemVal.title || ''}
+            onChange={(e) => update({ name: e.target.value })}
+            placeholder="Requirement name"
+            aria-label={`Requirement ${idx + 1} name`}
+            className={`${inputClass} md:col-span-8`}
+          />
+          <textarea
+            rows={2}
+            value={itemVal.desc || itemVal.userStory || ''}
+            onChange={(e) => update({ desc: e.target.value })}
+            placeholder="Technical specification & acceptance criteria"
+            aria-label={`Requirement ${idx + 1} specification`}
+            className={`${inputClass} md:col-span-12`}
+          />
+        </div>
+      );
+    }
 
-  const addCanonicalListItem = (key) => {
-    const currentObj = Array.isArray(formData.sections) ? {} : { ...formData.sections };
-    const currentList = Array.isArray(currentObj[key]) ? [...currentObj[key]] : [];
-    currentList.push(
-      key === 'metrics' ? { label: 'Metric Name', target: '+15%' } : 'New item specification'
+    if (key === 'metrics') {
+      return (
+        <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-2">
+          <input
+            type="text"
+            value={itemVal.name || itemVal.label || ''}
+            onChange={(e) => update({ name: e.target.value })}
+            placeholder="Metric name"
+            aria-label={`Metric ${idx + 1} name`}
+            className={inputClass}
+          />
+          <input
+            type="text"
+            value={itemVal.target || itemVal.value || ''}
+            onChange={(e) => update({ target: e.target.value })}
+            placeholder="Target"
+            aria-label={`Metric ${idx + 1} target`}
+            className={inputClass}
+          />
+        </div>
+      );
+    }
+
+    if (key === 'releaseGates') {
+      return (
+        <div className="grid flex-1 grid-cols-1 gap-2 md:grid-cols-3">
+          <input
+            type="text"
+            value={itemVal.name || ''}
+            onChange={(e) => update({ name: e.target.value })}
+            placeholder="Gate name"
+            aria-label={`Release gate ${idx + 1} name`}
+            className={inputClass}
+          />
+          <input
+            type="text"
+            value={itemVal.status || ''}
+            onChange={(e) => update({ status: e.target.value })}
+            placeholder="Status e.g. Passed"
+            aria-label={`Release gate ${idx + 1} status`}
+            className={inputClass}
+          />
+          <input
+            type="text"
+            value={itemVal.criteria || ''}
+            onChange={(e) => update({ criteria: e.target.value })}
+            placeholder="Criteria"
+            aria-label={`Release gate ${idx + 1} criteria`}
+            className={inputClass}
+          />
+        </div>
+      );
+    }
+
+    // Object goals / non-goals: edit the visible text, keep any extra properties
+    const textKey = ['name', 'text', 'title'].find((k) => typeof itemVal[k] === 'string') || 'text';
+    return (
+      <input
+        type="text"
+        value={itemVal[textKey] || ''}
+        onChange={(e) => update({ [textKey]: e.target.value })}
+        aria-label={`${LIST_LABELS[key]} item ${idx + 1}`}
+        className={`${inputClass} flex-1`}
+      />
     );
-    currentObj[key] = currentList;
-    setFormData((prev) => ({ ...prev, sections: currentObj }));
-    setSectionsJsonInput(JSON.stringify(currentObj, null, 2));
-    setAutosaveStatus('unsaved');
-  };
-
-  const updateCanonicalListItem = (key, idx, val) => {
-    const currentObj = Array.isArray(formData.sections) ? {} : { ...formData.sections };
-    const currentList = Array.isArray(currentObj[key]) ? [...currentObj[key]] : [];
-    currentList[idx] = val;
-    currentObj[key] = currentList;
-    setFormData((prev) => ({ ...prev, sections: currentObj }));
-    setSectionsJsonInput(JSON.stringify(currentObj, null, 2));
-    setAutosaveStatus('unsaved');
-  };
-
-  const removeCanonicalListItem = (key, idx) => {
-    const currentObj = Array.isArray(formData.sections) ? {} : { ...formData.sections };
-    const currentList = Array.isArray(currentObj[key]) ? [...currentObj[key]] : [];
-    currentList.splice(idx, 1);
-    currentObj[key] = currentList;
-    setFormData((prev) => ({ ...prev, sections: currentObj }));
-    setSectionsJsonInput(JSON.stringify(currentObj, null, 2));
-    setAutosaveStatus('unsaved');
   };
 
   if (loading) {
@@ -345,6 +429,13 @@ export const EditPrdPage = () => {
       </div>
     );
   }
+
+  const stageOptions = PRD_STAGES.includes(formData.stage)
+    ? PRD_STAGES
+    : [formData.stage, ...PRD_STAGES];
+  const linkedCaseStudyMissing =
+    formData.related_case_study_id &&
+    !caseStudyOptions.some((cs) => cs.id === formData.related_case_study_id);
 
   return (
     <div className="space-y-6 pb-20">
@@ -380,28 +471,7 @@ export const EditPrdPage = () => {
               className="hidden"
               onChange={(e) => {
                 const file = e.target.files?.[0];
-                if (!file) return;
-                const reader = new FileReader();
-                reader.onload = (event) => {
-                  const text = event.target?.result;
-                  if (typeof text === 'string') {
-                    // Automatically extract title if first line starts with #
-                    const lines = text.split('\n');
-                    let extractedTitle = '';
-                    let bodyText = text;
-                    if (lines[0] && lines[0].startsWith('# ')) {
-                      extractedTitle = lines[0].replace(/^#\s+/, '').trim();
-                      bodyText = lines.slice(1).join('\n').trim();
-                    }
-                    setFormData((prev) => ({
-                      ...prev,
-                      title: extractedTitle || prev.title || file.name.replace(/\.[^/.]+$/, ''),
-                      context: bodyText || text,
-                    }));
-                    setAutosaveStatus('unsaved');
-                  }
-                };
-                reader.readAsText(file);
+                if (file) handleImportMarkdown(file);
                 e.target.value = '';
               }}
             />
@@ -439,36 +509,57 @@ export const EditPrdPage = () => {
             </button>
           )}
 
+          {!isNew && formData.status !== 'draft' && (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => handleSave()}
+              title={`Save changes and keep this PRD ${formData.status} (Ctrl/Cmd+S)`}
+              className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
+            >
+              <Save className="h-3.5 w-3.5" />
+              <span>Save</span>
+            </button>
+          )}
+
           <button
             type="button"
             disabled={saving}
             onClick={() => handleSave('draft')}
+            title={
+              formData.status === 'published' ? 'Unpublish and save as draft' : 'Save as draft'
+            }
             className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium transition-colors disabled:opacity-50"
           >
             <Save className="h-3.5 w-3.5" />
-            <span>Save Draft</span>
+            <span>{formData.status === 'published' ? 'Unpublish to Draft' : 'Save Draft'}</span>
           </button>
 
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => handleSave('published')}
-            className="shadow-soft flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-medium text-white shadow-emerald-600/20 transition-all hover:bg-emerald-500 disabled:opacity-50"
-          >
-            {saving ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Check className="h-3.5 w-3.5" />
-            )}
-            <span>Publish Spec</span>
-          </button>
+          {formData.status !== 'published' && (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => handleSave('published')}
+              className="shadow-soft flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-medium text-white shadow-emerald-600/20 transition-all hover:bg-emerald-500 disabled:opacity-50"
+            >
+              {saving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Check className="h-3.5 w-3.5" />
+              )}
+              <span>Publish Spec</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {error && (
-        <div className="flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-300">
+      {(error || saveError) && (
+        <div
+          role="alert"
+          className="flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-300"
+        >
           <AlertCircle className="h-5 w-5 shrink-0" />
-          <span>{error}</span>
+          <span>{error || saveError}</span>
         </div>
       )}
 
@@ -496,7 +587,7 @@ export const EditPrdPage = () => {
                 required={true}
                 value={formData.context}
                 onChange={(val) => handleFieldChange('context', val)}
-                onSave={() => handleSave('draft')}
+                onSave={() => handleSave()}
                 autosaveStatus={autosaveStatus}
                 lastSavedAt={lastSavedAt}
                 minHeight="320px"
@@ -512,90 +603,95 @@ export const EditPrdPage = () => {
                   Structured Specification Sections
                 </h3>
                 <p className="text-muted-foreground text-xs">
-                  Switch between Canonical Lists, Custom Sections Array, or Raw JSON Spec Editor.
+                  Canonical lists and custom sections are kept together; switching views never
+                  discards either.
                 </p>
               </div>
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  type="button"
-                  onClick={() => setSectionsMode('canonical')}
-                  className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-colors ${
-                    sectionsMode === 'canonical'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-secondary text-foreground hover:bg-secondary'
-                  }`}
-                >
-                  Canonical Lists
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSectionsMode('custom_array')}
-                  className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-colors ${
-                    sectionsMode === 'custom_array'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-secondary text-foreground hover:bg-secondary'
-                  }`}
-                >
-                  Custom Array
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSectionsMode('json')}
-                  className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-colors ${
-                    sectionsMode === 'json'
-                      ? 'bg-emerald-600 text-white'
-                      : 'bg-secondary text-foreground hover:bg-secondary'
-                  }`}
-                >
-                  Raw JSON
-                </button>
+              <div className="flex flex-wrap items-center gap-2" role="tablist">
+                {[
+                  { id: 'canonical', label: 'Canonical Lists' },
+                  { id: 'custom', label: `Custom Sections (${sectionsModel.custom.length})` },
+                  { id: 'json', label: 'Raw JSON' },
+                ].map((view) => (
+                  <button
+                    key={view.id}
+                    type="button"
+                    role="tab"
+                    aria-selected={sectionsView === view.id}
+                    onClick={() => switchSectionsView(view.id)}
+                    className={`rounded-xl px-3 py-1.5 text-xs font-medium transition-colors ${
+                      sectionsView === view.id
+                        ? 'bg-emerald-600 text-white'
+                        : 'bg-secondary text-foreground hover:bg-secondary'
+                    }`}
+                  >
+                    {view.label}
+                  </button>
+                ))}
               </div>
             </div>
 
-            {sectionsMode === 'canonical' && (
+            {sectionsView === 'canonical' && (
               <div className="border-border bg-card space-y-6 rounded-2xl border p-6">
-                {['requirements', 'goals', 'nonGoals', 'releaseGates'].map((key) => {
-                  const items = Array.isArray(formData.sections?.[key])
-                    ? formData.sections[key]
-                    : [];
+                <div className="border-border space-y-2 border-b pb-5">
+                  <label
+                    htmlFor="prd-problem"
+                    className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-400"
+                  >
+                    Problem Statement
+                  </label>
+                  <textarea
+                    id="prd-problem"
+                    rows={3}
+                    value={
+                      typeof sectionsModel.canonical.problem === 'string'
+                        ? sectionsModel.canonical.problem
+                        : ''
+                    }
+                    onChange={(e) => updateSections((m) => setProblem(m, e.target.value))}
+                    placeholder="Why are we building this?"
+                    className={inputClass}
+                  />
+                </div>
+                {['goals', 'nonGoals', 'requirements', 'metrics', 'releaseGates'].map((key) => {
+                  const rawList = sectionsModel.canonical[key];
+                  const items = Array.isArray(rawList) ? rawList : [];
                   return (
                     <div
                       key={key}
                       className="border-border space-y-3 border-b pb-5 last:border-0 last:pb-0"
                     >
                       <div className="flex items-center justify-between">
-                        <label className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-400">
-                          {key === 'nonGoals'
-                            ? 'Explicit Non-Goals'
-                            : key === 'releaseGates'
-                              ? 'Release Gates & Quality Checklists'
-                              : key}
-                        </label>
-                        <button
-                          type="button"
-                          onClick={() => addCanonicalListItem(key)}
-                          className="bg-secondary hover:bg-secondary flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-medium text-emerald-300"
-                        >
-                          <Plus className="h-3 w-3" /> Add {key} item
-                        </button>
+                        <span className="font-mono text-xs font-bold uppercase tracking-wider text-emerald-400">
+                          {LIST_LABELS[key]}
+                        </span>
+                        {Array.isArray(rawList) && (
+                          <button
+                            type="button"
+                            onClick={() => updateSections((m) => addCanonicalItem(m, key))}
+                            className="bg-secondary hover:bg-secondary flex items-center gap-1 rounded-lg px-2.5 py-1 text-[11px] font-medium text-emerald-300"
+                          >
+                            <Plus className="h-3 w-3" /> Add item
+                          </button>
+                        )}
                       </div>
-                      {items.length === 0 ? (
-                        <p className="text-muted-foreground text-xs italic">No {key} added yet.</p>
+                      {!Array.isArray(rawList) ? (
+                        <p className="text-muted-foreground text-xs italic">
+                          This field is not a list; edit it in Raw JSON.
+                        </p>
+                      ) : items.length === 0 ? (
+                        <p className="text-muted-foreground text-xs italic">No items added yet.</p>
                       ) : (
                         <div className="space-y-2">
                           {items.map((itemVal, idx) => (
-                            <div key={idx} className="flex items-center gap-2">
-                              <input
-                                type="text"
-                                value={
-                                  typeof itemVal === 'string' ? itemVal : JSON.stringify(itemVal)
-                                }
-                                onChange={(e) => updateCanonicalListItem(key, idx, e.target.value)}
-                                className="border-border bg-background flex-1 rounded-xl border px-3.5 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none"
-                              />
+                            <div key={idx} className="flex items-start gap-2">
+                              {renderCanonicalItem(key, itemVal, idx)}
                               <button
                                 type="button"
-                                onClick={() => removeCanonicalListItem(key, idx)}
+                                onClick={() =>
+                                  updateSections((m) => removeCanonicalItem(m, key, idx))
+                                }
+                                aria-label={`Remove ${LIST_LABELS[key]} item ${idx + 1}`}
                                 className="text-muted-foreground hover:bg-background rounded-lg p-2 hover:text-rose-400"
                               >
                                 <Trash2 className="h-4 w-4" />
@@ -610,20 +706,20 @@ export const EditPrdPage = () => {
               </div>
             )}
 
-            {sectionsMode === 'custom_array' && (
+            {sectionsView === 'custom' && (
               <div className="space-y-4">
                 <div className="flex justify-end">
                   <button
                     type="button"
-                    onClick={addSection}
+                    onClick={() => updateSections(addCustomSection)}
                     className="flex items-center gap-1.5 rounded-xl bg-emerald-600 px-3.5 py-2 text-xs font-medium text-white shadow-sm transition-colors hover:bg-emerald-500"
                   >
                     <Plus className="h-4 w-4" />
                     <span>Add Custom Section</span>
                   </button>
                 </div>
-                {Array.isArray(formData.sections) && formData.sections.length > 0 ? (
-                  formData.sections.map((sec, idx) => (
+                {sectionsModel.custom.length > 0 ? (
+                  sectionsModel.custom.map((sec, idx) => (
                     <div
                       key={idx}
                       className="border-border bg-card space-y-3 rounded-2xl border p-5"
@@ -632,23 +728,31 @@ export const EditPrdPage = () => {
                         <input
                           type="text"
                           placeholder="Section Title e.g. 1. Functional Requirements Table"
-                          value={sec.title || ''}
-                          onChange={(e) => updateSection(idx, 'title', e.target.value)}
+                          value={sec?.title || ''}
+                          onChange={(e) =>
+                            updateSections((m) =>
+                              updateCustomSection(m, idx, { title: e.target.value })
+                            )
+                          }
+                          aria-label={`Custom section ${idx + 1} title`}
                           className="border-border bg-background flex-1 rounded-xl border px-4 py-2 text-sm font-bold text-white focus:border-emerald-500 focus:outline-none"
                         />
                         <button
                           type="button"
-                          onClick={() => removeSection(idx)}
+                          onClick={() => updateSections((m) => removeCustomSection(m, idx))}
                           className="text-muted-foreground hover:bg-background rounded-xl p-2 transition-colors hover:text-rose-400"
                           title="Remove Section"
+                          aria-label={`Remove custom section ${idx + 1}`}
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
                       </div>
                       <MarkdownEditor
-                        value={sec.content || ''}
-                        onChange={(val) => updateSection(idx, 'content', val)}
-                        onSave={() => handleSave('draft')}
+                        value={typeof sec === 'string' ? sec : sec?.content || ''}
+                        onChange={(val) =>
+                          updateSections((m) => updateCustomSection(m, idx, { content: val }))
+                        }
+                        onSave={() => handleSave()}
                         autosaveStatus={autosaveStatus}
                         lastSavedAt={lastSavedAt}
                         minHeight="240px"
@@ -665,19 +769,22 @@ export const EditPrdPage = () => {
               </div>
             )}
 
-            {sectionsMode === 'json' && (
+            {sectionsView === 'json' && (
               <div className="space-y-2">
                 <textarea
                   rows={18}
-                  value={sectionsJsonInput}
+                  value={jsonText}
                   onChange={(event) => handleSectionsJsonChange(event.target.value)}
                   className="border-border bg-background w-full rounded-2xl border p-4 font-mono text-xs leading-relaxed text-white focus:border-emerald-500 focus:outline-none"
                   aria-label="Structured PRD sections as JSON"
+                  aria-invalid={Boolean(jsonError)}
                 />
                 {jsonError ? (
-                  <p className="font-mono text-xs text-amber-400">{jsonError}</p>
+                  <p role="alert" className="font-mono text-xs text-amber-400">
+                    {jsonError}
+                  </p>
                 ) : (
-                  <p className="font-mono text-xs text-emerald-400">Valid JSON object.</p>
+                  <p className="font-mono text-xs text-emerald-400">Valid JSON.</p>
                 )}
               </div>
             )}
@@ -700,21 +807,15 @@ export const EditPrdPage = () => {
                 onChange={(e) => handleFieldChange('stage', e.target.value)}
                 className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:border-emerald-500 focus:outline-none"
               >
-                <option value="In Development" className="bg-slate-900 font-semibold text-white">
-                  In Development
-                </option>
-                <option value="In Review" className="bg-slate-900 font-semibold text-white">
-                  In Review
-                </option>
-                <option value="Approved" className="bg-slate-900 font-semibold text-white">
-                  Approved
-                </option>
-                <option value="Shipped" className="bg-slate-900 font-semibold text-white">
-                  Shipped / Launched
-                </option>
-                <option value="Archived" className="bg-slate-900 font-semibold text-white">
-                  Archived
-                </option>
+                {stageOptions.map((stage) => (
+                  <option
+                    key={stage}
+                    value={stage}
+                    className="bg-slate-900 font-semibold text-white"
+                  >
+                    {stage}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -747,24 +848,16 @@ export const EditPrdPage = () => {
             </div>
 
             <div>
-              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
+              <span className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 Publish Status
-              </label>
-              <select
-                value={formData.status}
-                onChange={(e) => handleFieldChange('status', e.target.value)}
-                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:border-emerald-500 focus:outline-none"
+              </span>
+              {/* Read-only: status changes only through the explicit Save Draft / Publish actions */}
+              <div
+                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium capitalize text-white"
+                aria-live="polite"
               >
-                <option value="draft" className="bg-slate-900 font-semibold text-white">
-                  Draft
-                </option>
-                <option value="published" className="bg-slate-900 font-semibold text-white">
-                  Published
-                </option>
-                <option value="archived" className="bg-slate-900 font-semibold text-white">
-                  Archived
-                </option>
-              </select>
+                {formData.status}
+              </div>
             </div>
 
             <div>
@@ -777,6 +870,38 @@ export const EditPrdPage = () => {
                 onChange={(e) => handleFieldChange('slug', e.target.value)}
                 className="border-border bg-background w-full rounded-xl border px-3 py-2 font-mono text-xs text-emerald-300 focus:border-emerald-500 focus:outline-none"
               />
+            </div>
+
+            <div>
+              <label
+                htmlFor="prd-related-case-study"
+                className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase"
+              >
+                Linked Case Study
+              </label>
+              <select
+                id="prd-related-case-study"
+                value={formData.related_case_study_id || ''}
+                onChange={(e) => handleFieldChange('related_case_study_id', e.target.value)}
+                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:border-emerald-500 focus:outline-none"
+              >
+                <option value="" className="bg-slate-900">
+                  None
+                </option>
+                {linkedCaseStudyMissing && (
+                  <option value={formData.related_case_study_id} className="bg-slate-900">
+                    Current link ({formData.related_case_study_id.slice(0, 8)}…)
+                  </option>
+                )}
+                {caseStudyOptions.map((cs) => (
+                  <option key={cs.id} value={cs.id} className="bg-slate-900">
+                    {cs.title} {cs.status !== 'published' ? `(${cs.status})` : ''}
+                  </option>
+                ))}
+              </select>
+              <p className="text-muted-foreground mt-1 text-[10px]">
+                Shown on the public PRD page only while the case study is published.
+              </p>
             </div>
           </div>
 

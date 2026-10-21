@@ -7,6 +7,7 @@ import {
   verifyPreviewToken,
 } from '../utils/validation.utils.js';
 import { logAuditAction } from '../utils/audit.utils.js';
+import { applyPublishedAtForUpdate, resolvePublishedAt } from '../utils/publication.utils.js';
 
 export const getPublicCaseStudies = async (req, res, next) => {
   try {
@@ -168,6 +169,8 @@ export const createCaseStudy = async (req, res, next) => {
         .replace(/^-+|-+$/g, '')
         .slice(0, 100);
     }
+    const publishedAt = resolvePublishedAt(null, payload.status);
+    if (publishedAt) payload.published_at = publishedAt;
 
     const { data, error } = await supabase
       .from('case_studies')
@@ -196,8 +199,8 @@ export const createCaseStudy = async (req, res, next) => {
 export const updateCaseStudy = async (req, res, next) => {
   try {
     const payload = parseResource(caseStudySchema, req.body);
-    if (payload.status === 'published' && !payload.published_at) {
-      payload.published_at = new Date().toISOString();
+    if (!(await applyPublishedAtForUpdate('case_studies', req.params.id, payload))) {
+      return res.status(404).json({ success: false, error: 'Case study not found' });
     }
 
     const { data, error } = await supabase

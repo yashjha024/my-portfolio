@@ -7,6 +7,7 @@ import {
   verifyPreviewToken,
 } from '../utils/validation.utils.js';
 import { logAuditAction } from '../utils/audit.utils.js';
+import { applyPublishedAtForUpdate, resolvePublishedAt } from '../utils/publication.utils.js';
 
 export const getPublicArticles = async (req, res, next) => {
   try {
@@ -163,6 +164,8 @@ export const createArticle = async (req, res, next) => {
         .replace(/^-+|-+$/g, '')
         .slice(0, 100);
     }
+    const publishedAt = resolvePublishedAt(null, payload.status);
+    if (publishedAt) payload.published_at = publishedAt;
 
     const { data, error } = await supabase
       .from('thinking_articles')
@@ -191,8 +194,8 @@ export const createArticle = async (req, res, next) => {
 export const updateArticle = async (req, res, next) => {
   try {
     const payload = parseResource(articleSchema, req.body);
-    if (payload.status === 'published' && !payload.published_at) {
-      payload.published_at = new Date().toISOString();
+    if (!(await applyPublishedAtForUpdate('thinking_articles', req.params.id, payload))) {
+      return res.status(404).json({ success: false, error: 'Article not found' });
     }
 
     const { data, error } = await supabase

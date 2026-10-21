@@ -531,9 +531,17 @@ export const MarkdownEditor = ({
                   const reader = new FileReader();
                   reader.onload = (event) => {
                     const text = event.target?.result;
-                    if (typeof text === 'string') {
-                      onChange?.(text);
+                    if (typeof text !== 'string') return;
+                    // Importing replaces the whole field; never discard existing content silently
+                    if (
+                      value.trim() &&
+                      !window.confirm(
+                        'Importing replaces the current content of this field. Continue?'
+                      )
+                    ) {
+                      return;
                     }
+                    onChange?.(text);
                   };
                   reader.readAsText(file);
                   e.target.value = '';

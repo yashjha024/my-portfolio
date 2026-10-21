@@ -4,6 +4,9 @@ import api from '../../services/api.js';
 import { AutosaveIndicator } from '../../components/admin/AutosaveIndicator.jsx';
 import { MediaPickerModal } from '../../components/admin/MediaPickerModal.jsx';
 import { MarkdownEditor } from '../../components/admin/MarkdownEditor.jsx';
+import { useEditorSave } from '../../hooks/useEditorSave.js';
+import { useUnsavedChangesGuard, useSaveShortcut } from '../../hooks/useUnsavedChangesGuard.js';
+import { buildArticlePayload, describeSaveError } from '../../utils/editorPayload.js';
 import { Save, Eye, ArrowLeft, Plus, Trash2, Check, AlertCircle, Loader2 } from 'lucide-react';
 
 export const EditThinkingPage = () => {
@@ -12,9 +15,6 @@ export const EditThinkingPage = () => {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(!isNew);
-  const [saving, setSaving] = useState(false);
-  const [autosaveStatus, setAutosaveStatus] = useState('saved');
-  const [lastSavedAt, setLastSavedAt] = useState(null);
   const [error, setError] = useState(null);
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
 
@@ -34,8 +34,36 @@ export const EditThinkingPage = () => {
   });
 
   const [tagsInput, setTagsInput] = useState('');
-  const initialMount = useRef(true);
-  const autosaveTimeout = useRef(null);
+
+  // Latest editor state for the save controller (timers fire after renders, never with stale data)
+  const latestRef = useRef({});
+  latestRef.current = { formData, tagsInput };
+
+  const editorSave = useEditorSave({
+    prepare: ({ status }) =>
+      buildArticlePayload(
+        latestRef.current.formData,
+        { tagsInput: latestRef.current.tagsInput },
+        { status }
+      ),
+    persist: async (payload) => {
+      const res = isNew
+        ? await api.post('/admin/thinking', payload)
+        : await api.put(`/admin/thinking/${id}`, payload);
+      if (!res.data?.success) throw new Error(res.data?.error || 'Failed to save article.');
+      return res.data.data;
+    },
+    // Autosave only drafts; published/archived edits go live only through an explicit Save
+    canAutosave: () => !isNew && latestRef.current.formData.status === 'draft',
+  });
+  const saving = editorSave.state.saving;
+  const autosaveStatus = editorSave.indicatorStatus;
+  const lastSavedAt = editorSave.state.lastSavedAt;
+  const saveError = editorSave.state.error
+    ? describeSaveError(editorSave.state.error, 'Failed to save article.')
+    : null;
+
+  useUnsavedChangesGuard(editorSave.state.dirty || saving);
 
   const fetchArticle = useCallback(async () => {
     if (isNew) return;
@@ -62,7 +90,8 @@ export const EditThinkingPage = () => {
           related_work: Array.isArray(item.related_work) ? item.related_work : [],
         });
         setTagsInput((item.tags || []).join(', '));
-        setLastSavedAt(item.updated_at || new Date().toISOString());
+        // Loading is not an edit: establish the saved baseline without scheduling any write
+        editorSave.markClean(item.updated_at || null);
       }
     } catch (err) {
       console.error('Failed to fetch article:', err);
@@ -70,7 +99,7 @@ export const EditThinkingPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [id, isNew]);
+  }, [id, isNew, editorSave.markClean]);
 
   useEffect(() => {
     fetchArticle();
@@ -88,96 +117,46 @@ export const EditThinkingPage = () => {
       }
       return next;
     });
-    setAutosaveStatus('unsaved');
+    editorSave.markDirty();
   };
 
   const handleFieldChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setAutosaveStatus('unsaved');
+    editorSave.markDirty();
   };
 
-  // Debounced Autosave
-  useEffect(() => {
-    if (initialMount.current) {
-      initialMount.current = false;
+  /**
+   * Save the article.
+   * - no argument: plain Save, keeps the current publication status (new items are created as drafts)
+   * - 'draft' / 'published': explicit status transition
+   */
+  const handleSave = async (targetStatus = null) => {
+    setError(null);
+    const currentStatus = latestRef.current.formData.status;
+    if (
+      !isNew &&
+      targetStatus === 'draft' &&
+      currentStatus === 'published' &&
+      !window.confirm('Saving as draft will unpublish this article from the public site. Continue?')
+    ) {
       return;
     }
-    if (isNew || formData.status !== 'draft') return;
+    const status = targetStatus || (isNew ? 'draft' : undefined);
+    const outcome = await editorSave.save(status ? { status } : {});
+    if (!outcome.ok) return; // error state and message come from the save controller
 
-    if (autosaveTimeout.current) clearTimeout(autosaveTimeout.current);
-
-    autosaveTimeout.current = setTimeout(async () => {
-      try {
-        setAutosaveStatus('saving');
-        await api.put(`/admin/thinking/${id}`, formData);
-        setAutosaveStatus('saved');
-        setLastSavedAt(new Date().toISOString());
-      } catch (err) {
-        console.error('Autosave failed:', err);
-        setAutosaveStatus('error');
-      }
-    }, 3000);
-
-    return () => clearTimeout(autosaveTimeout.current);
-  }, [formData, id, isNew]);
-
-  const validateForm = () => {
-    if (!formData.title || formData.title.trim().length < 3) {
-      alert('Title must be at least 3 characters long.');
-      return false;
+    const saved = outcome.result;
+    if (saved?.status) {
+      latestRef.current.formData = { ...latestRef.current.formData, status: saved.status };
+      setFormData((prev) => ({ ...prev, status: saved.status }));
     }
-    if (!formData.slug || !/^[a-z0-9-]+$/.test(formData.slug)) {
-      alert('Slug must contain only lowercase letters, numbers, and hyphens.');
-      return false;
-    }
-    if (!formData.excerpt || formData.excerpt.trim().length < 10) {
-      alert('Excerpt must be at least 10 characters.');
-      return false;
-    }
-    if (!formData.body || formData.body.trim().length < 20) {
-      alert('Body content must be at least 20 characters.');
-      return false;
-    }
-    return true;
-  };
-
-  const handleSave = async (targetStatus = null) => {
-    if (!validateForm()) return;
-
-    try {
-      setSaving(true);
-      setError(null);
-      const payload = { ...formData };
-      if (targetStatus) payload.status = targetStatus;
-
-      if (typeof tagsInput === 'string') {
-        payload.tags = tagsInput
-          .split(',')
-          .map((t) => t.trim())
-          .filter(Boolean);
-      }
-
-      let res;
-      if (isNew) {
-        res = await api.post('/admin/thinking', payload);
-      } else {
-        res = await api.put(`/admin/thinking/${id}`, payload);
-      }
-
-      if (res.data?.success) {
-        setAutosaveStatus('saved');
-        setLastSavedAt(new Date().toISOString());
-        if (isNew && res.data.data?.id) {
-          navigate(`/admin/thinking/edit/${res.data.data.id}`, { replace: true });
-        }
-      }
-    } catch (err) {
-      console.error('Save error:', err);
-      setError(err?.response?.data?.error || 'Failed to save article.');
-    } finally {
-      setSaving(false);
+    editorSave.refreshAutosave();
+    if (isNew && saved?.id) {
+      navigate(`/admin/thinking/edit/${saved.id}`, { replace: true });
     }
   };
+
+  useSaveShortcut(() => handleSave());
 
   const addRelatedWork = () => {
     setFormData((prev) => ({
@@ -187,7 +166,7 @@ export const EditThinkingPage = () => {
         { title: 'Related Case Study', url: '/work/case-study-slug' },
       ],
     }));
-    setAutosaveStatus('unsaved');
+    editorSave.markDirty();
   };
 
   const updateRelatedWork = (index, field, value) => {
@@ -196,7 +175,7 @@ export const EditThinkingPage = () => {
       list[index] = { ...list[index], [field]: value };
       return { ...prev, related_work: list };
     });
-    setAutosaveStatus('unsaved');
+    editorSave.markDirty();
   };
 
   const removeRelatedWork = (index) => {
@@ -204,7 +183,7 @@ export const EditThinkingPage = () => {
       ...prev,
       related_work: prev.related_work.filter((_, i) => i !== index),
     }));
-    setAutosaveStatus('unsaved');
+    editorSave.markDirty();
   };
 
   if (loading) {
@@ -271,36 +250,57 @@ export const EditThinkingPage = () => {
             </button>
           )}
 
+          {!isNew && formData.status !== 'draft' && (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => handleSave()}
+              title={`Save changes and keep this article ${formData.status} (Ctrl/Cmd+S)`}
+              className="flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-medium text-white transition-colors hover:bg-violet-500 disabled:opacity-50"
+            >
+              <Save className="h-3.5 w-3.5" />
+              <span>Save</span>
+            </button>
+          )}
+
           <button
             type="button"
             disabled={saving}
             onClick={() => handleSave('draft')}
+            title={
+              formData.status === 'published' ? 'Unpublish and save as draft' : 'Save as draft'
+            }
             className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium transition-colors disabled:opacity-50"
           >
             <Save className="h-3.5 w-3.5" />
-            <span>Save Draft</span>
+            <span>{formData.status === 'published' ? 'Unpublish to Draft' : 'Save Draft'}</span>
           </button>
 
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => handleSave('published')}
-            className="shadow-soft flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-medium text-white shadow-violet-600/20 transition-all hover:bg-violet-500 disabled:opacity-50"
-          >
-            {saving ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Check className="h-3.5 w-3.5" />
-            )}
-            <span>Publish Article</span>
-          </button>
+          {formData.status !== 'published' && (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => handleSave('published')}
+              className="shadow-soft flex items-center gap-1.5 rounded-xl bg-violet-600 px-4 py-2 text-xs font-medium text-white shadow-violet-600/20 transition-all hover:bg-violet-500 disabled:opacity-50"
+            >
+              {saving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Check className="h-3.5 w-3.5" />
+              )}
+              <span>Publish Article</span>
+            </button>
+          )}
         </div>
       </div>
 
-      {error && (
-        <div className="flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-300">
+      {(error || saveError) && (
+        <div
+          role="alert"
+          className="flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-300"
+        >
           <AlertCircle className="h-5 w-5 shrink-0" />
-          <span>{error}</span>
+          <span>{error || saveError}</span>
         </div>
       )}
 
@@ -341,7 +341,7 @@ export const EditThinkingPage = () => {
                 required={true}
                 value={formData.body}
                 onChange={(val) => handleFieldChange('body', val)}
-                onSave={() => handleSave('draft')}
+                onSave={() => handleSave()}
                 autosaveStatus={autosaveStatus}
                 lastSavedAt={lastSavedAt}
                 minHeight="520px"
@@ -427,18 +427,16 @@ export const EditThinkingPage = () => {
             </div>
 
             <div>
-              <label className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
+              <span className="text-muted-foreground mb-1.5 block font-mono text-xs uppercase">
                 Publish Status
-              </label>
-              <select
-                value={formData.status}
-                onChange={(e) => handleFieldChange('status', e.target.value)}
-                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:border-violet-500 focus:outline-none"
+              </span>
+              {/* Read-only: status changes only through the explicit Save Draft / Publish actions */}
+              <div
+                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium capitalize text-white"
+                aria-live="polite"
               >
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="archived">Archived</option>
-              </select>
+                {formData.status}
+              </div>
             </div>
 
             <div>
@@ -475,7 +473,7 @@ export const EditThinkingPage = () => {
                 value={tagsInput}
                 onChange={(e) => {
                   setTagsInput(e.target.value);
-                  setAutosaveStatus('unsaved');
+                  editorSave.markDirty();
                 }}
                 className="border-border bg-background w-full rounded-xl border px-3 py-2 text-xs text-white focus:border-violet-500 focus:outline-none"
               />
