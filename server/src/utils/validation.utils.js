@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import jwt from 'jsonwebtoken';
+import crypto from 'crypto';
 
 const text = (max = 10000) => z.string().trim().max(max).optional().nullable();
 const url = z
@@ -148,8 +149,19 @@ export const hasValidSignature = (file) => {
   return false;
 };
 
+// Production startup is blocked without a valid JWT_SECRET (see config/env.js). Outside production a
+// missing secret gets a random per-process value, so no known signing key ever exists.
+const ephemeralDevSecret = crypto.randomBytes(32).toString('hex');
+const getPreviewSecret = () => {
+  if (process.env.JWT_SECRET) return process.env.JWT_SECRET;
+  if (process.env.NODE_ENV === 'production') {
+    throw new Error('JWT_SECRET is not configured.');
+  }
+  return ephemeralDevSecret;
+};
+
 export const generatePreviewToken = (item, type) => {
-  const secret = process.env.JWT_SECRET || 'fallback_secret_for_dev_only';
+  const secret = getPreviewSecret();
   return jwt.sign(
     {
       id: item.id,
@@ -164,8 +176,7 @@ export const generatePreviewToken = (item, type) => {
 
 export const verifyPreviewToken = (token, expectedSlug, expectedType) => {
   try {
-    const secret = process.env.JWT_SECRET || 'fallback_secret_for_dev_only';
-    const decoded = jwt.verify(token, secret);
+    const decoded = jwt.verify(token, getPreviewSecret());
     if (decoded.purpose !== 'draft_preview') return false;
     if (decoded.type !== expectedType) return false;
     if (decoded.slug !== expectedSlug && decoded.id !== expectedSlug) return false;

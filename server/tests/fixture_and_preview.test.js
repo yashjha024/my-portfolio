@@ -10,6 +10,7 @@ import {
 } from '../src/utils/validation.utils.js';
 
 test('Signed preview token generation and verification for draft assets', () => {
+  process.env.JWT_SECRET = 'test-only-preview-secret-0123456789abcdef';
   const itemPrd = { id: 'prd-uuid-123', slug: 'next-gen-analytics-prd' };
   const itemWork = { id: 'work-uuid-456', slug: 'enterprise-billing-redesign' };
   const itemArticle = { id: 'article-uuid-789', slug: 'why-product-ops-matter' };
@@ -64,7 +65,7 @@ test('Signed preview token generation and verification for draft assets', () => 
   );
 
   // 6. Verify expired token rejection
-  const secret = process.env.JWT_SECRET || 'fallback_secret_for_dev_only';
+  const secret = process.env.JWT_SECRET;
   const expiredToken = jwt.sign(
     { id: itemPrd.id, slug: itemPrd.slug, type: 'prd', purpose: 'draft_preview' },
     secret,
