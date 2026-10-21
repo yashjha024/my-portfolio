@@ -326,7 +326,7 @@ export const AdminSettingsPage = () => {
                     uploadData.append('file', file);
                     uploadData.append('folder', 'documents');
                     uploadData.append(
-                      'alt',
+                      'alt_text',
                       `${formData.headline || 'Yash Jha'} Official Resume PDF`
                     );
 

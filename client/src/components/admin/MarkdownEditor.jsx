@@ -2,6 +2,7 @@ import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { MarkdownRenderer } from '../ui/MarkdownRenderer.jsx';
 import { AutosaveIndicator } from './AutosaveIndicator.jsx';
 import { MediaPickerModal } from './MediaPickerModal.jsx';
+import { describeMediaError, validateUploadFile } from '../../utils/mediaFiles.js';
 import api from '../../services/api.js';
 import {
   Bold,
@@ -164,6 +165,11 @@ export const MarkdownEditor = ({
       setUploadingDrop(true);
       for (let i = 0; i < files.length; i++) {
         const file = files[i];
+        const invalid = validateUploadFile(file);
+        if (invalid) {
+          alert(invalid);
+          continue;
+        }
         const formData = new FormData();
         formData.append('file', file);
         formData.append('alt_text', file.name.split('.')[0]);
@@ -187,7 +193,7 @@ export const MarkdownEditor = ({
       }
     } catch (err) {
       console.error('Drop upload failed:', err);
-      alert('Failed to upload dropped file.');
+      alert(describeMediaError(err, 'Failed to upload dropped file.'));
     } finally {
       setUploadingDrop(false);
     }

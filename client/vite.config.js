@@ -22,6 +22,11 @@ export default defineConfig({
       },
     },
   },
+  // Vitest runs only the DOM/component tests; pure-module tests use `node --test tests/*.test.js`
+  test: {
+    include: ['tests/dom/**/*.test.{js,jsx}'],
+    environment: 'jsdom',
+  },
   build: {
     target: 'es2022',
     sourcemap: false,
