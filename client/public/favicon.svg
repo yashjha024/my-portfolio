@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-label="Yash Jha">
+  <!-- "YJ" monogram drawn as strokes (no font dependency), in the site's ink-on-paper palette -->
+  <rect width="64" height="64" rx="14" fill="#171717"/>
+  <g fill="none" stroke="#F6F4EF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+    <path d="M12 17 L21.5 31 L31 17"/>
+    <path d="M21.5 31 L21.5 47"/>
+    <path d="M38 17 L52 17"/>
+    <path d="M47 17 L47 38 A9 9 0 0 1 38 47 L37 47"/>
+  </g>
+</svg>

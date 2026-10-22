@@ -2,7 +2,17 @@ import React, { useState, useEffect, useRef } from 'react';
 import api from '../../services/api.js';
 import { ConfirmDialog } from '../../components/admin/ConfirmDialog.jsx';
 import { AssetPreviewModal } from '../../components/admin/AssetPreviewModal.jsx';
+import { PaginationControls } from '../../components/admin/PaginationControls.jsx';
 import { compressImageBeforeUpload } from '../../utils/imageCompressor.js';
+import {
+  SUPPORTED_FORMATS_LABEL,
+  UPLOAD_ACCEPT,
+  describeMediaError,
+  mergeUpdatedAsset,
+  runBatchDelete,
+  summarizeBatchDelete,
+  validateUploadFile,
+} from '../../utils/mediaFiles.js';
 import {
   Image as ImageIcon,
   UploadCloud,
@@ -23,16 +33,30 @@ import {
   Layers,
   X,
   Eye,
+  HelpCircle,
 } from 'lucide-react';
+
+const PAGE_SIZE = 48;
+const CLEANUP_PAGE_SIZE = 100;
+
+const NOTICE_STYLES = {
+  success: 'border-emerald-500/30 bg-emerald-500/10 text-emerald-300',
+  warning: 'border-amber-500/30 bg-amber-500/10 text-amber-300',
+  error: 'border-rose-500/20 bg-rose-500/10 text-rose-300',
+};
 
 export const ManageMediaPage = () => {
   const [mediaList, setMediaList] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [notice, setNotice] = useState(null); // { type: 'success' | 'warning' | 'error', text }
   const [search, setSearch] = useState('');
   const [typeFilter, setTypeFilter] = useState('all');
   const [folderFilter, setFolderFilter] = useState('all');
   const [unusedOnly, setUnusedOnly] = useState(false);
+  const [page, setPage] = useState(1);
+  const [pageInfo, setPageInfo] = useState({ count: 0, totalPages: 1, usageAvailable: true });
+  const [summary, setSummary] = useState(null); // library-wide { total, used, unused, usage_available }
 
   // Upload modal & compression state
   const [uploadModalOpen, setUploadModalOpen] = useState(false);
@@ -40,7 +64,7 @@ export const ManageMediaPage = () => {
   const [uploadAltText, setUploadAltText] = useState('');
   const [enableCompression, setEnableCompression] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [uploadStats, setUploadStats] = useState(null); // { count, origBytes, compBytes }
+  const [uploadStats, setUploadStats] = useState(null); // { count, failures, origBytes, compBytes }
 
   const [copiedUrl, setCopiedUrl] = useState(null);
   const [previewAsset, setPreviewAsset] = useState(null);
@@ -52,14 +76,15 @@ export const ManageMediaPage = () => {
 
   const fileInputRef = useRef(null);
 
-  const fetchMedia = async () => {
+  const fetchMedia = async (targetPage = page) => {
     try {
       setLoading(true);
       setError(null);
       const params = new URLSearchParams({
         folder: folderFilter,
         unused: unusedOnly ? 'true' : 'false',
-        limit: '200',
+        page: String(targetPage),
+        limit: String(PAGE_SIZE),
       });
       if (search.trim()) params.append('q', search.trim());
       if (typeFilter !== 'all') params.append('type', typeFilter);
@@ -67,50 +92,83 @@ export const ManageMediaPage = () => {
       const res = await api.get(`/media/list?${params.toString()}`);
       if (res.data?.success) {
         setMediaList(res.data.data || []);
+        setPageInfo({
+          count: res.data.count ?? 0,
+          totalPages: Math.max(1, res.data.totalPages || 1),
+          usageAvailable: res.data.usage_available !== false,
+        });
       }
     } catch (err) {
       console.error('Failed to fetch media assets:', err);
-      setError('Could not load media items from server.');
+      setError(describeMediaError(err, 'Could not load media items from server.'));
     } finally {
       setLoading(false);
     }
   };
 
+  const fetchSummary = async () => {
+    try {
+      const res = await api.get('/media/summary');
+      setSummary(res.data?.success ? res.data.data : null);
+    } catch {
+      setSummary(null);
+    }
+  };
+
+  const refresh = () => {
+    fetchMedia(page);
+    fetchSummary();
+  };
+
   useEffect(() => {
-    fetchMedia();
-  }, [typeFilter, folderFilter, unusedOnly]);
+    fetchMedia(page);
+  }, [page, typeFilter, folderFilter, unusedOnly]);
+
+  useEffect(() => {
+    fetchSummary();
+  }, []);
+
+  // Changing a filter always returns to the first page of the new result set
+  const withPageReset = (setter) => (value) => {
+    setter(value);
+    setPage(1);
+  };
 
   const handleSearchSubmit = (e) => {
     e.preventDefault();
-    fetchMedia();
+    if (page === 1) fetchMedia(1);
+    else setPage(1);
   };
 
-  const handleFileUpload = async (e) => {
-    const files = e.target.files || (e.dataTransfer ? e.dataTransfer.files : null);
-    if (!files || files.length === 0) return;
+  const handleFiles = async (fileList) => {
+    const files = Array.from(fileList || []);
+    if (files.length === 0) return;
 
-    try {
-      setUploading(true);
-      setError(null);
-      let origTotal = 0;
-      let compTotal = 0;
-      let count = 0;
+    setUploading(true);
+    setError(null);
+    setUploadStats(null);
+    let origTotal = 0;
+    let compTotal = 0;
+    let uploadedCount = 0;
+    const failures = [];
 
-      for (let i = 0; i < files.length; i++) {
-        const rawFile = files[i];
-        origTotal += rawFile.size;
-
-        // Apply client-side compression if enabled and image
+    // Each file is validated and uploaded independently; one failure never hides the others
+    for (const rawFile of files) {
+      const invalid = validateUploadFile(rawFile);
+      if (invalid) {
+        failures.push(invalid);
+        continue;
+      }
+      try {
         let targetFile = rawFile;
+        let compressedSize = rawFile.size;
         if (enableCompression && rawFile.type.startsWith('image/')) {
           const compResult = await compressImageBeforeUpload(rawFile, {
             quality: 0.82,
             outputFormat: 'image/webp',
           });
           targetFile = compResult.file;
-          compTotal += compResult.compressedSize;
-        } else {
-          compTotal += rawFile.size;
+          compressedSize = compResult.compressedSize;
         }
 
         const formData = new FormData();
@@ -121,31 +179,38 @@ export const ManageMediaPage = () => {
         const res = await api.post('/media/upload', formData, {
           headers: { 'Content-Type': 'multipart/form-data' },
         });
-
-        if (res.data?.success && res.data?.data) {
-          setMediaList((prev) => [res.data.data, ...prev]);
-          count++;
+        if (!res.data?.success || !res.data?.data) {
+          throw new Error(res.data?.error || 'Unexpected upload response');
         }
+        uploadedCount += 1;
+        origTotal += rawFile.size;
+        compTotal += compressedSize;
+      } catch (err) {
+        failures.push(`${rawFile.name}: ${describeMediaError(err, 'Upload failed.')}`);
       }
+    }
 
-      setUploadStats({
-        count,
-        origBytes: origTotal,
-        compBytes: compTotal,
-        savedPercent: origTotal > 0 ? ((1 - compTotal / origTotal) * 100).toFixed(1) : 0,
-      });
+    setUploadStats({
+      count: uploadedCount,
+      failures,
+      origBytes: origTotal,
+      compBytes: compTotal,
+      savedPercent: origTotal > 0 ? ((1 - compTotal / origTotal) * 100).toFixed(1) : 0,
+    });
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = '';
 
+    if (uploadedCount > 0) {
+      if (page === 1) fetchMedia(1);
+      else setPage(1);
+      fetchSummary();
+    }
+    if (failures.length === 0) {
       setTimeout(() => {
         setUploadModalOpen(false);
         setUploadStats(null);
         setUploadAltText('');
       }, 3000);
-    } catch (err) {
-      console.error('Upload error:', err);
-      setError(err?.response?.data?.error || 'Failed to upload one or more files.');
-    } finally {
-      setUploading(false);
-      if (fileInputRef.current) fileInputRef.current.value = '';
     }
   };
 
@@ -162,17 +227,29 @@ export const ManageMediaPage = () => {
     setDeleteModalOpen(true);
   };
 
+  /** Delete one asset; local state changes only after the server confirms. Throws on failure. */
+  const deleteAsset = async (item) => {
+    let res;
+    try {
+      res = await api.delete(`/media/${item.id}`);
+    } catch (err) {
+      throw new Error(describeMediaError(err, 'Failed to delete media asset.'));
+    }
+    if (!res.data?.success) throw new Error(res.data?.error || 'Failed to delete media asset.');
+    setMediaList((prev) => prev.filter((m) => m.id !== item.id));
+    setPageInfo((prev) => ({ ...prev, count: Math.max(0, prev.count - 1) }));
+    fetchSummary();
+  };
+
   const handleDelete = async () => {
     if (!itemToDelete) return;
     try {
       setDeleting(true);
-      const res = await api.delete(`/media/${itemToDelete.id}`);
-      if (res.data?.success) {
-        setMediaList((prev) => prev.filter((m) => m.id !== itemToDelete.id));
-      }
+      await deleteAsset(itemToDelete);
+      setNotice({ type: 'success', text: `Deleted "${itemToDelete.original_name}".` });
     } catch (err) {
       console.error('Delete error:', err);
-      alert('Failed to delete media asset.');
+      setNotice({ type: 'error', text: err.message });
     } finally {
       setDeleting(false);
       setDeleteModalOpen(false);
@@ -180,31 +257,64 @@ export const ManageMediaPage = () => {
     }
   };
 
+  const handleSaveAltText = async (asset, altText) => {
+    let res;
+    try {
+      res = await api.put(`/media/${asset.id}`, { alt_text: altText });
+    } catch (err) {
+      throw new Error(describeMediaError(err, 'Could not update alt text.'));
+    }
+    if (!res.data?.success || !res.data?.data) throw new Error('Could not update alt text.');
+    const merged = mergeUpdatedAsset(asset, res.data.data);
+    setMediaList((prev) =>
+      prev.map((m) => (m.id === merged.id ? mergeUpdatedAsset(m, merged) : m))
+    );
+    setPreviewAsset(merged);
+  };
+
   const handleBatchDeleteUnused = async () => {
-    const unusedItems = mediaList.filter((m) => !m.is_used);
-    if (unusedItems.length === 0) return;
+    setNotice(null);
+    // Collect every unused asset in the library (all pages), as reported by the server
+    const candidates = [];
+    try {
+      for (let p = 1, totalPages = 1; p <= totalPages; p += 1) {
+        const params = new URLSearchParams({
+          unused: 'true',
+          page: String(p),
+          limit: String(CLEANUP_PAGE_SIZE),
+        });
+        const res = await api.get(`/media/list?${params.toString()}`);
+        candidates.push(...(res.data?.data || []));
+        totalPages = res.data?.totalPages || 1;
+      }
+    } catch (err) {
+      setNotice({
+        type: 'error',
+        text: `Could not determine unused assets: ${describeMediaError(err)}`,
+      });
+      return;
+    }
+    if (candidates.length === 0) {
+      setNotice({ type: 'success', text: 'There are no unused files to clean up.' });
+      return;
+    }
 
     if (
       !window.confirm(
-        `Permanently delete ${unusedItems.length} unused/orphaned files from cloud storage? This action cannot be undone.`
+        `Permanently delete ${candidates.length} unused file(s) from cloud storage? The server re-checks each file and skips any that are in use. This cannot be undone.`
       )
     ) {
       return;
     }
 
-    try {
-      setBatchDeleting(true);
-      for (const item of unusedItems) {
-        await api.delete(`/media/${item.id}`).catch(() => null);
-      }
-      setMediaList((prev) => prev.filter((m) => m.is_used));
-      alert(`Successfully deleted ${unusedItems.length} orphaned files.`);
-    } catch (err) {
-      console.error('Batch delete error:', err);
-      alert('Completed with partial errors.');
-    } finally {
-      setBatchDeleting(false);
-    }
+    setBatchDeleting(true);
+    const result = await runBatchDelete(candidates, (item) => api.delete(`/media/${item.id}`));
+    setBatchDeleting(false);
+    setNotice({
+      type: result.failed.length > 0 ? 'error' : result.inUse.length > 0 ? 'warning' : 'success',
+      text: summarizeBatchDelete(result),
+    });
+    refresh();
   };
 
   const formatFileSize = (bytes) => {
@@ -223,8 +333,11 @@ export const ManageMediaPage = () => {
     { id: 'general', label: 'General / Uncategorized', icon: Folder },
   ];
 
-  const totalAssetsCount = mediaList.length;
-  const unusedAssetsCount = mediaList.filter((m) => !m.is_used).length;
+  const usageAvailable = pageInfo.usageAvailable && summary?.usage_available !== false;
+  const totalAssetsCount = summary?.total ?? pageInfo.count;
+  const usedAssetsCount = summary?.used;
+  const unusedAssetsCount = summary?.unused;
+  const formatCount = (value) => (typeof value === 'number' ? `${value} files` : '—');
 
   return (
     <div className="space-y-6 pb-20">
@@ -255,34 +368,41 @@ export const ManageMediaPage = () => {
         </button>
       </div>
 
-      {/* Unused File Detection Telemetry Bar */}
+      {/* Unused File Detection Telemetry Bar (library-wide totals) */}
       <div className="border-border bg-card flex flex-col items-center justify-between gap-4 rounded-2xl border p-4 md:flex-row">
         <div className="flex flex-wrap items-center gap-6 font-mono text-xs">
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground uppercase">Total Inventory:</span>
             <span className="bg-secondary rounded px-2 py-0.5 font-bold text-white">
-              {totalAssetsCount} files
+              {formatCount(totalAssetsCount)}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground uppercase">Active in Content:</span>
             <span className="flex items-center gap-1 rounded border border-emerald-500/20 bg-emerald-500/10 px-2 py-0.5 font-bold text-emerald-400">
-              <CheckCircle2 className="h-3.5 w-3.5" /> {totalAssetsCount - unusedAssetsCount} files
+              <CheckCircle2 className="h-3.5 w-3.5" /> {formatCount(usedAssetsCount)}
             </span>
           </div>
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground uppercase">Orphaned / Unused:</span>
             <span className="flex items-center gap-1 rounded border border-amber-500/20 bg-amber-500/10 px-2 py-0.5 font-bold text-amber-400">
-              <AlertTriangle className="h-3.5 w-3.5" /> {unusedAssetsCount} files
+              <AlertTriangle className="h-3.5 w-3.5" /> {formatCount(unusedAssetsCount)}
             </span>
           </div>
+          {!usageAvailable && (
+            <span className="flex items-center gap-1 text-amber-300">
+              <HelpCircle className="h-3.5 w-3.5" /> Usage could not be verified; cleanup is
+              disabled.
+            </span>
+          )}
         </div>
 
         <div className="flex w-full items-center gap-2.5 md:w-auto">
           <button
             type="button"
-            onClick={() => setUnusedOnly(!unusedOnly)}
-            className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-medium transition-all ${
+            disabled={!usageAvailable}
+            onClick={() => withPageReset(setUnusedOnly)(!unusedOnly)}
+            className={`flex items-center gap-2 rounded-xl border px-3.5 py-2 text-xs font-medium transition-all disabled:opacity-50 ${
               unusedOnly
                 ? 'shadow-soft border-amber-500/40 bg-amber-500/20 text-amber-300 shadow-amber-500/10'
                 : 'border-border bg-secondary text-foreground hover:bg-secondary'
@@ -292,13 +412,13 @@ export const ManageMediaPage = () => {
             <span>{unusedOnly ? 'Showing Unused Only' : 'Filter Unused Assets'}</span>
           </button>
 
-          {unusedAssetsCount > 0 && (
+          {usageAvailable && unusedAssetsCount > 0 && (
             <button
               type="button"
               disabled={batchDeleting}
               onClick={handleBatchDeleteUnused}
               className="flex shrink-0 items-center gap-1.5 rounded-xl border border-rose-500/20 bg-rose-600/10 px-3 py-2 text-xs font-medium text-rose-400 transition-all hover:bg-rose-600 hover:text-white disabled:opacity-50"
-              title="Delete all orphaned/unused files across all folders"
+              title="Delete all orphaned/unused files across all folders (re-checked by the server)"
             >
               {batchDeleting ? (
                 <Loader2 className="h-3.5 w-3.5 animate-spin" />
@@ -320,7 +440,7 @@ export const ManageMediaPage = () => {
             <button
               key={f.id}
               type="button"
-              onClick={() => setFolderFilter(f.id)}
+              onClick={() => withPageReset(setFolderFilter)(f.id)}
               className={`flex shrink-0 items-center gap-2 rounded-xl border px-4 py-2.5 font-bold transition-all ${
                 isActive
                   ? 'border-primary/40 bg-primary text-primary shadow-soft shadow-indigo-500/10'
@@ -350,11 +470,12 @@ export const ManageMediaPage = () => {
         </form>
 
         <div className="flex w-full items-center gap-3 md:w-auto">
+          <span className="text-muted-foreground font-mono text-xs">{pageInfo.count} matching</span>
           <div className="flex items-center gap-2">
             <Filter className="text-muted-foreground h-4 w-4" />
             <select
               value={typeFilter}
-              onChange={(e) => setTypeFilter(e.target.value)}
+              onChange={(e) => withPageReset(setTypeFilter)(e.target.value)}
               className="border-border bg-background rounded-xl border px-3 py-1.5 text-xs font-medium text-white focus:border-amber-500 focus:outline-none"
             >
               <option value="all">All File Types</option>
@@ -364,9 +485,11 @@ export const ManageMediaPage = () => {
           </div>
 
           <button
-            onClick={fetchMedia}
+            type="button"
+            onClick={refresh}
             className="bg-secondary text-foreground hover:bg-secondary rounded-xl p-2 transition-colors"
             title="Refresh Library"
+            aria-label="Refresh library"
           >
             <RefreshCw className="h-4 w-4" />
           </button>
@@ -374,9 +497,29 @@ export const ManageMediaPage = () => {
       </div>
 
       {error && (
-        <div className="flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-300">
+        <div
+          role="alert"
+          className="flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-300"
+        >
           <AlertCircle className="h-5 w-5 shrink-0" />
           <span>{error}</span>
+        </div>
+      )}
+
+      {notice && (
+        <div
+          role="status"
+          className={`flex items-start justify-between gap-3 rounded-xl border p-4 text-sm ${NOTICE_STYLES[notice.type]}`}
+        >
+          <span>{notice.text}</span>
+          <button
+            type="button"
+            onClick={() => setNotice(null)}
+            aria-label="Dismiss message"
+            className="shrink-0 opacity-70 hover:opacity-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
         </div>
       )}
 
@@ -405,130 +548,162 @@ export const ManageMediaPage = () => {
           </button>
         </div>
       ) : (
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
-          {mediaList.map((item) => {
-            const isImg = item.type === 'image' || /\.(png|jpe?g|webp|svg|gif)$/i.test(item.url);
-            const isCopied = copiedUrl === item.url;
+        <div>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4">
+            {mediaList.map((item) => {
+              const isImg = item.type === 'image';
+              const isCopied = copiedUrl === item.url;
 
-            return (
-              <div
-                key={item.id}
-                onClick={() => setPreviewAsset(item)}
-                className="border-border bg-card shadow-soft hover:border-primary/40 group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1"
-              >
-                {/* Usage Status Tag */}
-                <div className="absolute left-2.5 top-2.5 z-10">
-                  {item.is_used ? (
-                    <span className="flex items-center gap-1 rounded-md border border-emerald-500/40 bg-emerald-950/90 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-300 shadow">
-                      <CheckCircle2 className="h-3 w-3 text-emerald-400" /> Active
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 rounded-md border border-amber-500/40 bg-amber-950/90 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-300 shadow">
-                      <AlertTriangle className="h-3 w-3 text-amber-400" /> Unused
-                    </span>
-                  )}
-                </div>
-
-                {/* Thumbnail Area */}
-                <div className="border-border bg-background relative flex h-44 items-center justify-center overflow-hidden border-b">
-                  {isImg ? (
-                    <img
-                      src={item.url}
-                      alt={item.alt_text || item.original_name}
-                      className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="flex flex-col items-center justify-center p-4 text-emerald-400">
-                      <FileText className="mb-2 h-12 w-12 opacity-80" />
-                      <span className="font-mono text-xs font-bold uppercase tracking-wider">
-                        PDF Document
+              return (
+                <div
+                  key={item.id}
+                  role="button"
+                  tabIndex={0}
+                  onClick={() => setPreviewAsset(item)}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' || e.key === ' ') {
+                      e.preventDefault();
+                      setPreviewAsset(item);
+                    }
+                  }}
+                  aria-label={`Inspect ${item.original_name}`}
+                  className="border-border bg-card shadow-soft hover:border-primary/40 group relative flex cursor-pointer flex-col overflow-hidden rounded-2xl border transition-all hover:-translate-y-1"
+                >
+                  {/* Usage Status Tag */}
+                  <div className="absolute left-2.5 top-2.5 z-10">
+                    {item.is_used === true ? (
+                      <span className="flex items-center gap-1 rounded-md border border-emerald-500/40 bg-emerald-950/90 px-2 py-0.5 font-mono text-[10px] font-bold text-emerald-300 shadow">
+                        <CheckCircle2 className="h-3 w-3 text-emerald-400" /> Active
                       </span>
-                    </div>
-                  )}
-
-                  {/* Hover Actions Overlay */}
-                  <div className="absolute right-2.5 top-2.5 flex items-center gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        setPreviewAsset(item);
-                      }}
-                      className="border-border bg-card text-foreground hover:bg-secondary rounded-lg border p-2 shadow transition-colors"
-                      title="Inspect & Edit Alt Text"
-                    >
-                      <Eye className="h-3.5 w-3.5" />
-                    </button>
-                    <button
-                      type="button"
-                      onClick={(e) => confirmDelete(item, e)}
-                      className="rounded-lg border border-rose-500 bg-rose-600/90 p-2 text-white shadow transition-colors hover:bg-rose-600"
-                      title="Delete Asset"
-                    >
-                      <Trash2 className="h-3.5 w-3.5" />
-                    </button>
-                  </div>
-                </div>
-
-                {/* Footer Metadata */}
-                <div className="flex flex-1 flex-col justify-between gap-3 p-4">
-                  <div className="min-w-0">
-                    <p className="truncate text-xs font-bold text-white" title={item.original_name}>
-                      {item.original_name}
-                    </p>
-                    <p
-                      className="text-muted-foreground mt-0.5 truncate text-[11px] italic"
-                      title={item.alt_text}
-                    >
-                      Alt: {item.alt_text || 'No alt text set'}
-                    </p>
-                    <div className="text-muted-foreground mt-2 flex items-center justify-between font-mono text-[11px]">
-                      <span className="border-border bg-background text-primary rounded border px-1.5 py-0.5 capitalize">
-                        {item.folder || 'general'}
+                    ) : item.is_used === false ? (
+                      <span className="flex items-center gap-1 rounded-md border border-amber-500/40 bg-amber-950/90 px-2 py-0.5 font-mono text-[10px] font-bold text-amber-300 shadow">
+                        <AlertTriangle className="h-3 w-3 text-amber-400" /> Unused
                       </span>
-                      <span>{formatFileSize(item.size_bytes)}</span>
-                    </div>
-                  </div>
-
-                  <button
-                    type="button"
-                    onClick={(e) => copyToClipboard(item.url, e)}
-                    className={`flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition-all ${
-                      isCopied
-                        ? 'border border-emerald-500/30 bg-emerald-500/15 text-emerald-400'
-                        : 'bg-secondary text-foreground hover:bg-secondary'
-                    }`}
-                  >
-                    {isCopied ? (
-                      <>
-                        <Check className="h-3.5 w-3.5" />
-                        <span>Copied CDN URL!</span>
-                      </>
                     ) : (
-                      <>
-                        <Copy className="h-3.5 w-3.5" />
-                        <span>Copy URL</span>
-                      </>
+                      <span className="flex items-center gap-1 rounded-md border border-slate-500/40 bg-slate-950/90 px-2 py-0.5 font-mono text-[10px] font-bold text-slate-300 shadow">
+                        <HelpCircle className="h-3 w-3" /> Unknown
+                      </span>
                     )}
-                  </button>
+                  </div>
+
+                  {/* Thumbnail Area */}
+                  <div className="border-border bg-background relative flex h-44 items-center justify-center overflow-hidden border-b">
+                    {isImg ? (
+                      <img
+                        src={item.url}
+                        alt={item.alt_text || item.original_name}
+                        className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
+                      />
+                    ) : (
+                      <div className="flex flex-col items-center justify-center p-4 text-emerald-400">
+                        <FileText className="mb-2 h-12 w-12 opacity-80" />
+                        <span className="font-mono text-xs font-bold uppercase tracking-wider">
+                          PDF Document
+                        </span>
+                      </div>
+                    )}
+
+                    {/* Hover Actions Overlay */}
+                    <div className="absolute right-2.5 top-2.5 flex items-center gap-1.5 opacity-0 transition-opacity group-hover:opacity-100">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setPreviewAsset(item);
+                        }}
+                        className="border-border bg-card text-foreground hover:bg-secondary rounded-lg border p-2 shadow transition-colors"
+                        title="Inspect & Edit Alt Text"
+                        aria-label={`Inspect ${item.original_name}`}
+                      >
+                        <Eye className="h-3.5 w-3.5" />
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => confirmDelete(item, e)}
+                        className="rounded-lg border border-rose-500 bg-rose-600/90 p-2 text-white shadow transition-colors hover:bg-rose-600"
+                        title="Delete Asset"
+                        aria-label={`Delete ${item.original_name}`}
+                      >
+                        <Trash2 className="h-3.5 w-3.5" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Footer Metadata */}
+                  <div className="flex flex-1 flex-col justify-between gap-3 p-4">
+                    <div className="min-w-0">
+                      <p
+                        className="truncate text-xs font-bold text-white"
+                        title={item.original_name}
+                      >
+                        {item.original_name}
+                      </p>
+                      <p
+                        className="text-muted-foreground mt-0.5 truncate text-[11px] italic"
+                        title={item.alt_text}
+                      >
+                        Alt: {item.alt_text || 'No alt text set'}
+                      </p>
+                      <div className="text-muted-foreground mt-2 flex items-center justify-between font-mono text-[11px]">
+                        <span className="border-border bg-background text-primary rounded border px-1.5 py-0.5 capitalize">
+                          {item.folder || 'general'}
+                        </span>
+                        <span>{formatFileSize(item.size_bytes)}</span>
+                      </div>
+                    </div>
+
+                    <button
+                      type="button"
+                      onClick={(e) => copyToClipboard(item.url, e)}
+                      className={`flex w-full items-center justify-center gap-1.5 rounded-xl px-3 py-2 text-xs font-medium transition-all ${
+                        isCopied
+                          ? 'border border-emerald-500/30 bg-emerald-500/15 text-emerald-400'
+                          : 'bg-secondary text-foreground hover:bg-secondary'
+                      }`}
+                    >
+                      {isCopied ? (
+                        <>
+                          <Check className="h-3.5 w-3.5" />
+                          <span>Copied CDN URL!</span>
+                        </>
+                      ) : (
+                        <>
+                          <Copy className="h-3.5 w-3.5" />
+                          <span>Copy URL</span>
+                        </>
+                      )}
+                    </button>
+                  </div>
                 </div>
-              </div>
-            );
-          })}
+              );
+            })}
+          </div>
+          <PaginationControls
+            currentPage={page}
+            totalPages={pageInfo.totalPages}
+            onPageChange={setPage}
+          />
         </div>
       )}
 
       {/* Upload & Compression Modal */}
       {uploadModalOpen && (
         <div className="animate-fadeIn bg-background fixed inset-0 z-50 flex items-center justify-center p-4">
-          <div className="border-border bg-card shadow-soft relative w-full max-w-lg rounded-3xl border p-6">
+          <div
+            role="dialog"
+            aria-modal="true"
+            aria-label="Upload media assets"
+            className="border-border bg-card shadow-soft relative w-full max-w-lg rounded-3xl border p-6"
+          >
             <div className="border-border mb-5 flex items-center justify-between border-b pb-4">
               <div className="flex items-center gap-2 text-base font-bold text-white">
                 <UploadCloud className="h-5 w-5 text-amber-400" />
                 <span>Upload & Auto-Compress Asset</span>
               </div>
               <button
+                type="button"
                 onClick={() => setUploadModalOpen(false)}
+                aria-label="Close upload panel"
                 className="text-muted-foreground hover:bg-secondary rounded-xl p-1.5 transition-colors hover:text-white"
               >
                 <X className="h-5 w-5" />
@@ -583,7 +758,7 @@ export const ManageMediaPage = () => {
                 <p className="text-muted-foreground font-sans text-[11px] leading-relaxed">
                   Automatically resizes high-resolution PNG/JPG images and converts them to
                   optimized WebP format (up to 75-80% smaller) inside the browser before uploading
-                  to cloud storage.
+                  to cloud storage. Transparency is preserved.
                 </p>
               </div>
 
@@ -592,14 +767,19 @@ export const ManageMediaPage = () => {
                 <input
                   type="file"
                   ref={fileInputRef}
-                  onChange={handleFileUpload}
+                  onChange={(e) => handleFiles(e.target.files)}
                   multiple
-                  accept="image/*,.pdf"
+                  accept={UPLOAD_ACCEPT}
                   className="hidden"
                   id="modal-asset-upload"
                 />
                 <label
                   htmlFor="modal-asset-upload"
+                  onDragOver={(e) => e.preventDefault()}
+                  onDrop={(e) => {
+                    e.preventDefault();
+                    if (!uploading) handleFiles(e.dataTransfer?.files);
+                  }}
                   className={`flex w-full cursor-pointer flex-col items-center justify-center gap-3 rounded-2xl border-2 border-dashed border-amber-500/40 bg-amber-500/5 px-6 py-10 transition-all hover:border-amber-500 hover:bg-amber-500/10 ${
                     uploading ? 'pointer-events-none opacity-50' : ''
                   }`}
@@ -618,24 +798,43 @@ export const ManageMediaPage = () => {
                         Click or Drop Images/PDFs Here
                       </span>
                       <span className="font-mono text-xs text-amber-300/80">
-                        Supports PNG, JPG, WEBP, SVG & PDF Specs
+                        Supports {SUPPORTED_FORMATS_LABEL}
                       </span>
                     </>
                   )}
                 </label>
               </div>
 
-              {/* Live Savings Badge */}
+              {/* Upload results: successes and every failure */}
               {uploadStats && (
-                <div className="animate-fadeIn space-y-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 font-mono text-xs text-emerald-300">
-                  <div className="flex items-center justify-between font-bold">
-                    <span>🎉 Uploaded {uploadStats.count} files successfully!</span>
-                    <span>Saved {uploadStats.savedPercent}% bandwidth</span>
-                  </div>
-                  <div className="text-[11px] text-emerald-400/80">
-                    Original: {formatFileSize(uploadStats.origBytes)} → Compressed:{' '}
-                    {formatFileSize(uploadStats.compBytes)}
-                  </div>
+                <div className="space-y-2">
+                  {uploadStats.count > 0 && (
+                    <div className="animate-fadeIn space-y-1 rounded-xl border border-emerald-500/30 bg-emerald-500/10 p-3.5 font-mono text-xs text-emerald-300">
+                      <div className="flex items-center justify-between font-bold">
+                        <span>Uploaded {uploadStats.count} file(s).</span>
+                        <span>Saved {uploadStats.savedPercent}% bandwidth</span>
+                      </div>
+                      <div className="text-[11px] text-emerald-400/80">
+                        Original: {formatFileSize(uploadStats.origBytes)} → Compressed:{' '}
+                        {formatFileSize(uploadStats.compBytes)}
+                      </div>
+                    </div>
+                  )}
+                  {uploadStats.failures.length > 0 && (
+                    <div
+                      role="alert"
+                      className="space-y-1 rounded-xl border border-rose-500/20 bg-rose-500/10 p-3.5 text-xs text-rose-300"
+                    >
+                      <div className="font-bold">
+                        {uploadStats.failures.length} file(s) were not uploaded:
+                      </div>
+                      <ul className="list-disc space-y-0.5 pl-4">
+                        {uploadStats.failures.map((message, idx) => (
+                          <li key={idx}>{message}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
               )}
             </div>
@@ -658,12 +857,10 @@ export const ManageMediaPage = () => {
         isOpen={Boolean(previewAsset)}
         onClose={() => setPreviewAsset(null)}
         asset={previewAsset}
-        onUpdate={(updated) => {
-          setMediaList((prev) => prev.map((m) => (m.id === updated.id ? updated : m)));
-          setPreviewAsset(updated);
-        }}
-        onDelete={(deleted) => {
-          setMediaList((prev) => prev.filter((m) => m.id !== deleted.id));
+        onSaveAltText={handleSaveAltText}
+        onDelete={async (asset) => {
+          await deleteAsset(asset);
+          setNotice({ type: 'success', text: `Deleted "${asset.original_name}".` });
         }}
       />
 
@@ -675,7 +872,11 @@ export const ManageMediaPage = () => {
         title="Delete Media Asset"
         description={
           itemToDelete
-            ? `Are you sure you want to permanently delete"${itemToDelete.original_name}"? Any case study or article embedding this URL will display a broken image link.`
+            ? `Permanently delete "${itemToDelete.original_name}"?${
+                itemToDelete.is_used === true
+                  ? ' It is currently used in your content, so the server will refuse until you remove those references.'
+                  : ''
+              } The server re-checks usage before deleting.`
             : 'Are you sure?'
         }
         confirmText="Delete Asset"

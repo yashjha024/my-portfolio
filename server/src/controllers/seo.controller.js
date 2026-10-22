@@ -1,190 +1,218 @@
 import { supabase } from '../config/supabase.js';
-
-const BASE_URL = process.env.CLIENT_URL || 'https://portfolio.yashjha024.com';
+import { env } from '../config/env.js';
 
 /**
- * Generate Dynamic XML Sitemap based on active Case Studies, Thinking Articles, and PRDs.
+ * Public sitemap and RSS feed.
+ * - Only content the public API shows: published case studies and articles, and PRDs that are
+ *   published AND public (the same contract as the public list endpoints and RLS policies).
+ * - All links are absolute on SITE_URL.
+ * - Dates come only from stored timestamps; nothing is stamped with "now".
+ * - If any source cannot be read the feed returns 503 instead of silently dropping URLs.
  */
+
+const SITE_DESCRIPTION =
+  'Product Professional & AI/ML Engineer Portfolio featuring production LMS workflows, industrial commerce journeys, and CVPR AI research pipelines.';
+const SITE_TITLE = 'Yash Jha — Product Professional & AI/ML Engineer Portfolio';
+const RSS_ITEM_LIMIT = 50;
+const FEED_CACHE_CONTROL = 'public, max-age=0, s-maxage=900, stale-while-revalidate=3600';
+
+const STATIC_ROUTES = [
+  { path: '/', changefreq: 'weekly', priority: '1.0' },
+  { path: '/work', changefreq: 'weekly', priority: '0.9' },
+  { path: '/thinking', changefreq: 'weekly', priority: '0.9' },
+  { path: '/prds', changefreq: 'weekly', priority: '0.8' },
+  { path: '/about', changefreq: 'monthly', priority: '0.8' },
+  { path: '/resume', changefreq: 'monthly', priority: '0.8' },
+  { path: '/contact', changefreq: 'monthly', priority: '0.6' },
+];
+
+// XML 1.0 forbids most control characters even when escaped
+const INVALID_XML_CHARS = /[\u0000-\u0008\u000B\u000C\u000E-\u001F￾￿]/g;
+
+export const escapeXml = (value) =>
+  String(value ?? '')
+    .replace(INVALID_XML_CHARS, '')
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&apos;');
+
+/** A stored timestamp as a Date, or null when missing or unparseable. */
+export const validDate = (value) => {
+  if (!value) return null;
+  const date = new Date(value);
+  return Number.isNaN(date.getTime()) ? null : date;
+};
+
+const absolute = (path) => `${env.SITE_URL}${path}`;
+const detailUrl = (section, slug) => absolute(`/${section}/${encodeURIComponent(slug)}`);
+
+export class FeedSourceError extends Error {}
+
+/** Read every publicly indexable item; throws FeedSourceError if a source fails. */
+export const loadPublicContent = async () => {
+  const [caseStudies, articles, prds] = await Promise.all([
+    supabase
+      .from('case_studies')
+      .select('slug, title, summary, domain, featured, published_at, updated_at')
+      .eq('status', 'published'),
+    supabase
+      .from('thinking_articles')
+      .select('slug, title, excerpt, published_at, updated_at')
+      .eq('status', 'published'),
+    supabase
+      .from('prds')
+      .select('slug, title, context, updated_at')
+      .eq('status', 'published')
+      .eq('visibility', 'public'),
+  ]);
+
+  const failed = [
+    ['case_studies', caseStudies],
+    ['thinking_articles', articles],
+    ['prds', prds],
+  ].filter(([, result]) => result.error);
+  if (failed.length > 0) {
+    throw new FeedSourceError(
+      `Feed sources unavailable: ${failed.map(([name, r]) => `${name} (${r.error.message})`).join(', ')}`
+    );
+  }
+
+  const withSlug = (rows) => (rows || []).filter((row) => typeof row.slug === 'string' && row.slug);
+  return {
+    caseStudies: withSlug(caseStudies.data),
+    articles: withSlug(articles.data),
+    prds: withSlug(prds.data),
+  };
+};
+
+const sendFeedError = (res, next, error) => {
+  if (error instanceof FeedSourceError) {
+    console.error('[SEO]', error.message);
+    res.set('Retry-After', '300');
+    return res.status(503).type('text/plain').send('Feed temporarily unavailable.');
+  }
+  return next(error);
+};
+
+export const buildSitemapXml = ({ caseStudies, articles, prds }) => {
+  const entries = STATIC_ROUTES.map((route) => ({
+    loc: absolute(route.path === '/' ? '/' : route.path),
+    changefreq: route.changefreq,
+    priority: route.priority,
+    lastmod: null,
+  }));
+
+  const addDetail = (section, rows, priorityFor) => {
+    for (const row of rows) {
+      const lastmod = validDate(row.updated_at) || validDate(row.published_at);
+      entries.push({
+        loc: detailUrl(section, row.slug),
+        changefreq: 'monthly',
+        priority: priorityFor(row),
+        lastmod: lastmod ? lastmod.toISOString().slice(0, 10) : null,
+      });
+    }
+  };
+  addDetail('work', caseStudies, (row) => (row.featured ? '0.9' : '0.8'));
+  addDetail('thinking', articles, () => '0.8');
+  addDetail('prds', prds, () => '0.7');
+
+  const seen = new Set();
+  const urls = entries
+    .filter((entry) => !seen.has(entry.loc) && seen.add(entry.loc))
+    .map(
+      (entry) =>
+        `  <url>\n    <loc>${escapeXml(entry.loc)}</loc>\n` +
+        (entry.lastmod ? `    <lastmod>${entry.lastmod}</lastmod>\n` : '') +
+        `    <changefreq>${entry.changefreq}</changefreq>\n    <priority>${entry.priority}</priority>\n  </url>`
+    );
+
+  return (
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">\n' +
+    `${urls.join('\n')}\n` +
+    '</urlset>\n'
+  );
+};
+
+export const buildRssXml = ({ caseStudies, articles, prds }) => {
+  const items = [
+    ...caseStudies.map((row) => ({
+      title: row.title,
+      link: detailUrl('work', row.slug),
+      category: row.domain || 'Case Study',
+      description: row.summary || '',
+      // Only a real publication timestamp; drafts published before published_at existed get none
+      pubDate: validDate(row.published_at),
+    })),
+    ...articles.map((row) => ({
+      title: row.title,
+      link: detailUrl('thinking', row.slug),
+      category: 'Product Thinking & Strategy',
+      description: row.excerpt || '',
+      pubDate: validDate(row.published_at),
+    })),
+    // PRDs have no publication timestamp column, so their items carry no pubDate
+    ...prds.map((row) => ({
+      title: row.title,
+      link: detailUrl('prds', row.slug),
+      category: 'Product Requirements Document',
+      description: (row.context || '').slice(0, 250),
+      pubDate: null,
+    })),
+  ]
+    .sort((a, b) => (b.pubDate?.getTime() ?? -Infinity) - (a.pubDate?.getTime() ?? -Infinity))
+    .slice(0, RSS_ITEM_LIMIT);
+
+  const newest = items.find((item) => item.pubDate)?.pubDate;
+  const itemXml = items.map(
+    (item) =>
+      '    <item>\n' +
+      `      <title>${escapeXml(item.title || 'Untitled')}</title>\n` +
+      `      <link>${escapeXml(item.link)}</link>\n` +
+      `      <guid isPermaLink="true">${escapeXml(item.link)}</guid>\n` +
+      (item.pubDate ? `      <pubDate>${item.pubDate.toUTCString()}</pubDate>\n` : '') +
+      `      <category>${escapeXml(item.category)}</category>\n` +
+      `      <description>${escapeXml(item.description)}</description>\n` +
+      '    </item>'
+  );
+
+  return (
+    '<?xml version="1.0" encoding="UTF-8"?>\n' +
+    '<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">\n' +
+    '  <channel>\n' +
+    `    <title>${escapeXml(SITE_TITLE)}</title>\n` +
+    `    <link>${escapeXml(absolute('/'))}</link>\n` +
+    `    <description>${escapeXml(SITE_DESCRIPTION)}</description>\n` +
+    '    <language>en-us</language>\n' +
+    (newest ? `    <lastBuildDate>${newest.toUTCString()}</lastBuildDate>\n` : '') +
+    `    <atom:link href="${escapeXml(absolute('/rss.xml'))}" rel="self" type="application/rss+xml"/>\n` +
+    (itemXml.length ? `${itemXml.join('\n')}\n` : '') +
+    '  </channel>\n' +
+    '</rss>\n'
+  );
+};
+
+/** Dynamic XML sitemap of public content. */
 export const getDynamicSitemap = async (req, res, next) => {
   try {
-    const [csRes, thRes, prdRes] = await Promise.all([
-      supabase
-        .from('case_studies')
-        .select('slug, updated_at, status, featured')
-        .eq('status', 'published'),
-      supabase
-        .from('thinking_articles')
-        .select('slug, updated_at, status')
-        .eq('status', 'published'),
-      supabase
-        .from('prds')
-        .select('slug, updated_at, status, visibility')
-        .eq('status', 'published')
-        .eq('visibility', 'public'),
-    ]);
-
-    const caseStudies = csRes.data || [];
-    const thinkingArticles = thRes.data || [];
-    const prdDocs = prdRes.data || [];
-
-    const now = new Date().toISOString().split('T')[0];
-
-    const staticRoutes = [
-      { loc: `${BASE_URL}/`, changefreq: 'weekly', priority: '1.0', lastmod: now },
-      { loc: `${BASE_URL}/work`, changefreq: 'weekly', priority: '0.9', lastmod: now },
-      { loc: `${BASE_URL}/thinking`, changefreq: 'weekly', priority: '0.9', lastmod: now },
-      { loc: `${BASE_URL}/prds`, changefreq: 'weekly', priority: '0.8', lastmod: now },
-      { loc: `${BASE_URL}/about`, changefreq: 'monthly', priority: '0.8', lastmod: now },
-      { loc: `${BASE_URL}/resume`, changefreq: 'monthly', priority: '0.8', lastmod: now },
-      { loc: `${BASE_URL}/contact`, changefreq: 'monthly', priority: '0.8', lastmod: now },
-    ];
-
-    let xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://www.sitemaps.org/schemas/sitemap/0.9 http://www.sitemaps.org/schemas/sitemap/0.9/sitemap.xsd">\n`;
-
-    // Add static routes
-    staticRoutes.forEach((r) => {
-      xml += `  <url>
-    <loc>${r.loc}</loc>
-    <lastmod>${r.lastmod}</lastmod>
-    <changefreq>${r.changefreq}</changefreq>
-    <priority>${r.priority}</priority>
-  </url>\n`;
-    });
-
-    // Add case study routes
-    caseStudies.forEach((cs) => {
-      xml += `  <url>
-    <loc>${BASE_URL}/work/${cs.slug}</loc>
-    <lastmod>${(cs.updated_at || now).split('T')[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>${cs.featured ? '0.9' : '0.8'}</priority>
-  </url>\n`;
-    });
-
-    // Add thinking article routes
-    thinkingArticles.forEach((art) => {
-      xml += `  <url>
-    <loc>${BASE_URL}/thinking/${art.slug}</loc>
-    <lastmod>${(art.updated_at || now).split('T')[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.8</priority>
-  </url>\n`;
-    });
-
-    // Add PRD routes
-    prdDocs.forEach((prd) => {
-      xml += `  <url>
-    <loc>${BASE_URL}/prds/${prd.slug}</loc>
-    <lastmod>${(prd.updated_at || now).split('T')[0]}</lastmod>
-    <changefreq>monthly</changefreq>
-    <priority>0.7</priority>
-  </url>\n`;
-    });
-
-    xml += `</urlset>`;
-
-    res.header('Content-Type', 'application/xml');
-    res.status(200).send(xml);
+    const xml = buildSitemapXml(await loadPublicContent());
+    res.set('Cache-Control', FEED_CACHE_CONTROL);
+    res.type('application/xml; charset=utf-8').status(200).send(xml);
   } catch (error) {
-    next(error);
+    sendFeedError(res, next, error);
   }
 };
 
-/**
- * Generate Dynamic RSS Feed based on active Case Studies, Thinking Articles, and PRDs per PRD Section 6
- */
+/** RSS 2.0 feed of public case studies, articles and PRDs. */
 export const getDynamicRssFeed = async (req, res, next) => {
   try {
-    const [csRes, thRes, prdRes] = await Promise.all([
-      supabase
-        .from('case_studies')
-        .select('title, slug, summary, updated_at, created_at, domain, cover_image')
-        .eq('status', 'published')
-        .order('created_at', { ascending: false })
-        .limit(20),
-      supabase
-        .from('thinking_articles')
-        .select('title, slug, excerpt, updated_at, created_at, cover_image')
-        .eq('status', 'published')
-        .order('created_at', { ascending: false })
-        .limit(20),
-      supabase
-        .from('prds')
-        .select('title, slug, context, updated_at, created_at, visibility')
-        .eq('status', 'published')
-        .eq('visibility', 'public')
-        .order('created_at', { ascending: false })
-        .limit(10),
-    ]);
-
-    const caseStudies = (csRes.data || []).map((item) => ({
-      ...item,
-      url: `${BASE_URL}/work/${item.slug}`,
-      category: item.domain || 'Case Study',
-      pubDate: new Date(item.created_at || item.updated_at || Date.now()).toUTCString(),
-      description: item.summary || 'Deep-dive product management case study & strategy.',
-    }));
-
-    const thinkingArticles = (thRes.data || []).map((item) => ({
-      ...item,
-      url: `${BASE_URL}/thinking/${item.slug}`,
-      category: 'Product Thinking & Strategy',
-      pubDate: new Date(item.created_at || item.updated_at || Date.now()).toUTCString(),
-      description: item.excerpt || 'Product leadership, frameworks, and architectural decisions.',
-    }));
-
-    const prdSpecs = (prdRes.data || []).map((item) => ({
-      ...item,
-      url: `${BASE_URL}/prds/${item.slug}`,
-      category: 'Technical PRD Specification',
-      pubDate: new Date(item.created_at || item.updated_at || Date.now()).toUTCString(),
-      description: item.context?.substring(0, 250) || 'Detailed product requirements document.',
-    }));
-
-    // Merge and sort all items chronologically by date
-    const allItems = [...caseStudies, ...thinkingArticles, ...prdSpecs].sort(
-      (a, b) => new Date(b.pubDate).getTime() - new Date(a.pubDate).getTime()
-    );
-
-    let rss = `<?xml version="1.0" encoding="UTF-8"?>
-<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom" xmlns:content="http://purl.org/rss/1.0/modules/content/">
-  <channel>
-    <title>Yash Jha — Product Professional & Strategic Architecture Portfolio</title>
-    <link>${BASE_URL}</link>
-    <description>Product Professional & AI/ML Engineer Portfolio featuring production LMS workflows, industrial commerce journeys, and CVPR AI research pipelines.</description>
-    <language>en-us</language>
-    <lastBuildDate>${new Date().toUTCString()}</lastBuildDate>
-    <atom:link href="${BASE_URL}/rss.xml" rel="self" type="application/rss+xml"/>\n`;
-
-    allItems.forEach((item) => {
-      const cleanDesc = (item.description || '')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;')
-        .replace(/"/g, '&quot;');
-
-      const cleanTitle = (item.title || 'Untitled')
-        .replace(/&/g, '&amp;')
-        .replace(/</g, '&lt;')
-        .replace(/>/g, '&gt;');
-
-      rss += `    <item>
-      <title>${cleanTitle}</title>
-      <link>${item.url}</link>
-      <guid isPermaLink="true">${item.url}</guid>
-      <pubDate>${item.pubDate}</pubDate>
-      <category>${item.category}</category>
-      <description>${cleanDesc}</description>
-    </item>\n`;
-    });
-
-    rss += `  </channel>
-</rss>`;
-
-    res.header('Content-Type', 'application/rss+xml');
-    res.status(200).send(rss);
+    const xml = buildRssXml(await loadPublicContent());
+    res.set('Cache-Control', FEED_CACHE_CONTROL);
+    res.type('application/rss+xml; charset=utf-8').status(200).send(xml);
   } catch (error) {
-    next(error);
+    sendFeedError(res, next, error);
   }
 };

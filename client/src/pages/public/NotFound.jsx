@@ -17,6 +17,7 @@ export const NotFoundPage = () => {
         title="404 Page Not Found"
         description="The requested page could not be found. Return to Yash Jha's product and AI/ML engineering portfolio."
         type="website"
+        noindex
       />
 
       <Section className="py-24 md:py-32 flex items-center justify-center min-h-[75vh]">

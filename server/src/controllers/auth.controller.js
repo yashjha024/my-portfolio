@@ -1,5 +1,12 @@
 import { supabase } from '../config/supabase.js';
+import { env } from '../config/env.js';
 import { setTokenCookies, clearTokenCookies } from '../utils/token.utils.js';
+
+/**
+ * Post-login landing URL, built only from validated configuration (CLIENT_URL is checked to be a
+ * bare origin in config/env.js) and never from request headers such as Origin or Host.
+ */
+export const authCallbackUrl = () => `${env.CLIENT_URL}/auth/callback`;
 
 /**
  * Trigger OTP/Magic Link passwordless sign-in via Supabase Auth
@@ -30,11 +37,11 @@ export const sendMagicLink = async (req, res) => {
         .json({ success: false, error: 'This account is not authorized for the owner console.' });
     }
 
-    const clientUrl = process.env.CLIENT_URL || 'http://localhost:5173';
+    // signInWithOtp reads `emailRedirectTo`; `redirectTo` is ignored and falls back to the Site URL
     const { error } = await supabase.auth.signInWithOtp({
       email,
       options: {
-        redirectTo: `${clientUrl}/auth/callback`,
+        emailRedirectTo: authCallbackUrl(),
       },
     });
 
@@ -60,12 +67,10 @@ export const sendMagicLink = async (req, res) => {
  */
 export const getGoogleOAuthUrl = async (req, res) => {
   try {
-    const origin = req.get('origin');
-    const clientUrl = origin || process.env.CLIENT_URL || 'http://localhost:5173';
     const { data, error } = await supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: `${clientUrl}/auth/callback`,
+        redirectTo: authCallbackUrl(),
       },
     });
 
@@ -174,18 +179,25 @@ export const getMe = async (req, res) => {
 };
 
 /**
- * Sign out user and clear HTTP-only cookies
+ * Sign out and clear HTTP-only cookies.
+ * Deliberately does not require a valid session: an expired or invalid session must still be able
+ * to clear its cookies. Token revocation is best-effort. CSRF protection still applies whenever
+ * session cookies are present (app-level guard).
  */
 export const logout = async (req, res) => {
-  try {
-    const token = req.cookies['sb-access-token'] || req.headers.authorization?.split(' ')[1];
-    if (token) {
-      await supabase.auth.admin?.signOut?.(token).catch(() => null);
+  const bearer = req.headers.authorization?.startsWith('Bearer ')
+    ? req.headers.authorization.split(' ')[1]
+    : null;
+  const token = req.cookies?.['sb-access-token'] || bearer;
+  let revoked = false;
+  if (token) {
+    try {
+      const { error } = await supabase.auth.admin.signOut(token);
+      revoked = !error;
+    } catch (_e) {
+      // Expired or invalid tokens cannot be revoked; clearing the cookies below still logs out
     }
-  } catch (_e) {
-    // Ignore sign-out errors on expired tokens
-  } finally {
-    clearTokenCookies(res);
-    res.status(200).json({ success: true, message: 'Logged out successfully.' });
   }
+  clearTokenCookies(res);
+  res.status(200).json({ success: true, message: 'Logged out successfully.', revoked });
 };

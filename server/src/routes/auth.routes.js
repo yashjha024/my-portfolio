@@ -22,7 +22,7 @@ router.post('/session', setSession);
 // Protected session profile lookup
 router.get('/me', verifyAuth, getMe);
 
-// Protected logout
-router.post('/logout', verifyAuth, logout);
+// Logout must work for expired/invalid sessions so their cookies are always cleared
+router.post('/logout', logout);
 
 export default router;

@@ -4,6 +4,9 @@ import api from '../../services/api.js';
 import { AutosaveIndicator } from '../../components/admin/AutosaveIndicator.jsx';
 import { MediaPickerModal } from '../../components/admin/MediaPickerModal.jsx';
 import { MarkdownEditor } from '../../components/admin/MarkdownEditor.jsx';
+import { useEditorSave } from '../../hooks/useEditorSave.js';
+import { useUnsavedChangesGuard, useSaveShortcut } from '../../hooks/useUnsavedChangesGuard.js';
+import { buildCaseStudyPayload, describeSaveError } from '../../utils/editorPayload.js';
 import {
   Save,
   Eye,
@@ -23,9 +26,6 @@ export const EditWorkPage = () => {
   const navigate = useNavigate();
 
   const [loading, setLoading] = useState(!isNew);
-  const [saving, setSaving] = useState(false);
-  const [autosaveStatus, setAutosaveStatus] = useState('saved'); // saved, saving, unsaved, error
-  const [lastSavedAt, setLastSavedAt] = useState(null);
   const [error, setError] = useState(null);
   const [activeTab, setActiveTab] = useState('core'); // core, narrative, metrics, links, seo
   const [mediaPickerOpen, setMediaPickerOpen] = useState(false);
@@ -73,8 +73,34 @@ export const EditWorkPage = () => {
   const [toolsInput, setToolsInput] = useState('');
   const [tagsInput, setTagsInput] = useState('');
   const [skillsInput, setSkillsInput] = useState('');
-  const initialMount = useRef(true);
-  const autosaveTimeout = useRef(null);
+
+  // Latest editor state for the save controller (timers fire after renders, never with stale data)
+  const latestRef = useRef({});
+  latestRef.current = { formData, toolsInput, tagsInput, skillsInput };
+
+  const editorSave = useEditorSave({
+    prepare: ({ status }) => {
+      const { formData: form, ...inputs } = latestRef.current;
+      return buildCaseStudyPayload(form, inputs, { status });
+    },
+    persist: async (payload) => {
+      const res = isNew
+        ? await api.post('/admin/work', payload)
+        : await api.put(`/admin/work/${id}`, payload);
+      if (!res.data?.success) throw new Error(res.data?.error || 'Failed to save case study.');
+      return res.data.data;
+    },
+    // Autosave only drafts; published/archived edits go live only through an explicit Save
+    canAutosave: () => !isNew && latestRef.current.formData.status === 'draft',
+  });
+  const saving = editorSave.state.saving;
+  const autosaveStatus = editorSave.indicatorStatus;
+  const lastSavedAt = editorSave.state.lastSavedAt;
+  const saveError = editorSave.state.error
+    ? describeSaveError(editorSave.state.error, 'Failed to save case study.')
+    : null;
+
+  useUnsavedChangesGuard(editorSave.state.dirty || saving);
 
   const fetchCaseStudy = useCallback(async () => {
     if (isNew) return;
@@ -132,7 +158,8 @@ export const EditWorkPage = () => {
         setToolsInput((item.tools || []).join(', '));
         setTagsInput((item.tags || []).join(', '));
         setSkillsInput((item.skills || []).join(', '));
-        setLastSavedAt(item.updated_at || new Date().toISOString());
+        // Loading is not an edit: establish the saved baseline without scheduling any write
+        editorSave.markClean(item.updated_at || null);
       }
     } catch (err) {
       console.error('Failed to fetch case study:', err);
@@ -140,7 +167,7 @@ export const EditWorkPage = () => {
     } finally {
       setLoading(false);
     }
-  }, [id, isNew]);
+  }, [id, isNew, editorSave.markClean]);
 
   useEffect(() => {
     fetchCaseStudy();
@@ -159,118 +186,48 @@ export const EditWorkPage = () => {
       }
       return next;
     });
-    setAutosaveStatus('unsaved');
+    editorSave.markDirty();
   };
 
   const handleFieldChange = (field, value) => {
     setFormData((prev) => ({ ...prev, [field]: value }));
-    setAutosaveStatus('unsaved');
+    editorSave.markDirty();
   };
 
-  // Debounced Autosave for existing items in draft status
-  useEffect(() => {
-    if (initialMount.current) {
-      initialMount.current = false;
+  /**
+   * Save the case study.
+   * - no argument: plain Save, keeps the current publication status (new items are created as drafts)
+   * - 'draft' / 'published' / 'archived': explicit status transition
+   */
+  const handleSave = async (targetStatus = null) => {
+    setError(null);
+    const currentStatus = latestRef.current.formData.status;
+    if (
+      !isNew &&
+      targetStatus === 'draft' &&
+      currentStatus === 'published' &&
+      !window.confirm(
+        'Saving as draft will unpublish this case study from the public site. Continue?'
+      )
+    ) {
       return;
     }
-    if (isNew || formData.status !== 'draft') return;
+    const status = targetStatus || (isNew ? 'draft' : undefined);
+    const outcome = await editorSave.save(status ? { status } : {});
+    if (!outcome.ok) return; // error state and message come from the save controller
 
-    if (autosaveTimeout.current) clearTimeout(autosaveTimeout.current);
-
-    autosaveTimeout.current = setTimeout(async () => {
-      try {
-        setAutosaveStatus('saving');
-        await api.put(`/admin/work/${id}`, formData);
-        setAutosaveStatus('saved');
-        setLastSavedAt(new Date().toISOString());
-      } catch (err) {
-        console.error('Autosave failed:', err);
-        setAutosaveStatus('error');
-      }
-    }, 3000);
-
-    return () => clearTimeout(autosaveTimeout.current);
-  }, [formData, id, isNew]);
-
-  const validateForm = () => {
-    if (!formData.title || formData.title.trim().length < 3) {
-      alert('Title must be at least 3 characters long.');
-      return false;
+    const saved = outcome.result;
+    if (saved?.status) {
+      latestRef.current.formData = { ...latestRef.current.formData, status: saved.status };
+      setFormData((prev) => ({ ...prev, status: saved.status }));
     }
-    if (!formData.slug || !/^[a-z0-9-]+$/.test(formData.slug)) {
-      alert('Slug must contain only lowercase letters, numbers, and hyphens.');
-      return false;
-    }
-    if (!formData.summary || formData.summary.trim().length < 10) {
-      alert('Summary must be at least 10 characters (elevator pitch).');
-      return false;
-    }
-    return true;
-  };
-
-  const handleSave = async (targetStatus = null) => {
-    if (!validateForm()) return;
-
-    try {
-      setSaving(true);
-      setError(null);
-      const payload = { ...formData };
-      if (targetStatus) {
-        payload.status = targetStatus;
-      }
-
-      // Convert comma-separated string tools, tags, and skills if user typed
-      if (typeof toolsInput === 'string') {
-        payload.tools = toolsInput
-          .split(',')
-          .map((t) => t.trim())
-          .filter(Boolean);
-      }
-      if (typeof tagsInput === 'string') {
-        payload.tags = tagsInput
-          .split(',')
-          .map((t) => t.trim())
-          .filter(Boolean);
-      }
-      if (typeof skillsInput === 'string') {
-        payload.skills = skillsInput
-          .split(',')
-          .map((t) => t.trim())
-          .filter(Boolean);
-      }
-      if (payload.year !== '' && payload.year !== null && payload.year !== undefined) {
-        payload.year = Number(payload.year);
-      } else {
-        payload.year = null;
-      }
-      if (payload.options_tradeoffs && !payload.options_decision) {
-        payload.options_decision = payload.options_tradeoffs;
-      }
-      if (payload.options_decision && !payload.options_tradeoffs) {
-        payload.options_tradeoffs = payload.options_decision;
-      }
-
-      let res;
-      if (isNew) {
-        res = await api.post('/admin/work', payload);
-      } else {
-        res = await api.put(`/admin/work/${id}`, payload);
-      }
-
-      if (res.data?.success) {
-        setAutosaveStatus('saved');
-        setLastSavedAt(new Date().toISOString());
-        if (isNew && res.data.data?.id) {
-          navigate(`/admin/work/edit/${res.data.data.id}`, { replace: true });
-        }
-      }
-    } catch (err) {
-      console.error('Save error:', err);
-      setError(err?.response?.data?.error || 'Failed to save case study.');
-    } finally {
-      setSaving(false);
+    editorSave.refreshAutosave();
+    if (isNew && saved?.id) {
+      navigate(`/admin/work/edit/${saved.id}`, { replace: true });
     }
   };
+
+  useSaveShortcut(() => handleSave());
 
   // Metrics dynamic operations
   const addMetric = () => {
@@ -278,7 +235,7 @@ export const EditWorkPage = () => {
       ...prev,
       metrics: [...prev.metrics, { label: 'New Metric', value: '+0%', qualifier: 'actual' }],
     }));
-    setAutosaveStatus('unsaved');
+    editorSave.markDirty();
   };
 
   const updateMetric = (index, field, value) => {
@@ -287,7 +244,7 @@ export const EditWorkPage = () => {
       nextMetrics[index] = { ...nextMetrics[index], [field]: value };
       return { ...prev, metrics: nextMetrics };
     });
-    setAutosaveStatus('unsaved');
+    editorSave.markDirty();
   };
 
   const removeMetric = (index) => {
@@ -295,7 +252,7 @@ export const EditWorkPage = () => {
       ...prev,
       metrics: prev.metrics.filter((_, i) => i !== index),
     }));
-    setAutosaveStatus('unsaved');
+    editorSave.markDirty();
   };
 
   if (loading) {
@@ -362,29 +319,47 @@ export const EditWorkPage = () => {
             </button>
           )}
 
-          <button
-            type="button"
-            disabled={saving}
-            onClick={() => handleSave('draft')}
-            className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium transition-colors disabled:opacity-50"
-          >
-            <Save className="h-3.5 w-3.5" />
-            <span>Save Draft</span>
-          </button>
+          {!isNew && formData.status !== 'draft' && (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => handleSave()}
+              title={`Save changes and keep this case study ${formData.status} (Ctrl/Cmd+S)`}
+              className="bg-primary hover:bg-primary/90 flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium text-white transition-colors disabled:opacity-50"
+            >
+              <Save className="h-3.5 w-3.5" />
+              <span>Save</span>
+            </button>
+          )}
 
           <button
             type="button"
             disabled={saving}
-            onClick={() => handleSave('published')}
-            className="shadow-soft flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-medium text-white shadow-emerald-600/20 transition-all hover:bg-emerald-500 disabled:opacity-50"
+            onClick={() => handleSave('draft')}
+            title={
+              formData.status === 'published' ? 'Unpublish and save as draft' : 'Save as draft'
+            }
+            className="bg-secondary text-foreground hover:bg-secondary flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium transition-colors disabled:opacity-50"
           >
-            {saving ? (
-              <Loader2 className="h-3.5 w-3.5 animate-spin" />
-            ) : (
-              <Check className="h-3.5 w-3.5" />
-            )}
-            <span>Publish Now</span>
+            <Save className="h-3.5 w-3.5" />
+            <span>{formData.status === 'published' ? 'Unpublish to Draft' : 'Save Draft'}</span>
           </button>
+
+          {formData.status !== 'published' && (
+            <button
+              type="button"
+              disabled={saving}
+              onClick={() => handleSave('published')}
+              className="shadow-soft flex items-center gap-1.5 rounded-xl bg-emerald-600 px-4 py-2 text-xs font-medium text-white shadow-emerald-600/20 transition-all hover:bg-emerald-500 disabled:opacity-50"
+            >
+              {saving ? (
+                <Loader2 className="h-3.5 w-3.5 animate-spin" />
+              ) : (
+                <Check className="h-3.5 w-3.5" />
+              )}
+              <span>Publish Now</span>
+            </button>
+          )}
 
           {formData.status !== 'archived' && !isNew && (
             <button
@@ -399,10 +374,13 @@ export const EditWorkPage = () => {
         </div>
       </div>
 
-      {error && (
-        <div className="flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-300">
+      {(error || saveError) && (
+        <div
+          role="alert"
+          className="flex items-center gap-3 rounded-xl border border-rose-500/20 bg-rose-500/10 p-4 text-sm text-rose-300"
+        >
           <AlertCircle className="h-5 w-5 shrink-0" />
-          <span>{error}</span>
+          <span>{error || saveError}</span>
         </div>
       )}
 
@@ -495,18 +473,16 @@ export const EditWorkPage = () => {
             </div>
 
             <div>
-              <label className="text-foreground mb-1.5 block font-mono text-xs uppercase">
+              <span className="text-foreground mb-1.5 block font-mono text-xs uppercase">
                 Status
-              </label>
-              <select
-                value={formData.status}
-                onChange={(e) => handleFieldChange('status', e.target.value)}
-                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:outline-none"
+              </span>
+              {/* Read-only: status changes only through the explicit Save Draft / Publish / Archive actions */}
+              <div
+                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium capitalize text-white"
+                aria-live="polite"
               >
-                <option value="draft">Draft</option>
-                <option value="published">Published</option>
-                <option value="archived">Archived</option>
-              </select>
+                {formData.status}
+              </div>
             </div>
 
             <div>
@@ -621,7 +597,7 @@ export const EditWorkPage = () => {
               required={true}
               value={formData.problem}
               onChange={(val) => handleFieldChange('problem', val)}
-              onSave={() => handleSave('draft')}
+              onSave={() => handleSave()}
               autosaveStatus={autosaveStatus}
               lastSavedAt={lastSavedAt}
               minHeight="320px"
@@ -635,7 +611,7 @@ export const EditWorkPage = () => {
               required={true}
               value={formData.approach}
               onChange={(val) => handleFieldChange('approach', val)}
-              onSave={() => handleSave('draft')}
+              onSave={() => handleSave()}
               autosaveStatus={autosaveStatus}
               lastSavedAt={lastSavedAt}
               minHeight="320px"
@@ -649,7 +625,7 @@ export const EditWorkPage = () => {
               required={true}
               value={formData.outcome}
               onChange={(val) => handleFieldChange('outcome', val)}
-              onSave={() => handleSave('draft')}
+              onSave={() => handleSave()}
               autosaveStatus={autosaveStatus}
               lastSavedAt={lastSavedAt}
               minHeight="320px"
@@ -667,7 +643,7 @@ export const EditWorkPage = () => {
                   label="Research Inputs (User research, data insights, interviews)"
                   value={formData.research_inputs || ''}
                   onChange={(val) => handleFieldChange('research_inputs', val)}
-                  onSave={() => handleSave('draft')}
+                  onSave={() => handleSave()}
                   autosaveStatus={autosaveStatus}
                   lastSavedAt={lastSavedAt}
                   minHeight="220px"
@@ -680,7 +656,7 @@ export const EditWorkPage = () => {
                   label="Problem Framing (Detailed HMW and opportunity breakdown)"
                   value={formData.problem_framing || ''}
                   onChange={(val) => handleFieldChange('problem_framing', val)}
-                  onSave={() => handleSave('draft')}
+                  onSave={() => handleSave()}
                   autosaveStatus={autosaveStatus}
                   lastSavedAt={lastSavedAt}
                   minHeight="220px"
@@ -696,7 +672,7 @@ export const EditWorkPage = () => {
                     handleFieldChange('options_decision', val);
                     handleFieldChange('options_tradeoffs', val);
                   }}
-                  onSave={() => handleSave('draft')}
+                  onSave={() => handleSave()}
                   autosaveStatus={autosaveStatus}
                   lastSavedAt={lastSavedAt}
                   minHeight="220px"
@@ -709,7 +685,7 @@ export const EditWorkPage = () => {
                   label="Delivery Execution (Milestones, sprints, engineering roll-out)"
                   value={formData.delivery || ''}
                   onChange={(val) => handleFieldChange('delivery', val)}
-                  onSave={() => handleSave('draft')}
+                  onSave={() => handleSave()}
                   autosaveStatus={autosaveStatus}
                   lastSavedAt={lastSavedAt}
                   minHeight="220px"
@@ -722,7 +698,7 @@ export const EditWorkPage = () => {
                   label="Outcome & Learnings (Retrospective and post-launch insights)"
                   value={formData.outcome_learning || ''}
                   onChange={(val) => handleFieldChange('outcome_learning', val)}
-                  onSave={() => handleSave('draft')}
+                  onSave={() => handleSave()}
                   autosaveStatus={autosaveStatus}
                   lastSavedAt={lastSavedAt}
                   minHeight="220px"
@@ -869,7 +845,7 @@ export const EditWorkPage = () => {
                 value={toolsInput}
                 onChange={(e) => {
                   setToolsInput(e.target.value);
-                  setAutosaveStatus('unsaved');
+                  editorSave.markDirty();
                 }}
                 className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
               />
@@ -888,7 +864,7 @@ export const EditWorkPage = () => {
                 value={tagsInput}
                 onChange={(e) => {
                   setTagsInput(e.target.value);
-                  setAutosaveStatus('unsaved');
+                  editorSave.markDirty();
                 }}
                 className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
               />
@@ -907,7 +883,7 @@ export const EditWorkPage = () => {
                 value={skillsInput}
                 onChange={(e) => {
                   setSkillsInput(e.target.value);
-                  setAutosaveStatus('unsaved');
+                  editorSave.markDirty();
                 }}
                 className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
               />

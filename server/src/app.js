@@ -1,4 +1,4 @@
-import './config/env.js';
+import { env } from './config/env.js';
 import express from 'express';
 import cors from 'cors';
 import cookieParser from 'cookie-parser';
@@ -8,7 +8,8 @@ import crypto from 'crypto';
 import { supabase } from './config/supabase.js';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware.js';
 import { requestLogger } from './middleware/logger.middleware.js';
-import { apiLimiter, authLimiter } from './middleware/rateLimiter.middleware.js';
+import { apiLimiter, loginLimiter, contactLimiter } from './middleware/rateLimiter.middleware.js';
+import { createOriginChecker, hasSessionCookie } from './config/security.js';
 
 import authRoutes from './routes/auth.routes.js';
 import workRoutes from './routes/work.routes.js';
@@ -23,6 +24,16 @@ import adminRoutes from './routes/admin.routes.js';
 import seoRoutes from './routes/seo.routes.js';
 
 const app = express();
+
+// Trust exactly TRUST_PROXY_HOPS reverse proxies (expected chain: Vercel /api rewrite -> Railway edge).
+// Express then takes req.ip from that position in X-Forwarded-For, counting from the right, so
+// addresses a client prepends to the header are never used. 0 (default) ignores the header entirely.
+app.set('trust proxy', env.TRUST_PROXY_HOPS);
+if (env.NODE_ENV === 'production' && env.TRUST_PROXY_HOPS === 0) {
+  console.warn(
+    '[SECURITY] TRUST_PROXY_HOPS is 0; behind a proxy every visitor shares one rate-limit bucket.'
+  );
+}
 
 // Security and middleware setup
 app.use(
@@ -42,12 +53,33 @@ app.use(
     referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
   })
 );
-const isAllowedOrigin = (origin) => {
-  if (!origin) return true;
-  const configured = process.env.CLIENT_URL || 'http://localhost:5173';
-  if (origin === configured) return true;
-  if (origin.endsWith('.vercel.app')) return true;
-  return false;
+// Exact-match allowlist (CLIENT_URL + ALLOWED_ORIGINS). Wildcard hosts such as *.vercel.app are shared
+// by every Vercel customer and must never receive credentialed CORS responses. In production the SPA
+// calls /api on its own origin, so CORS only matters for explicitly listed extra origins.
+const isAllowedOrigin = createOriginChecker(env.ALLOWED_ORIGINS);
+
+// Public, published-only GET endpoints whose responses never depend on who is asking.
+// Slug lookups qualify only without a draft preview token (previews require an owner session).
+const PUBLIC_CACHEABLE_PATHS = new Set([
+  '/api/work',
+  '/api/thinking',
+  '/api/prds',
+  '/api/settings',
+  '/api/experiences',
+  '/api/educations',
+]);
+const PUBLIC_SLUG_PATH = /^\/api\/(work|thinking|prds)\/slug\/[^/]+$/;
+
+const isPublicCacheableRequest = (req) => {
+  if (req.method !== 'GET') return false;
+  if (req.query?.preview_token || req.get('x-preview-token')) return false;
+  const fullPath = `${req.baseUrl}${req.path}`.replace(/\/+$/, '');
+  return PUBLIC_CACHEABLE_PATHS.has(fullPath) || PUBLIC_SLUG_PATH.test(fullPath);
+};
+
+const tokensMatch = (a, b) => {
+  if (typeof a !== 'string' || typeof b !== 'string' || a.length !== b.length) return false;
+  return crypto.timingSafeEqual(Buffer.from(a), Buffer.from(b));
 };
 
 app.use(
@@ -62,8 +94,12 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Body limits: the public contact form gets a tight limit (parsed here first, so the global
+// parser skips it); CMS JSON (articles up to 200k chars, PRD sections) fits well within 2 MB.
+// File uploads are multipart and handled by multer with its own 10 MB limit.
+app.use('/api/contact', express.json({ limit: '16kb' }));
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(cookieParser());
 // CSRF Initialization and Double-Submit Cookie Protection
 app.use((req, res, next) => {
@@ -98,11 +134,11 @@ app.use((req, res, next) => {
       return res.status(403).json({ success: false, error: 'Invalid request origin.' });
     }
 
-    // Double-Submit Cookie CSRF verification when cookie authentication is present
-    if (req.cookies && req.cookies['sb-access-token']) {
+    // Double-Submit Cookie CSRF verification when any session cookie (access or refresh) is present
+    if (hasSessionCookie(req.cookies)) {
       const cookieCsrf = req.cookies['csrf-token'];
       const headerCsrf = req.headers['x-csrf-token'];
-      if (!cookieCsrf || !headerCsrf || cookieCsrf !== headerCsrf) {
+      if (!cookieCsrf || !headerCsrf || !tokensMatch(cookieCsrf, headerCsrf)) {
         return res.status(403).json({ success: false, error: 'CSRF token mismatch or missing.' });
       }
     }
@@ -115,12 +151,32 @@ app.use(requestLogger);
 // Global API Rate Limiter
 app.use('/api', apiLimiter);
 
-// SEO Dynamic Feeds & Sitemaps
-app.use(['/', '/api/seo'], seoRoutes);
+// API responses are private by default; only allowlisted public GETs may be cached by the CDN
+app.use('/api', (req, res, next) => {
+  res.set('Cache-Control', 'no-store');
+  if (isPublicCacheableRequest(req)) {
+    const json = res.json.bind(res);
+    res.json = (body) => {
+      if (res.statusCode < 400) {
+        res.set('Cache-Control', 'public, max-age=0, s-maxage=60, stale-while-revalidate=300');
+      }
+      return json(body);
+    };
+  }
+  next();
+});
 
-// Sensitive & Submission Route Rate Limits
-app.use('/api/auth', authLimiter, authRoutes);
-app.use('/api/contact', authLimiter, contactRoutes);
+// SEO Dynamic Feeds & Sitemaps: /sitemap.xml + /rss.xml (Vercel rewrite targets) and the same
+// feeds under /api/seo. Mounted separately: with a path array the '/' prefix matched first and
+// the router never tried '/api/seo', so /api/seo/* returned 404.
+app.use('/api/seo', seoRoutes);
+app.use(seoRoutes);
+
+// Sensitive & Submission Route Rate Limits (separate stores: login attempts and contact
+// submissions never share an allowance; session checks like /auth/me use the API limiter only)
+app.use(['/api/auth/magic-link', '/api/auth/session', '/api/auth/google'], loginLimiter);
+app.use('/api/auth', authRoutes);
+app.use('/api/contact', contactLimiter, contactRoutes);
 
 // Public & Modular API Routes
 app.use('/api/work', workRoutes);

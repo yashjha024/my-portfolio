@@ -1,5 +1,4 @@
-import React, { useState } from 'react';
-import api from '../../services/api.js';
+import React, { useEffect, useRef, useState } from 'react';
 import {
   X,
   FileText,
@@ -14,52 +13,131 @@ import {
   HardDrive,
   CheckCircle2,
   AlertTriangle,
+  AlertCircle,
+  Lock,
+  Globe,
+  HelpCircle,
 } from 'lucide-react';
 
-export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }) => {
-  if (!isOpen || !asset) return null;
+const formatFileSize = (bytes) => {
+  if (!bytes) return '0 B';
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+};
 
+/**
+ * Asset inspector. The outer component only decides whether to render; all hooks live in
+ * `AssetPreviewContent`, which is keyed by asset id so switching assets starts with fresh state and
+ * the hook order never changes between closed, open and switched states.
+ *
+ * @param {(asset, altText: string) => Promise<void>} onSaveAltText - rejects with an Error on failure
+ * @param {(asset) => Promise<void>} onDelete - rejects with an Error on failure
+ */
+export const AssetPreviewModal = ({ isOpen, onClose, asset, onSaveAltText, onDelete }) => {
+  if (!isOpen || !asset) return null;
+  return (
+    <AssetPreviewContent
+      key={asset.id}
+      asset={asset}
+      onClose={onClose}
+      onSaveAltText={onSaveAltText}
+      onDelete={onDelete}
+    />
+  );
+};
+
+const UsageBadge = ({ isUsed }) => {
+  if (isUsed === true) {
+    return (
+      <span className="flex items-center gap-1 rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-300">
+        <CheckCircle2 className="h-3 w-3" /> Active / Used
+      </span>
+    );
+  }
+  if (isUsed === false) {
+    return (
+      <span className="flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-300">
+        <AlertTriangle className="h-3 w-3" /> Unused / Orphaned
+      </span>
+    );
+  }
+  return (
+    <span className="border-border text-muted-foreground flex items-center gap-1 rounded border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider">
+      <HelpCircle className="h-3 w-3" /> Usage unknown
+    </span>
+  );
+};
+
+const AssetPreviewContent = ({ asset, onClose, onSaveAltText, onDelete }) => {
   const [altText, setAltText] = useState(asset.alt_text || '');
   const [saving, setSaving] = useState(false);
+  const [deleting, setDeleting] = useState(false);
   const [copied, setCopied] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [actionError, setActionError] = useState(null);
+  const timers = useRef([]);
 
-  const isImg = asset.type === 'image' || /\.(png|jpe?g|webp|svg|gif)$/i.test(asset.url);
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      if (event.key === 'Escape') onClose?.();
+    };
+    document.addEventListener('keydown', handleKeyDown);
+    const pending = timers.current;
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+      pending.forEach(clearTimeout);
+    };
+  }, [onClose]);
+
+  const flash = (setter) => {
+    setter(true);
+    timers.current.push(setTimeout(() => setter(false), 2500));
+  };
+
+  const isImg = asset.type === 'image';
+  const isPrivate = asset.storage_visibility === 'private';
 
   const handleSaveAltText = async (e) => {
     e.preventDefault();
+    setActionError(null);
     try {
       setSaving(true);
-      const res = await api.put(`/media/${asset.id}`, { alt_text: altText });
-      if (res.data?.success && res.data?.data) {
-        setSaveSuccess(true);
-        setTimeout(() => setSaveSuccess(false), 2500);
-        onUpdate?.(res.data.data);
-      }
+      await onSaveAltText?.(asset, altText);
+      flash(setSaveSuccess);
     } catch (err) {
-      console.error('Failed to update alt text:', err);
-      alert('Could not update alt text.');
+      setActionError(err?.message || 'Could not update alt text.');
     } finally {
       setSaving(false);
     }
   };
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(asset.url);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+  const handleDelete = async () => {
+    if (!window.confirm(`Permanently delete "${asset.original_name}" from cloud storage?`)) return;
+    setActionError(null);
+    try {
+      setDeleting(true);
+      await onDelete?.(asset);
+      onClose?.(); // only after the server confirmed the deletion
+    } catch (err) {
+      setActionError(err?.message || 'Could not delete this asset.');
+      setDeleting(false);
+    }
   };
 
-  const formatFileSize = (bytes) => {
-    if (!bytes) return '0 B';
-    if (bytes < 1024) return `${bytes} B`;
-    if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
-    return `${(bytes / (1024 * 1024)).toFixed(2)} MB`;
+  const handleCopy = () => {
+    navigator.clipboard?.writeText(asset.url);
+    flash(setCopied);
   };
 
   return (
     <div className="animate-fadeIn bg-background fixed inset-0 z-50 flex items-center justify-center p-4">
-      <div className="border-border bg-card shadow-soft flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border md:flex-row">
+      <div
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="asset-preview-title"
+        className="border-border bg-card shadow-soft flex max-h-[90vh] w-full max-w-4xl flex-col overflow-hidden rounded-3xl border md:flex-row"
+      >
         {/* Left/Top Preview Area */}
         <div className="border-border bg-background group relative flex min-h-[280px] flex-col items-center justify-center overflow-hidden border-b p-6 md:w-1/2 md:border-b-0 md:border-r">
           {isImg ? (
@@ -70,7 +148,7 @@ export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }
             />
           ) : (
             <div className="flex flex-col items-center justify-center p-8 text-center text-emerald-400">
-              <FileText className="mb-4 h-20 w-20 animate-pulse opacity-90" />
+              <FileText className="mb-4 h-20 w-20 opacity-90" />
               <h4 className="max-w-xs truncate text-base font-bold text-white">
                 {asset.original_name}
               </h4>
@@ -100,22 +178,20 @@ export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }
                   <span className="border-border bg-secondary text-foreground rounded border px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider">
                     {asset.type || 'document'}
                   </span>
-                  {asset.is_used ? (
-                    <span className="flex items-center gap-1 rounded border border-emerald-500/30 bg-emerald-500/10 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-emerald-300">
-                      <CheckCircle2 className="h-3 w-3" /> Active / Used
-                    </span>
-                  ) : (
-                    <span className="flex items-center gap-1 rounded border border-amber-500/30 bg-amber-500/10 px-2 py-0.5 font-mono text-[10px] font-bold uppercase tracking-wider text-amber-300">
-                      <AlertTriangle className="h-3 w-3" /> Unused / Orphaned
-                    </span>
-                  )}
+                  <UsageBadge isUsed={asset.is_used} />
                 </div>
-                <h3 className="truncate text-lg font-bold text-white" title={asset.original_name}>
+                <h3
+                  id="asset-preview-title"
+                  className="truncate text-lg font-bold text-white"
+                  title={asset.original_name}
+                >
                   {asset.original_name}
                 </h3>
               </div>
               <button
+                type="button"
                 onClick={onClose}
+                aria-label="Close asset preview"
                 className="text-muted-foreground hover:bg-secondary shrink-0 rounded-xl p-1.5 transition-colors hover:text-white"
               >
                 <X className="h-5 w-5" />
@@ -142,6 +218,31 @@ export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }
                 </div>
               </div>
 
+              <div className="border-border col-span-2 flex items-start gap-2 border-t pt-2">
+                {isPrivate ? (
+                  <Lock className="mt-0.5 h-4 w-4 shrink-0 text-rose-400" />
+                ) : (
+                  <Globe className="mt-0.5 h-4 w-4 shrink-0 text-sky-400" />
+                )}
+                <div data-testid="asset-visibility">
+                  <div className="text-muted-foreground text-[10px] uppercase">Visibility</div>
+                  <div className="text-foreground">
+                    {isPrivate
+                      ? 'Private bucket — owner-only download link'
+                      : 'Public bucket — anyone with the URL can view'}
+                  </div>
+                  <div className="text-muted-foreground text-[10px]">
+                    Set at upload; it cannot be changed here.
+                  </div>
+                  {asset.visibility_mismatch && (
+                    <div className="mt-1 text-[10px] text-amber-400">
+                      The stored flag disagrees with the bucket; the bucket shown here is what
+                      applies.
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="border-border col-span-2 flex items-center gap-2 border-t pt-1">
                 <Calendar className="h-4 w-4 shrink-0 text-amber-400" />
                 <div>
@@ -163,11 +264,15 @@ export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }
 
             {/* Alt Text Editor */}
             <form onSubmit={handleSaveAltText} className="space-y-2">
-              <label className="text-foreground block font-mono text-xs font-bold uppercase tracking-wider">
+              <label
+                htmlFor="asset-alt-text"
+                className="text-foreground block font-mono text-xs font-bold uppercase tracking-wider"
+              >
                 Alt Text / SEO Description
               </label>
               <div className="flex gap-2">
                 <input
+                  id="asset-alt-text"
                   type="text"
                   value={altText}
                   onChange={(e) => setAltText(e.target.value)}
@@ -194,11 +299,21 @@ export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }
               )}
             </form>
 
+            {actionError && (
+              <p
+                role="alert"
+                className="flex items-start gap-1.5 rounded-xl border border-rose-500/20 bg-rose-500/10 p-3 text-xs text-rose-300"
+              >
+                <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0" />
+                <span>{actionError}</span>
+              </p>
+            )}
+
             {/* Storage Path Display */}
             <div>
-              <label className="text-muted-foreground mb-1 block font-mono text-[10px] uppercase tracking-wider">
+              <span className="text-muted-foreground mb-1 block font-mono text-[10px] uppercase tracking-wider">
                 Supabase Storage Bucket Path
-              </label>
+              </span>
               <div className="border-border bg-background text-muted-foreground select-all break-all rounded-xl border p-2.5 font-mono text-[11px]">
                 {asset.storage_path || `assets/${asset.folder || 'general'}/${asset.filename}`}
               </div>
@@ -222,18 +337,16 @@ export const AssetPreviewModal = ({ isOpen, onClose, asset, onUpdate, onDelete }
 
             <button
               type="button"
-              onClick={() => {
-                if (
-                  window.confirm(`Permanently delete"${asset.original_name}"from cloud storage?`)
-                ) {
-                  onDelete?.(asset);
-                  onClose();
-                }
-              }}
-              className="flex shrink-0 items-center gap-1.5 rounded-xl border border-rose-500/20 bg-rose-600/10 px-4 py-2.5 text-xs font-medium text-rose-400 transition-all hover:bg-rose-600 hover:text-white"
+              disabled={deleting}
+              onClick={handleDelete}
+              className="flex shrink-0 items-center gap-1.5 rounded-xl border border-rose-500/20 bg-rose-600/10 px-4 py-2.5 text-xs font-medium text-rose-400 transition-all hover:bg-rose-600 hover:text-white disabled:opacity-50"
               title="Delete asset permanently"
             >
-              <Trash2 className="h-4 w-4" />
+              {deleting ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Trash2 className="h-4 w-4" />
+              )}
               <span>Delete</span>
             </button>
           </div>

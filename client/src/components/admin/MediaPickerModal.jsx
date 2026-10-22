@@ -3,6 +3,30 @@ import api from '../../services/api.js';
 import { motion, AnimatePresence } from 'framer-motion';
 import { compressImageBeforeUpload } from '../../utils/imageCompressor.js';
 import {
+  IMAGE_UPLOAD_ACCEPT,
+  PDF_UPLOAD_ACCEPT,
+  SUPPORTED_FORMATS_LABEL,
+  SUPPORTED_UPLOAD_TYPES,
+  UPLOAD_ACCEPT,
+  describeMediaError,
+  validateUploadFile,
+} from '../../utils/mediaFiles.js';
+
+// Upload formats offered for each picker mode, matching what the server stores
+const ALLOWED_UPLOADS = {
+  image: {
+    accept: IMAGE_UPLOAD_ACCEPT,
+    types: ['image/png', 'image/jpeg', 'image/webp'],
+    label: 'PNG, JPG & WEBP (max 10 MB)',
+  },
+  pdf: { accept: PDF_UPLOAD_ACCEPT, types: ['application/pdf'], label: 'PDF (max 10 MB)' },
+  all: {
+    accept: UPLOAD_ACCEPT,
+    types: Object.keys(SUPPORTED_UPLOAD_TYPES),
+    label: SUPPORTED_FORMATS_LABEL,
+  },
+};
+import {
   X,
   UploadCloud,
   Search,
@@ -79,6 +103,13 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
   const handleFileUpload = async (e) => {
     const file = e.target.files?.[0];
     if (!file) return;
+    const uploadRules = ALLOWED_UPLOADS[allowedTypes] || ALLOWED_UPLOADS.all;
+    const invalid = validateUploadFile(file, { allowedTypes: uploadRules.types });
+    if (invalid) {
+      setError(invalid);
+      e.target.value = '';
+      return;
+    }
 
     try {
       setUploading(true);
@@ -106,12 +137,15 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
         setMediaList((prev) => [data.data, ...prev]);
         setSelectedItem(data.data);
         setShowUploadTab(false);
+      } else {
+        setError(data?.error || 'Failed to upload media asset.');
       }
     } catch (err) {
       console.error('Upload error:', err);
-      setError(err?.response?.data?.error || 'Failed to upload media asset.');
+      setError(describeMediaError(err, 'Failed to upload media asset.'));
     } finally {
       setUploading(false);
+      e.target.value = '';
     }
   };
 
@@ -311,7 +345,7 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
                           Click or Drop File Here
                         </span>
                         <span className="text-muted-foreground font-mono text-[11px]">
-                          Supports PNG, JPG, WEBP, SVG & PDF Specs
+                          Supports {(ALLOWED_UPLOADS[allowedTypes] || ALLOWED_UPLOADS.all).label}
                         </span>
                       </>
                     )}
@@ -320,6 +354,7 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
                       ref={fileInputRef}
                       onChange={handleFileUpload}
                       disabled={uploading}
+                      accept={(ALLOWED_UPLOADS[allowedTypes] || ALLOWED_UPLOADS.all).accept}
                       className="hidden"
                     />
                   </label>

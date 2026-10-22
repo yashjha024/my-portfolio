@@ -1,5 +1,75 @@
 import { supabase } from '../config/supabase.js';
+import { env } from '../config/env.js';
 import { setTokenCookies } from '../utils/token.utils.js';
+
+/**
+ * Single owner decision shared by required and optional authentication, so draft previews,
+ * private downloads and the admin console all agree on who the owner is.
+ * The owner is the Supabase-verified account whose confirmed email equals OWNER_EMAIL; the
+ * `users.role` column is never trusted on its own (it defaults to 'owner' for every row).
+ */
+export const isOwnerAuthUser = (authUser) =>
+  Boolean(
+    env.OWNER_EMAIL &&
+    authUser?.email &&
+    authUser.email.toLowerCase().trim() === env.OWNER_EMAIL &&
+    (authUser.email_confirmed_at || authUser.confirmed_at)
+  );
+
+const loadProfile = async (userId) => {
+  const { data } = await supabase.from('users').select('*').eq('id', userId).single();
+  return data || null;
+};
+
+const buildRequestUser = (authUser, userProfile) => {
+  const isOwner = isOwnerAuthUser(authUser);
+  return {
+    id: authUser.id,
+    email: authUser.email,
+    full_name:
+      userProfile?.full_name ||
+      authUser.user_metadata?.full_name ||
+      authUser.email?.split('@')[0] ||
+      'User',
+    role: isOwner ? 'owner' : 'visitor',
+    avatar_url: userProfile?.avatar_url || authUser.user_metadata?.avatar_url || null,
+    is_admin: isOwner,
+  };
+};
+
+/**
+ * Resolve the Supabase user from the Bearer header, the access-token cookie, or (last) the
+ * refresh-token cookie, renewing session cookies when a refresh succeeds.
+ */
+const resolveAuthUser = async (req, res) => {
+  const authHeader = req.headers.authorization;
+  const headerToken =
+    authHeader && authHeader.startsWith('Bearer ') ? authHeader.split(' ')[1] : null;
+  const cookieToken = req.cookies?.['sb-access-token'];
+  const refreshToken = req.cookies?.['sb-refresh-token'];
+
+  if (!headerToken && !cookieToken && !refreshToken) {
+    return { authUser: null, hadCredentials: false };
+  }
+
+  for (const token of [headerToken, cookieToken]) {
+    if (!token) continue;
+    const { data, error } = await supabase.auth.getUser(token);
+    if (!error && data?.user) return { authUser: data.user, hadCredentials: true };
+  }
+
+  if (refreshToken) {
+    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession({
+      refresh_token: refreshToken,
+    });
+    if (!refreshError && refreshData?.session) {
+      setTokenCookies(res, refreshData.session.access_token, refreshData.session.refresh_token);
+      return { authUser: refreshData.session.user, hadCredentials: true };
+    }
+  }
+
+  return { authUser: null, hadCredentials: true };
+};
 
 /**
  * Authentication Middleware (`verifyAuth`)
@@ -8,48 +78,12 @@ import { setTokenCookies } from '../utils/token.utils.js';
  */
 export const verifyAuth = async (req, res, next) => {
   try {
-    const authHeader = req.headers.authorization;
-    let headerToken = null;
-    if (authHeader && authHeader.startsWith('Bearer ')) {
-      headerToken = authHeader.split(' ')[1];
-    }
-    const cookieToken = req.cookies?.['sb-access-token'];
-    const refreshToken = req.cookies?.['sb-refresh-token'];
+    const { authUser, hadCredentials } = await resolveAuthUser(req, res);
 
-    if (!headerToken && !cookieToken && !refreshToken) {
+    if (!hadCredentials) {
       return res
         .status(401)
         .json({ success: false, error: 'Unauthorized: No authentication tokens found.' });
-    }
-
-    let authUser = null;
-
-    // 1. Try Bearer header token first
-    if (headerToken) {
-      const { data, error } = await supabase.auth.getUser(headerToken);
-      if (!error && data?.user) {
-        authUser = data.user;
-      }
-    }
-
-    // 2. Try cookie token if header token wasn't provided or failed
-    if (!authUser && cookieToken) {
-      const { data, error } = await supabase.auth.getUser(cookieToken);
-      if (!error && data?.user) {
-        authUser = data.user;
-      }
-    }
-
-    // 3. Try refresh token if access token attempts failed
-    if (!authUser && refreshToken) {
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession({
-        refresh_token: refreshToken,
-      });
-
-      if (!refreshError && refreshData?.session) {
-        authUser = refreshData.session.user;
-        setTokenCookies(res, refreshData.session.access_token, refreshData.session.refresh_token);
-      }
     }
 
     if (!authUser) {
@@ -58,29 +92,7 @@ export const verifyAuth = async (req, res, next) => {
         .json({ success: false, error: 'Unauthorized: Invalid or expired session.' });
     }
 
-    // Query user profile from public users table
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', authUser.id)
-      .single();
-
-    const ownerEmail = (process.env.OWNER_EMAIL || '').toLowerCase();
-    const isOwner = Boolean(ownerEmail && authUser.email?.toLowerCase() === ownerEmail);
-
-    req.user = {
-      id: authUser.id,
-      email: authUser.email,
-      full_name:
-        userProfile?.full_name ||
-        authUser.user_metadata?.full_name ||
-        authUser.email?.split('@')[0] ||
-        'User',
-      role: isOwner ? 'owner' : 'visitor',
-      avatar_url: userProfile?.avatar_url || authUser.user_metadata?.avatar_url || null,
-      is_admin: isOwner,
-    };
-
+    req.user = buildRequestUser(authUser, await loadProfile(authUser.id));
     next();
   } catch (err) {
     console.error('verifyAuth middleware error:', err);
@@ -88,51 +100,14 @@ export const verifyAuth = async (req, res, next) => {
   }
 };
 
+/**
+ * Optional authentication: attaches `req.user` when a valid session exists, otherwise `null`.
+ * Uses the same owner rule as `verifyAuth`.
+ */
 export const verifyAuthOptional = async (req, res, next) => {
   try {
-    let accessToken = req.cookies?.['sb-access-token'];
-    let refreshToken = req.cookies?.['sb-refresh-token'];
-    const authHeader = req.headers.authorization;
-    if (!accessToken && authHeader && authHeader.startsWith('Bearer ')) {
-      accessToken = authHeader.split(' ')[1];
-    }
-    if (!accessToken && !refreshToken) {
-      req.user = null;
-      return next();
-    }
-    let authUser = null;
-    if (accessToken) {
-      const { data, error } = await supabase.auth.getUser(accessToken);
-      if (!error && data?.user) authUser = data.user;
-    }
-    if (!authUser && refreshToken) {
-      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession({
-        refresh_token: refreshToken,
-      });
-      if (!refreshError && refreshData?.session) {
-        authUser = refreshData.session.user;
-        setTokenCookies(res, refreshData.session.access_token, refreshData.session.refresh_token);
-      }
-    }
-    if (!authUser) {
-      req.user = null;
-      return next();
-    }
-    const { data: userProfile } = await supabase
-      .from('users')
-      .select('*')
-      .eq('id', authUser.id)
-      .single();
-    const ownerEmail = (process.env.OWNER_EMAIL || '').toLowerCase();
-    const isOwner = authUser.email?.toLowerCase() === ownerEmail && userProfile?.role === 'owner';
-    req.user = userProfile
-      ? { ...userProfile, role: isOwner ? 'owner' : 'visitor', is_admin: isOwner }
-      : {
-          id: authUser.id,
-          email: authUser.email,
-          role: 'visitor',
-          is_admin: isOwner,
-        };
+    const { authUser } = await resolveAuthUser(req, res);
+    req.user = authUser ? buildRequestUser(authUser, await loadProfile(authUser.id)) : null;
     next();
   } catch (_err) {
     req.user = null;

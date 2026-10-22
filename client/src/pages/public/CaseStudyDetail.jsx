@@ -56,6 +56,7 @@ export const CaseStudyDetailPage = () => {
   if (!cs) {
     return (
       <Section className="py-24 text-center">
+        <SEO title="Case Study Not Found" noindex />
         <Container>
           <div className="max-w-md mx-auto space-y-4">
             <h1 className="font-heading text-3xl font-bold text-foreground">
@@ -95,11 +96,13 @@ export const CaseStudyDetailPage = () => {
         </div>
       )}
       <SEO
-        title={cs.title}
-        description={cs.summary}
-        image={cs.coverImage}
+        title={cs.seoTitle || cs.title}
+        description={cs.seoDescription || cs.summary}
+        image={cs.ogImage || cs.coverImage}
+        imageAlt={cs.title}
         type="case_study"
-        publishedTime={cs.publishedAt || cs.timeline}
+        publishedTime={cs.publishedAt}
+        modifiedTime={cs.updated_at}
         breadcrumbs={breadcrumbs}
       />
 

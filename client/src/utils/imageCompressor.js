@@ -2,6 +2,18 @@
  * Client-side Image Compression utility using HTML5 Canvas & Blob API.
  * Reduces image file sizes by up to 75-80% before uploading to cloud storage.
  */
+import { needsOpaqueBackground, resolveCompressedOutput } from './mediaFiles.js';
+
+// Raster formats the canvas can decode and the server accepts
+const COMPRESSIBLE_TYPES = new Set(['image/png', 'image/jpeg', 'image/webp']);
+
+const unchanged = (file) => ({
+  file,
+  originalSize: file.size,
+  compressedSize: file.size,
+  compressionRatio: 0,
+  wasCompressed: false,
+});
 
 export const compressImageBeforeUpload = async (file, options = {}) => {
   const {
@@ -11,20 +23,8 @@ export const compressImageBeforeUpload = async (file, options = {}) => {
     outputFormat = 'image/webp',
   } = options;
 
-  // Do not compress non-images or SVGs/GIFs
-  if (
-    !file.type.startsWith('image/') ||
-    file.type === 'image/svg+xml' ||
-    file.type === 'image/gif'
-  ) {
-    return {
-      file,
-      originalSize: file.size,
-      compressedSize: file.size,
-      compressionRatio: 0,
-      wasCompressed: false,
-    };
-  }
+  // Leave PDFs and unsupported formats untouched (the upload pre-check rejects the latter)
+  if (!COMPRESSIBLE_TYPES.has(file.type)) return unchanged(file);
 
   return new Promise((resolve) => {
     const reader = new FileReader();
@@ -50,30 +50,26 @@ export const compressImageBeforeUpload = async (file, options = {}) => {
         canvas.height = height;
 
         const ctx = canvas.getContext('2d');
-        // Clear background for PNG transparency if converted to WebP
-        ctx.fillStyle = '#0f172a';
-        ctx.fillRect(0, 0, width, height);
+        // Keep transparency for WebP/PNG; only JPEG (no alpha channel) gets a white background
+        if (needsOpaqueBackground(outputFormat)) {
+          ctx.fillStyle = '#ffffff';
+          ctx.fillRect(0, 0, width, height);
+        }
         ctx.drawImage(img, 0, 0, width, height);
 
-        // Convert to blob
         canvas.toBlob(
           (blob) => {
-            if (!blob || blob.size >= file.size) {
-              // If compression didn't save bytes, return original file
-              resolve({
-                file,
-                originalSize: file.size,
-                compressedSize: file.size,
-                compressionRatio: 0,
-                wasCompressed: false,
-              });
+            // The browser may encode a different type than requested (e.g. PNG instead of WebP)
+            const output =
+              blob && resolveCompressedOutput({ blobType: blob.type, originalName: file.name });
+            if (!blob || !output || blob.size >= file.size) {
+              // Unusable output or no savings: upload the original file
+              resolve(unchanged(file));
               return;
             }
 
-            const ext = outputFormat === 'image/webp' ? '.webp' : '.jpg';
-            const baseName = file.name.substring(0, file.name.lastIndexOf('.')) || file.name;
-            const compressedFile = new File([blob], `${baseName}${ext}`, {
-              type: outputFormat,
+            const compressedFile = new File([blob], output.name, {
+              type: output.type,
               lastModified: Date.now(),
             });
 
@@ -92,25 +88,9 @@ export const compressImageBeforeUpload = async (file, options = {}) => {
         );
       };
 
-      img.onerror = () => {
-        resolve({
-          file,
-          originalSize: file.size,
-          compressedSize: file.size,
-          compressionRatio: 0,
-          wasCompressed: false,
-        });
-      };
+      img.onerror = () => resolve(unchanged(file));
     };
 
-    reader.onerror = () => {
-      resolve({
-        file,
-        originalSize: file.size,
-        compressedSize: file.size,
-        compressionRatio: 0,
-        wasCompressed: false,
-      });
-    };
+    reader.onerror = () => resolve(unchanged(file));
   });
 };
