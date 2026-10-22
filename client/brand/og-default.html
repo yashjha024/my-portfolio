@@ -1,0 +1,108 @@
+<!doctype html>
+<!--
+  Source for client/public/og-default.png (1200x630 social preview).
+  Regenerate with: node client/scripts/generate-brand-assets.mjs
+  Copy is limited to the positioning already used on the site (title/description defaults).
+-->
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Outfit:wght@600;800&family=Plus+Jakarta+Sans:wght@500;600&display=block"
+      rel="stylesheet"
+    />
+    <style>
+      html,
+      body {
+        margin: 0;
+        width: 1200px;
+        height: 630px;
+        overflow: hidden;
+      }
+      body {
+        background: #f6f4ef;
+        color: #171717;
+        font-family: 'Plus Jakarta Sans', 'Segoe UI', system-ui, sans-serif;
+        position: relative;
+      }
+      .frame {
+        position: absolute;
+        inset: 40px;
+        border: 2px solid #171717;
+        border-radius: 28px;
+        padding: 64px 72px;
+        box-sizing: border-box;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+      }
+      .top {
+        display: flex;
+        align-items: center;
+        gap: 20px;
+      }
+      .top svg {
+        width: 72px;
+        height: 72px;
+      }
+      .eyebrow {
+        font-family: 'Outfit', 'Segoe UI', sans-serif;
+        font-weight: 600;
+        font-size: 26px;
+        letter-spacing: 0.18em;
+        text-transform: uppercase;
+        color: #57534e;
+      }
+      h1 {
+        font-family: 'Outfit', 'Segoe UI', sans-serif;
+        font-weight: 800;
+        font-size: 112px;
+        line-height: 1;
+        letter-spacing: -0.02em;
+        margin: 0;
+      }
+      .role {
+        margin-top: 22px;
+        font-size: 38px;
+        font-weight: 600;
+        color: #292524;
+      }
+      .rule {
+        height: 2px;
+        background: #171717;
+        width: 120px;
+      }
+      .topics {
+        font-size: 26px;
+        font-weight: 500;
+        color: #57534e;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="frame">
+      <div class="top">
+        <svg viewBox="0 0 64 64" aria-hidden="true">
+          <rect width="64" height="64" rx="14" fill="#171717" />
+          <g fill="none" stroke="#F6F4EF" stroke-width="6" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M12 17 L21.5 31 L31 17" />
+            <path d="M21.5 31 L21.5 47" />
+            <path d="M38 17 L52 17" />
+            <path d="M47 17 L47 38 A9 9 0 0 1 38 47 L37 47" />
+          </g>
+        </svg>
+        <span class="eyebrow">Product Portfolio</span>
+      </div>
+      <div>
+        <h1>Yash Jha</h1>
+        <div class="role">Product Professional &amp; AI/ML Engineer</div>
+      </div>
+      <div>
+        <div class="rule"></div>
+        <p class="topics">Case studies &middot; Product thinking &middot; PRDs</p>
+      </div>
+    </div>
+  </body>
+</html>

@@ -166,8 +166,11 @@ app.use('/api', (req, res, next) => {
   next();
 });
 
-// SEO Dynamic Feeds & Sitemaps
-app.use(['/', '/api/seo'], seoRoutes);
+// SEO Dynamic Feeds & Sitemaps: /sitemap.xml + /rss.xml (Vercel rewrite targets) and the same
+// feeds under /api/seo. Mounted separately: with a path array the '/' prefix matched first and
+// the router never tried '/api/seo', so /api/seo/* returned 404.
+app.use('/api/seo', seoRoutes);
+app.use(seoRoutes);
 
 // Sensitive & Submission Route Rate Limits (separate stores: login attempts and contact
 // submissions never share an allowance; session checks like /auth/me use the API limiter only)

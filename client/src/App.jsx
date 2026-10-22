@@ -6,6 +6,7 @@ import { AdminLayout } from './components/admin/AdminLayout.jsx';
 import { ErrorBoundary } from './components/shared/ErrorBoundary.jsx';
 import { GlobalPageLoader } from './components/shared/GlobalPageLoader.jsx';
 import { Analytics } from './components/shared/Analytics.jsx';
+import { PrivateRouteSeo } from './components/shared/SEO.jsx';
 
 // Code-Split Public Pages via React.lazy
 const HomePage = React.lazy(() =>
@@ -96,6 +97,7 @@ export default function App() {
     <ErrorBoundary>
       <BrowserRouter>
         <Analytics />
+        <PrivateRouteSeo />
         <Suspense fallback={<GlobalPageLoader />}>
           <Routes>
             {/* Public Routes with Shared Header, Footer, and Auto-Scroll */}

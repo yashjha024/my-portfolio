@@ -42,9 +42,33 @@
           "value": "camera=(), microphone=(), geolocation=()"
         }
       ]
+    },
+    {
+      "source": "/admin",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/admin/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/login",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
+    },
+    {
+      "source": "/auth/(.*)",
+      "headers": [{ "key": "X-Robots-Tag", "value": "noindex, nofollow" }]
     }
   ],
   "rewrites": [
+    {
+      "source": "/sitemap.xml",
+      "destination": "https://portfolio-server-production-4788.up.railway.app/sitemap.xml"
+    },
+    {
+      "source": "/rss.xml",
+      "destination": "https://portfolio-server-production-4788.up.railway.app/rss.xml"
+    },
     {
       "source": "/api/(.*)",
       "destination": "https://portfolio-server-production-4788.up.railway.app/api/$1"

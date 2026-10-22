@@ -10,6 +10,7 @@ dotenv.config({ path: path.resolve(__dirname, '../../../.env') });
 dotenv.config();
 
 const MIN_JWT_SECRET_LENGTH = 32;
+const DEFAULT_SITE_URL = 'https://yashjha.vercel.app';
 const MAX_TRUST_PROXY_HOPS = 5;
 const PLACEHOLDER_SECRET_PATTERN =
   /change_in_production|generate_a_random|fallback_secret|your_jwt/i;
@@ -98,6 +99,13 @@ export const validateEnv = (source = process.env) => {
     }
   }
 
+  // SITE_URL: canonical public origin for sitemap/RSS links. Defaults to the verified Vercel
+  // hostname until a custom domain is confirmed; must match the client's VITE_SITE_URL.
+  const siteOrigin = parseOrigin(source.SITE_URL || DEFAULT_SITE_URL, 'SITE_URL');
+  if (isProduction && new URL(siteOrigin).protocol !== 'https:') {
+    throw new Error(`FATAL: SITE_URL must be an https origin in production (${siteOrigin}).`);
+  }
+
   const cleanEmail = (str) =>
     (str || '')
       .toLowerCase()
@@ -108,6 +116,7 @@ export const validateEnv = (source = process.env) => {
     PORT: source.PORT || 5000,
     NODE_ENV: source.NODE_ENV || 'development',
     CLIENT_URL: clientOrigin,
+    SITE_URL: siteOrigin,
     ALLOWED_ORIGINS: allowedOrigins,
     TRUST_PROXY_HOPS: parseTrustProxyHops(source.TRUST_PROXY_HOPS),
     JWT_SECRET: jwtSecret,

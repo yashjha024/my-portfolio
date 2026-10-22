@@ -9,6 +9,7 @@ import { Section } from '../../components/layout/Section.jsx';
 import { Button } from '../../components/ui/Button.jsx';
 import { SEO } from '../../components/shared/SEO.jsx';
 import { BreadcrumbNav } from '../../components/shared/BreadcrumbNav.jsx';
+import { SITE_URL } from '../../config/site.js';
 
 export const ResumePage = () => {
   const { data: profile } = usePortfolioData({ type: 'profile', delayMs: 100 });
@@ -283,7 +284,7 @@ export const ResumePage = () => {
 
             {/* Print Footer Note */}
             <div className="pt-6 border-t border-border/40 text-center text-xs text-muted-foreground print:pt-4">
-              <p>Yash Jha &bull; Delhi, IN &bull; yashjha024@gmail.com &bull; +91-7759831707 &bull; <NavLink to="/" className="underline">portfolio.yashjha024.com</NavLink></p>
+              <p>Yash Jha &bull; Delhi, IN &bull; yashjha024@gmail.com &bull; +91-7759831707 &bull; <NavLink to="/" className="underline">{new URL(SITE_URL).host}</NavLink></p>
             </div>
           </motion.div>
         </Container>

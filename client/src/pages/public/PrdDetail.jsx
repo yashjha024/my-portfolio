@@ -67,6 +67,7 @@ export const PrdDetailPage = () => {
   if (!prd) {
     return (
       <Section className="py-24 text-center">
+        <SEO title="PRD Specification Not Found" noindex />
         <Container>
           <div className="max-w-md mx-auto space-y-4">
             <h1 className="font-heading text-3xl font-bold text-foreground">
@@ -129,7 +130,7 @@ export const PrdDetailPage = () => {
         title={prd.title}
         description={prd.context?.substring(0, 160)}
         type="prd"
-        publishedTime={prd.updatedAt || prd.createdAt}
+        modifiedTime={prd.updated_at}
         breadcrumbs={breadcrumbs}
       />
 
