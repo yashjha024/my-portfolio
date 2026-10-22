@@ -19,18 +19,39 @@ import { Select } from '../../components/ui/Select.jsx';
 import { SEO } from '../../components/shared/SEO.jsx';
 import { BreadcrumbNav } from '../../components/shared/BreadcrumbNav.jsx';
 
+// Limits mirror CONTACT_LIMITS in server/src/controllers/contact.controller.js
 const contactSchema = z.object({
-  name: z.string().min(2, { message: 'Name must be at least 2 characters' }),
-  email: z.string().email({ message: 'Please enter a valid email address' }),
-  subject: z.string().min(3, { message: 'Subject is required' }),
-  purpose: z.string().min(1, { message: 'Please select an inquiry purpose' }),
-  message: z.string().min(10, { message: 'Message must be at least 10 characters' }),
+  name: z
+    .string()
+    .trim()
+    .min(2, { message: 'Name must be at least 2 characters' })
+    .max(100, { message: 'Name must be at most 100 characters' }),
+  email: z
+    .string()
+    .trim()
+    .max(254, { message: 'Email address is too long' })
+    .email({ message: 'Please enter a valid email address' }),
+  subject: z
+    .string()
+    .trim()
+    .min(3, { message: 'Subject is required' })
+    .max(150, { message: 'Subject must be at most 150 characters' }),
+  purpose: z.string().min(1, { message: 'Please select an inquiry purpose' }).max(60),
+  message: z
+    .string()
+    .trim()
+    .min(10, { message: 'Message must be at least 10 characters' })
+    .max(5000, { message: 'Message must be at most 5000 characters' }),
 });
+
+const DEFAULT_RECEIVED_MESSAGE =
+  'Thank you for getting in touch. I have received your message and will get back to you shortly.';
 
 export const ContactPage = () => {
   const { data: profile } = usePortfolioData({ type: 'profile', delayMs: 100 });
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isSubmitted, setIsSubmitted] = useState(false);
+  const [receivedMessage, setReceivedMessage] = useState(DEFAULT_RECEIVED_MESSAGE);
   const [submitError, setSubmitError] = useState(null);
 
   const {
@@ -54,17 +75,24 @@ export const ContactPage = () => {
     setSubmitError(null);
     try {
       const response = await api.post('/contact', _data);
-      if (response.data && response.data.success) {
+      // success: stored. 202 + notified: emailed to the owner but not stored (no need to resend)
+      if (response.data?.success || response.data?.notified) {
+        setReceivedMessage(
+          response.data.success ? DEFAULT_RECEIVED_MESSAGE : response.data.message
+        );
         setIsSubmitted(true);
         reset();
       } else {
-        setSubmitError(response.data?.message || 'Failed to send message. Please try again.');
+        setSubmitError(
+          response.data?.error || response.data?.message || 'Failed to send message. Please try again.'
+        );
       }
     } catch (err) {
       console.error('Contact submission error:', err);
       const errMsg =
         err.response?.data?.errors?.[0]?.message ||
         err.response?.data?.error ||
+        (err.response?.status === 413 ? 'Your message is too long to send.' : null) ||
         err.message ||
         'Error sending message. Please check your network or try again later.';
       setSubmitError(errMsg);
@@ -212,7 +240,7 @@ export const ContactPage = () => {
                   <CheckCircle className="w-12 h-12 text-success mx-auto" />
                   <h4 className="font-heading font-bold text-lg text-foreground">Message Received!</h4>
                   <p className="text-xs sm:text-sm text-muted-foreground max-w-sm mx-auto leading-relaxed">
-                    Thank you for getting in touch. I have received your message and will get back to you shortly.
+                    {receivedMessage}
                   </p>
                   <Button variant="outline" size="sm" onClick={() => setIsSubmitted(false)}>
                     Send Another Message

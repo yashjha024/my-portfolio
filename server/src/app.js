@@ -94,8 +94,12 @@ app.use(
     credentials: true,
   })
 );
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+// Body limits: the public contact form gets a tight limit (parsed here first, so the global
+// parser skips it); CMS JSON (articles up to 200k chars, PRD sections) fits well within 2 MB.
+// File uploads are multipart and handled by multer with its own 10 MB limit.
+app.use('/api/contact', express.json({ limit: '16kb' }));
+app.use(express.json({ limit: '2mb' }));
+app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(cookieParser());
 // CSRF Initialization and Double-Submit Cookie Protection
 app.use((req, res, next) => {
