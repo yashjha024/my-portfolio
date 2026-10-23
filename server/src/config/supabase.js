@@ -13,6 +13,8 @@ if (!supabaseUrl || !supabaseServiceKey) {
   );
 }
 
+console.info(`✓ Supabase server key loaded from ${env.SUPABASE_KEY_SOURCE}`);
+
 // Server-side Supabase client with strict admin/service-role credentials
 export const supabase = createClient(supabaseUrl, supabaseServiceKey, {
   auth: {

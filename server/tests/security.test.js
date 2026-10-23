@@ -514,3 +514,24 @@ test('CSRF cookie is never issued on publicly cacheable responses or feeds', asy
   assert.strictEqual(csrf.headers.get('cache-control'), 'no-store');
   assert.match(csrf.headers.get('set-cookie') || '', /^csrf-token=/);
 });
+
+test('Supabase server key: SUPABASE_SECRET_KEY preferred, legacy name as fallback, publishable rejected', () => {
+  const base = { SUPABASE_URL: 'http://127.0.0.1:1', OWNER_EMAIL: 'o@example.test' };
+  const both = validateEnv({
+    ...base,
+    SUPABASE_SECRET_KEY: 'sb_secret_new',
+    SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_old',
+  });
+  assert.strictEqual(both.SUPABASE_SERVICE_ROLE_KEY, 'sb_secret_new');
+  assert.strictEqual(both.SUPABASE_KEY_SOURCE, 'SUPABASE_SECRET_KEY');
+
+  const legacy = validateEnv({ ...base, SUPABASE_SERVICE_ROLE_KEY: 'sb_secret_old' });
+  assert.strictEqual(legacy.SUPABASE_SERVICE_ROLE_KEY, 'sb_secret_old');
+  assert.strictEqual(legacy.SUPABASE_KEY_SOURCE, 'SUPABASE_SERVICE_ROLE_KEY');
+
+  assert.throws(() => validateEnv(base), /SUPABASE_SECRET_KEY/);
+  assert.throws(
+    () => validateEnv({ ...base, SUPABASE_SECRET_KEY: 'sb_publishable_abc' }),
+    /publishable/
+  );
+});

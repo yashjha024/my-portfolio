@@ -54,13 +54,20 @@ const parseTrustProxyHops = (value) => {
 
 export const validateEnv = (source = process.env) => {
   const supabaseUrl = source.SUPABASE_URL;
-  const supabaseServiceKey = source.SUPABASE_SERVICE_ROLE_KEY;
+  // Prefer the new secret-key variable; the legacy name remains as a fallback so a rotated key can
+  // be introduced and verified before the old variable (and old key) are removed.
+  const supabaseServiceKey = source.SUPABASE_SECRET_KEY || source.SUPABASE_SERVICE_ROLE_KEY;
   const ownerEmail = source.OWNER_EMAIL;
   const isProduction = source.NODE_ENV === 'production';
 
   if (!supabaseUrl || !supabaseServiceKey || !ownerEmail) {
     throw new Error(
-      'FATAL: SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, and OWNER_EMAIL are required. Public client keys are not valid server credentials.'
+      'FATAL: SUPABASE_URL, SUPABASE_SECRET_KEY (or legacy SUPABASE_SERVICE_ROLE_KEY), and OWNER_EMAIL are required. Public client keys are not valid server credentials.'
+    );
+  }
+  if (supabaseServiceKey.startsWith('sb_publishable_')) {
+    throw new Error(
+      'FATAL: The Supabase server key is a publishable (public) key. Use a secret key (sb_secret_…).'
     );
   }
 
@@ -122,6 +129,10 @@ export const validateEnv = (source = process.env) => {
     JWT_SECRET: jwtSecret,
     SUPABASE_URL: supabaseUrl,
     SUPABASE_SERVICE_ROLE_KEY: supabaseServiceKey,
+    // Name (never the value) of the variable the key came from, for rotation checks in logs
+    SUPABASE_KEY_SOURCE: source.SUPABASE_SECRET_KEY
+      ? 'SUPABASE_SECRET_KEY'
+      : 'SUPABASE_SERVICE_ROLE_KEY',
     OWNER_EMAIL: cleanEmail(ownerEmail),
     CONTACT_EMAIL: cleanEmail(source.CONTACT_EMAIL || ownerEmail),
     RESEND_API_KEY: source.RESEND_API_KEY || '',
