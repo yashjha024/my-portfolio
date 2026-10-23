@@ -491,3 +491,26 @@ test('Optional-auth paths (draft preview, private media) apply the same owner ru
   });
   assert.strictEqual(ownerMedia.status, 302);
 });
+
+test('CSRF cookie is never issued on publicly cacheable responses or feeds', async () => {
+  const headers = forwardedFor('203.0.113.51');
+  for (const path of [
+    '/api/work',
+    '/api/settings',
+    '/api/work/slug/demo-case-study',
+    '/sitemap.xml',
+  ]) {
+    const res = await fetch(`${API}${path}`, { headers });
+    assert.strictEqual(res.headers.get('set-cookie'), null, `${path} must not set a cookie`);
+  }
+
+  // Non-cacheable API responses still issue it, so the admin console can send the CSRF header
+  const me = await fetch(`${API}/api/auth/me`, { headers });
+  assert.strictEqual(me.headers.get('cache-control'), 'no-store');
+  assert.match(me.headers.get('set-cookie') || '', /^csrf-token=/);
+
+  const csrf = await fetch(`${API}/api/csrf-token`, { headers });
+  assert.strictEqual(csrf.status, 200);
+  assert.strictEqual(csrf.headers.get('cache-control'), 'no-store');
+  assert.match(csrf.headers.get('set-cookie') || '', /^csrf-token=/);
+});

@@ -102,8 +102,15 @@ app.use(express.json({ limit: '2mb' }));
 app.use(express.urlencoded({ extended: true, limit: '100kb' }));
 app.use(cookieParser());
 // CSRF Initialization and Double-Submit Cookie Protection
+// The per-visitor cookie is issued only on non-cacheable API responses: a Set-Cookie on a publicly
+// cacheable read (or on the sitemap/RSS feeds) could be stored by the CDN and handed to every visitor.
+const shouldIssueCsrfCookie = (req) =>
+  req.path.startsWith('/api/') &&
+  !req.path.startsWith('/api/seo/') &&
+  !isPublicCacheableRequest(req);
+
 app.use((req, res, next) => {
-  if (!req.cookies['csrf-token']) {
+  if (!req.cookies['csrf-token'] && shouldIssueCsrfCookie(req)) {
     const token = crypto.randomBytes(24).toString('hex');
     res.cookie('csrf-token', token, {
       httpOnly: false, // Must be readable by client JS/Axios for Double-Submit Cookie pattern
@@ -124,6 +131,7 @@ app.get('/api/csrf-token', (req, res) => {
     sameSite: 'strict',
     path: '/',
   });
+  res.set('Cache-Control', 'no-store');
   res.status(200).json({ success: true, csrfToken: token });
 });
 
