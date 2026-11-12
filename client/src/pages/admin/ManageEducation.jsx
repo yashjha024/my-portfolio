@@ -204,7 +204,7 @@ export const ManageEducationPage = () => {
         </div>
         <button
           onClick={openCreateModal}
-          className="bg-primary shadow-soft shadow-subtle hover:bg-primary/90 flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-all"
+          className="bg-primary shadow-soft shadow-subtle hover:bg-primary/90 text-primary-foreground flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium transition-all"
         >
           <Plus className="h-4 w-4" />
           <span>Add Education</span>
@@ -278,7 +278,7 @@ export const ManageEducationPage = () => {
             </p>
             <button
               onClick={openCreateModal}
-              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium"
             >
               <Plus className="h-4 w-4" />
               <span>Add Your First Education</span>
@@ -552,7 +552,7 @@ export const ManageEducationPage = () => {
                   <button
                     type="submit"
                     disabled={saving}
-                    className="bg-primary hover:bg-primary/90 flex items-center gap-1.5 rounded-xl px-5 py-2 text-xs font-bold text-white shadow-sm disabled:opacity-50"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-1.5 rounded-xl px-5 py-2 text-xs font-bold shadow-sm disabled:opacity-50"
                   >
                     {saving ? (
                       <Loader2 className="h-4 w-4 animate-spin" />

@@ -148,7 +148,9 @@ export const ManagePrdsPage = () => {
             <FileText className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">PRD Library & Specs</h1>
+            <h1 className="text-foreground text-2xl font-bold tracking-tight">
+              PRD Library & Specs
+            </h1>
             <p className="text-muted-foreground mt-0.5 text-sm">
               Create and publish product requirements documents, stages, and PDF downloads shown in
               the public /prds library ({totalCount} total).
@@ -173,7 +175,7 @@ export const ManagePrdsPage = () => {
             placeholder="Search PRD title or context..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="border-border bg-background placeholder:text-muted-foreground w-full rounded-xl border py-2 pl-10 pr-4 text-sm text-white transition-colors focus:border-emerald-500 focus:outline-none"
+            className="border-border bg-background placeholder:text-muted-foreground text-foreground w-full rounded-xl border py-2 pl-10 pr-4 text-sm transition-colors focus:border-emerald-500 focus:outline-none"
           />
         </form>
 
@@ -186,7 +188,7 @@ export const ManagePrdsPage = () => {
                 setStatusFilter(e.target.value);
                 setPage(1);
               }}
-              className="border-border bg-background rounded-xl border px-3 py-1.5 text-xs font-medium text-white focus:border-emerald-500 focus:outline-none"
+              className="border-border bg-background text-foreground rounded-xl border px-3 py-1.5 text-xs font-medium focus:border-emerald-500 focus:outline-none"
             >
               <option value="all">All Statuses</option>
               <option value="published">Published</option>
@@ -202,7 +204,7 @@ export const ManagePrdsPage = () => {
                 setStageFilter(e.target.value);
                 setPage(1);
               }}
-              className="border-border bg-background rounded-xl border px-3 py-1.5 text-xs font-medium text-white focus:border-emerald-500 focus:outline-none"
+              className="border-border bg-background text-foreground rounded-xl border px-3 py-1.5 text-xs font-medium focus:border-emerald-500 focus:outline-none"
             >
               <option value="all">All Stages</option>
               <option value="In Development">In Development</option>
@@ -219,7 +221,7 @@ export const ManagePrdsPage = () => {
                 setVisibilityFilter(e.target.value);
                 setPage(1);
               }}
-              className="border-border bg-background rounded-xl border px-3 py-1.5 text-xs font-medium text-white focus:border-emerald-500 focus:outline-none"
+              className="border-border bg-background text-foreground rounded-xl border px-3 py-1.5 text-xs font-medium focus:border-emerald-500 focus:outline-none"
             >
               <option value="all">All Visibility</option>
               <option value="public">Public</option>
@@ -261,7 +263,7 @@ export const ManagePrdsPage = () => {
         ) : prds.length === 0 ? (
           <div className="p-16 text-center">
             <FileText className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
-            <h3 className="mb-1 text-base font-bold text-white">No PRD Specs Found</h3>
+            <h3 className="text-foreground mb-1 text-base font-bold">No PRD Specs Found</h3>
             <p className="text-muted-foreground mx-auto mb-6 max-w-sm text-xs">
               You haven&apos;t added any PRD specifications matching your current filters.
             </p>
@@ -290,7 +292,7 @@ export const ManagePrdsPage = () => {
                 {prds.map((item) => (
                   <tr key={item.id} className="hover:bg-secondary group transition-colors">
                     <td className="px-5 py-4">
-                      <div className="font-bold text-white transition-colors group-hover:text-emerald-300">
+                      <div className="text-foreground font-bold transition-colors group-hover:text-emerald-300">
                         {item.title}
                       </div>
                       <div className="text-muted-foreground mt-0.5 font-mono text-xs">
@@ -338,7 +340,7 @@ export const ManagePrdsPage = () => {
                               );
                             }
                           }}
-                          className="text-muted-foreground hover:bg-secondary rounded-lg p-2 transition-colors hover:text-white"
+                          className="text-muted-foreground hover:bg-secondary hover:text-foreground rounded-lg p-2 transition-colors"
                           title={
                             item.status === 'published' && item.visibility === 'public'
                               ? 'Preview PRD Spec'

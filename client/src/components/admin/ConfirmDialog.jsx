@@ -33,7 +33,7 @@ export const ConfirmDialog = ({
               <AlertTriangle className="h-6 w-6" />
             </div>
             <div>
-              <h3 className="text-lg font-bold text-white">{title}</h3>
+              <h3 className="text-foreground text-lg font-bold">{title}</h3>
               <p className="text-muted-foreground mt-1 text-sm leading-relaxed">{description}</p>
             </div>
           </div>
@@ -51,7 +51,7 @@ export const ConfirmDialog = ({
               type="button"
               disabled={loading}
               onClick={onConfirm}
-              className={`shadow-soft flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-all ${
+              className={`shadow-soft text-foreground flex items-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium transition-all ${
                 isDestructive
                   ? 'bg-rose-600 shadow-rose-600/20 hover:bg-rose-500'
                   : 'bg-primary shadow-subtle hover:bg-primary/90'

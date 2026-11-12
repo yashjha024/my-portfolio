@@ -149,7 +149,7 @@ const AssetPreviewContent = ({ asset, onClose, onSaveAltText, onDelete }) => {
           ) : (
             <div className="flex flex-col items-center justify-center p-8 text-center text-emerald-400">
               <FileText className="mb-4 h-20 w-20 opacity-90" />
-              <h4 className="max-w-xs truncate text-base font-bold text-white">
+              <h4 className="text-foreground max-w-xs truncate text-base font-bold">
                 {asset.original_name}
               </h4>
               <span className="text-muted-foreground mt-1 font-mono text-xs uppercase tracking-wider">
@@ -182,7 +182,7 @@ const AssetPreviewContent = ({ asset, onClose, onSaveAltText, onDelete }) => {
                 </div>
                 <h3
                   id="asset-preview-title"
-                  className="truncate text-lg font-bold text-white"
+                  className="text-foreground truncate text-lg font-bold"
                   title={asset.original_name}
                 >
                   {asset.original_name}
@@ -192,7 +192,7 @@ const AssetPreviewContent = ({ asset, onClose, onSaveAltText, onDelete }) => {
                 type="button"
                 onClick={onClose}
                 aria-label="Close asset preview"
-                className="text-muted-foreground hover:bg-secondary shrink-0 rounded-xl p-1.5 transition-colors hover:text-white"
+                className="text-muted-foreground hover:bg-secondary hover:text-foreground shrink-0 rounded-xl p-1.5 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -277,12 +277,12 @@ const AssetPreviewContent = ({ asset, onClose, onSaveAltText, onDelete }) => {
                   value={altText}
                   onChange={(e) => setAltText(e.target.value)}
                   placeholder="Describe image for screen readers & SEO index..."
-                  className="border-border bg-background focus:border-primary/40 flex-1 rounded-xl border px-3.5 py-2 text-xs text-white transition-colors focus:outline-none"
+                  className="border-border bg-background focus:border-primary/40 text-foreground flex-1 rounded-xl border px-3.5 py-2 text-xs transition-colors focus:outline-none"
                 />
                 <button
                   type="submit"
                   disabled={saving}
-                  className="bg-primary hover:bg-primary/90 flex shrink-0 items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium text-white shadow-md transition-all disabled:opacity-50"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground flex shrink-0 items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium shadow-md transition-all disabled:opacity-50"
                 >
                   {saving ? (
                     <Loader2 className="h-3.5 w-3.5 animate-spin" />

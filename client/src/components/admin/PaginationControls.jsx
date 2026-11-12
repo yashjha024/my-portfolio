@@ -7,8 +7,8 @@ export const PaginationControls = ({ currentPage = 1, totalPages = 1, onPageChan
   return (
     <div className="border-border bg-card flex items-center justify-between rounded-b-2xl border-t px-4 py-3">
       <span className="text-muted-foreground font-mono text-xs">
-        Page <strong className="text-white">{currentPage}</strong> of{' '}
-        <strong className="text-white">{totalPages}</strong>
+        Page <strong className="text-foreground">{currentPage}</strong> of{' '}
+        <strong className="text-foreground">{totalPages}</strong>
       </span>
 
       <div className="flex items-center gap-2">

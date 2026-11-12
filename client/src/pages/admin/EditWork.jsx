@@ -273,13 +273,13 @@ export const EditWorkPage = () => {
         <div className="flex items-center gap-3">
           <Link
             to="/admin/work"
-            className="text-muted-foreground hover:bg-secondary rounded-xl p-2 transition-colors hover:text-white"
+            className="text-muted-foreground hover:bg-secondary hover:text-foreground rounded-xl p-2 transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-white">
+              <h1 className="text-foreground text-xl font-bold">
                 {isNew ? 'Create Case Study' : formData.title || 'Edit Case Study'}
               </h1>
               {!isNew && <AutosaveIndicator status={autosaveStatus} lastSavedAt={lastSavedAt} />}
@@ -325,7 +325,7 @@ export const EditWorkPage = () => {
               disabled={saving}
               onClick={() => handleSave()}
               title={`Save changes and keep this case study ${formData.status} (Ctrl/Cmd+S)`}
-              className="bg-primary hover:bg-primary/90 flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium text-white transition-colors disabled:opacity-50"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium transition-colors disabled:opacity-50"
             >
               <Save className="h-3.5 w-3.5" />
               <span>Save</span>
@@ -399,7 +399,7 @@ export const EditWorkPage = () => {
             onClick={() => setActiveTab(tab.id)}
             className={`whitespace-nowrap border-b-2 px-4 py-3 font-mono text-xs font-medium transition-all ${
               activeTab === tab.id
-                ? 'border-primary/40 bg-indigo-500/5 text-white'
+                ? 'border-primary/40 text-foreground bg-indigo-500/5'
                 : 'text-muted-foreground hover:border-border hover:text-foreground border-transparent'
             }`}
           >
@@ -425,7 +425,7 @@ export const EditWorkPage = () => {
                 placeholder="e.g. WhatsApp Group Event Coordinator"
                 value={formData.title}
                 onChange={handleTitleChange}
-                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none"
               />
             </div>
 
@@ -452,7 +452,7 @@ export const EditWorkPage = () => {
               placeholder="Concise 1-2 sentence problem overview and specific business/user outcome..."
               value={formData.summary}
               onChange={(e) => handleFieldChange('summary', e.target.value)}
-              className="border-border bg-background focus:border-primary/40 w-full rounded-xl border p-4 text-sm text-white focus:outline-none"
+              className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border p-4 text-sm focus:outline-none"
             />
           </div>
 
@@ -464,7 +464,7 @@ export const EditWorkPage = () => {
               <select
                 value={formData.type}
                 onChange={(e) => handleFieldChange('type', e.target.value)}
-                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border px-3 py-2.5 text-sm font-medium focus:outline-none"
               >
                 <option value="shipped_project">Shipped Project</option>
                 <option value="product_case_study">Product Case Study</option>
@@ -478,7 +478,7 @@ export const EditWorkPage = () => {
               </span>
               {/* Read-only: status changes only through the explicit Save Draft / Publish / Archive actions */}
               <div
-                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium capitalize text-white"
+                className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2.5 text-sm font-medium capitalize"
                 aria-live="polite"
               >
                 {formData.status}
@@ -493,12 +493,12 @@ export const EditWorkPage = () => {
                 type="number"
                 value={formData.sort_order}
                 onChange={(e) => handleFieldChange('sort_order', Number(e.target.value))}
-                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none"
               />
             </div>
 
             <div className="flex items-center pt-6">
-              <label className="flex cursor-pointer items-center gap-3 text-sm font-medium text-white">
+              <label className="text-foreground flex cursor-pointer items-center gap-3 text-sm font-medium">
                 <input
                   type="checkbox"
                   checked={formData.featured}
@@ -520,7 +520,7 @@ export const EditWorkPage = () => {
                 placeholder="e.g. Lead Product Manager"
                 value={formData.role}
                 onChange={(e) => handleFieldChange('role', e.target.value)}
-                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none"
               />
             </div>
             <div>
@@ -532,7 +532,7 @@ export const EditWorkPage = () => {
                 placeholder="e.g. Q3 2025 - 4 Months"
                 value={formData.timeline}
                 onChange={(e) => handleFieldChange('timeline', e.target.value)}
-                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none"
               />
             </div>
             <div>
@@ -544,7 +544,7 @@ export const EditWorkPage = () => {
                 placeholder="e.g. 4 Engineers, 1 Product Designer"
                 value={formData.team}
                 onChange={(e) => handleFieldChange('team', e.target.value)}
-                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none"
               />
             </div>
             <div>
@@ -556,7 +556,7 @@ export const EditWorkPage = () => {
                 placeholder="e.g. Messaging & Social, Fintech"
                 value={formData.domain}
                 onChange={(e) => handleFieldChange('domain', e.target.value)}
-                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none"
               />
             </div>
             <div>
@@ -568,7 +568,7 @@ export const EditWorkPage = () => {
                 placeholder="e.g. 2026"
                 value={formData.year || ''}
                 onChange={(e) => handleFieldChange('year', e.target.value)}
-                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none"
               />
             </div>
           </div>
@@ -582,7 +582,7 @@ export const EditWorkPage = () => {
               placeholder="Detail your specific constraints, budget limitations, technical trade-offs, or team dynamics..."
               value={formData.role_constraints || ''}
               onChange={(e) => handleFieldChange('role_constraints', e.target.value)}
-              className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
+              className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none"
             />
           </div>
         </div>
@@ -726,7 +726,7 @@ export const EditWorkPage = () => {
                       handleFieldChange('prd_snapshot', textVal);
                     }
                   }}
-                  className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-xs text-white focus:outline-none"
+                  className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border px-4 py-2.5 font-mono text-xs focus:outline-none"
                   placeholder='{"title":"Feature X PRD","status":"Shipped","key_metrics": ["Conversion +10%"]}'
                 />
                 <p className="text-muted-foreground mt-1 text-[11px]">
@@ -743,7 +743,7 @@ export const EditWorkPage = () => {
         <div className="border-border bg-card space-y-5 rounded-2xl border p-6">
           <div className="border-border flex items-center justify-between border-b pb-4">
             <div>
-              <h3 className="font-mono text-sm uppercase tracking-wider text-white">
+              <h3 className="text-foreground font-mono text-sm uppercase tracking-wider">
                 Quantitative Evidence Strip
               </h3>
               <p className="text-muted-foreground mt-0.5 text-xs">
@@ -754,7 +754,7 @@ export const EditWorkPage = () => {
             <button
               type="button"
               onClick={addMetric}
-              className="bg-primary hover:bg-primary/90 flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-medium text-white shadow-sm transition-colors"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-medium shadow-sm transition-colors"
             >
               <Plus className="h-4 w-4" />
               <span>Add Metric</span>
@@ -782,7 +782,7 @@ export const EditWorkPage = () => {
                       placeholder="e.g. Reduction in message clutter"
                       value={metric.label || ''}
                       onChange={(e) => updateMetric(idx, 'label', e.target.value)}
-                      className="border-border bg-card w-full rounded-lg border px-3 py-1.5 text-xs text-white"
+                      className="border-border bg-card text-foreground w-full rounded-lg border px-3 py-1.5 text-xs"
                     />
                   </div>
 
@@ -806,7 +806,7 @@ export const EditWorkPage = () => {
                     <select
                       value={metric.qualifier || 'actual'}
                       onChange={(e) => updateMetric(idx, 'qualifier', e.target.value)}
-                      className="border-border bg-card w-full rounded-lg border px-3 py-1.5 text-xs text-white"
+                      className="border-border bg-card text-foreground w-full rounded-lg border px-3 py-1.5 text-xs"
                     >
                       <option value="actual">Actual (Shipped metric)</option>
                       <option value="estimated">Estimated / Hypothesis</option>
@@ -847,7 +847,7 @@ export const EditWorkPage = () => {
                   setToolsInput(e.target.value);
                   editorSave.markDirty();
                 }}
-                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none"
               />
               <p className="text-muted-foreground mt-1 text-[11px]">
                 Displayed as methodology pills on the case study header.
@@ -866,7 +866,7 @@ export const EditWorkPage = () => {
                   setTagsInput(e.target.value);
                   editorSave.markDirty();
                 }}
-                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none"
               />
               <p className="text-muted-foreground mt-1 text-[11px]">
                 Used for filtering on the public /work grid.
@@ -885,7 +885,7 @@ export const EditWorkPage = () => {
                   setSkillsInput(e.target.value);
                   editorSave.markDirty();
                 }}
-                className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 text-sm text-white focus:outline-none"
+                className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border px-4 py-2.5 text-sm focus:outline-none"
               />
               <p className="text-muted-foreground mt-1 text-[11px]">
                 Used for skill competency filtering across case studies.
@@ -893,7 +893,7 @@ export const EditWorkPage = () => {
             </div>
           </div>
 
-          <h3 className="font-mono text-sm uppercase tracking-wider text-white">
+          <h3 className="text-foreground font-mono text-sm uppercase tracking-wider">
             External Live Evidence & GitHub Links
           </h3>
           <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
@@ -951,7 +951,7 @@ export const EditWorkPage = () => {
           </div>
 
           <div className="border-border border-t pt-6">
-            <h3 className="mb-3 font-mono text-sm uppercase tracking-wider text-white">
+            <h3 className="text-foreground mb-3 font-mono text-sm uppercase tracking-wider">
               Related Work & Case Studies (JSON Array)
             </h3>
             <textarea
@@ -970,7 +970,7 @@ export const EditWorkPage = () => {
                   handleFieldChange('related_work', textVal);
                 }
               }}
-              className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-4 py-2.5 font-mono text-xs text-white focus:outline-none"
+              className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border px-4 py-2.5 font-mono text-xs focus:outline-none"
               placeholder='[{"title":"Project Y","url":"/work/project-y","relationship":"Precursor exploration"}]'
             />
           </div>
@@ -1013,7 +1013,7 @@ export const EditWorkPage = () => {
                   placeholder="https://images.unsplash.com/... or choose from library"
                   value={formData.cover_image}
                   onChange={(e) => handleFieldChange('cover_image', e.target.value)}
-                  className="border-border bg-background w-full rounded-xl border px-4 py-2 font-mono text-xs text-white"
+                  className="border-border bg-background text-foreground w-full rounded-xl border px-4 py-2 font-mono text-xs"
                 />
                 <button
                   type="button"
@@ -1028,7 +1028,7 @@ export const EditWorkPage = () => {
           </div>
 
           <div className="border-border space-y-4 border-t pt-6">
-            <h3 className="font-mono text-sm uppercase tracking-wider text-white">
+            <h3 className="text-foreground font-mono text-sm uppercase tracking-wider">
               Search Engine Optimization (SEO)
             </h3>
             <div className="grid grid-cols-1 gap-4">
@@ -1041,7 +1041,7 @@ export const EditWorkPage = () => {
                   placeholder={formData.title || 'Case study title'}
                   value={formData.seo_title}
                   onChange={(e) => handleFieldChange('seo_title', e.target.value)}
-                  className="border-border bg-background w-full rounded-xl border px-4 py-2.5 text-sm text-white"
+                  className="border-border bg-background text-foreground w-full rounded-xl border px-4 py-2.5 text-sm"
                 />
               </div>
 
@@ -1054,7 +1054,7 @@ export const EditWorkPage = () => {
                   placeholder={formData.summary || 'Summary description for Google search results'}
                   value={formData.seo_description}
                   onChange={(e) => handleFieldChange('seo_description', e.target.value)}
-                  className="border-border bg-background w-full rounded-xl border p-4 text-sm text-white"
+                  className="border-border bg-background text-foreground w-full rounded-xl border p-4 text-sm"
                 />
               </div>
             </div>

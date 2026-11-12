@@ -173,7 +173,7 @@ export const ManageWorkPage = () => {
         </div>
         <Link
           to="/admin/work/new"
-          className="bg-primary shadow-soft shadow-subtle hover:bg-primary/90 flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-all"
+          className="bg-primary shadow-soft shadow-subtle hover:bg-primary/90 text-primary-foreground flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium transition-all"
         >
           <Plus className="h-4 w-4" />
           <span>Create Case Study</span>
@@ -269,7 +269,7 @@ export const ManageWorkPage = () => {
             </p>
             <Link
               to="/admin/work/new"
-              className="bg-primary hover:bg-primary/90 inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium text-white"
+              className="bg-primary hover:bg-primary/90 text-primary-foreground inline-flex items-center gap-2 rounded-xl px-4 py-2.5 text-xs font-medium"
             >
               <Plus className="h-4 w-4" />
               <span>Create Your First Case Study</span>
@@ -346,7 +346,7 @@ export const ManageWorkPage = () => {
                               );
                             }
                           }}
-                          className="text-muted-foreground hover:bg-secondary rounded-lg p-2 transition-colors hover:text-white"
+                          className="text-muted-foreground hover:bg-secondary hover:text-foreground rounded-lg p-2 transition-colors"
                           title={
                             item.status === 'published' ? 'Preview on Public Site' : 'Preview Draft'
                           }

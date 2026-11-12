@@ -348,7 +348,7 @@ export const ManageMediaPage = () => {
             <ImageIcon className="h-6 w-6" />
           </div>
           <div>
-            <h1 className="text-2xl font-bold tracking-tight text-white">
+            <h1 className="text-foreground text-2xl font-bold tracking-tight">
               Media & Cloud Asset Library
             </h1>
             <p className="text-muted-foreground mt-0.5 text-sm">
@@ -373,7 +373,7 @@ export const ManageMediaPage = () => {
         <div className="flex flex-wrap items-center gap-6 font-mono text-xs">
           <div className="flex items-center gap-2">
             <span className="text-muted-foreground uppercase">Total Inventory:</span>
-            <span className="bg-secondary rounded px-2 py-0.5 font-bold text-white">
+            <span className="bg-secondary text-foreground rounded px-2 py-0.5 font-bold">
               {formatCount(totalAssetsCount)}
             </span>
           </div>
@@ -465,7 +465,7 @@ export const ManageMediaPage = () => {
             placeholder="Search filename or alt text..."
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            className="border-border bg-background placeholder:text-muted-foreground w-full rounded-xl border py-2 pl-10 pr-4 text-sm text-white transition-colors focus:border-amber-500 focus:outline-none"
+            className="border-border bg-background placeholder:text-muted-foreground text-foreground w-full rounded-xl border py-2 pl-10 pr-4 text-sm transition-colors focus:border-amber-500 focus:outline-none"
           />
         </form>
 
@@ -476,7 +476,7 @@ export const ManageMediaPage = () => {
             <select
               value={typeFilter}
               onChange={(e) => withPageReset(setTypeFilter)(e.target.value)}
-              className="border-border bg-background rounded-xl border px-3 py-1.5 text-xs font-medium text-white focus:border-amber-500 focus:outline-none"
+              className="border-border bg-background text-foreground rounded-xl border px-3 py-1.5 text-xs font-medium focus:border-amber-500 focus:outline-none"
             >
               <option value="all">All File Types</option>
               <option value="image">Images (PNG/JPG/WEBP)</option>
@@ -534,7 +534,7 @@ export const ManageMediaPage = () => {
       ) : mediaList.length === 0 ? (
         <div className="border-border bg-card rounded-2xl border p-16 text-center">
           <ImageIcon className="text-muted-foreground mx-auto mb-3 h-10 w-10" />
-          <h3 className="mb-1 text-base font-bold text-white">No Assets Found</h3>
+          <h3 className="text-foreground mb-1 text-base font-bold">No Assets Found</h3>
           <p className="text-muted-foreground mx-auto mb-6 max-w-sm text-xs">
             No files match your current folder or search criteria. Click below to upload assets.
           </p>
@@ -633,7 +633,7 @@ export const ManageMediaPage = () => {
                   <div className="flex flex-1 flex-col justify-between gap-3 p-4">
                     <div className="min-w-0">
                       <p
-                        className="truncate text-xs font-bold text-white"
+                        className="text-foreground truncate text-xs font-bold"
                         title={item.original_name}
                       >
                         {item.original_name}
@@ -696,7 +696,7 @@ export const ManageMediaPage = () => {
             className="border-border bg-card shadow-soft relative w-full max-w-lg rounded-3xl border p-6"
           >
             <div className="border-border mb-5 flex items-center justify-between border-b pb-4">
-              <div className="flex items-center gap-2 text-base font-bold text-white">
+              <div className="text-foreground flex items-center gap-2 text-base font-bold">
                 <UploadCloud className="h-5 w-5 text-amber-400" />
                 <span>Upload & Auto-Compress Asset</span>
               </div>
@@ -704,7 +704,7 @@ export const ManageMediaPage = () => {
                 type="button"
                 onClick={() => setUploadModalOpen(false)}
                 aria-label="Close upload panel"
-                className="text-muted-foreground hover:bg-secondary rounded-xl p-1.5 transition-colors hover:text-white"
+                className="text-muted-foreground hover:bg-secondary hover:text-foreground rounded-xl p-1.5 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -718,7 +718,7 @@ export const ManageMediaPage = () => {
                 <select
                   value={selectedFolder}
                   onChange={(e) => setSelectedFolder(e.target.value)}
-                  className="border-border bg-background w-full rounded-xl border px-3.5 py-2.5 text-sm font-medium text-white focus:border-amber-500 focus:outline-none"
+                  className="border-border bg-background text-foreground w-full rounded-xl border px-3.5 py-2.5 text-sm font-medium focus:border-amber-500 focus:outline-none"
                 >
                   <option value="case-studies">Case Studies & Projects</option>
                   <option value="thinking">Thinking Articles</option>
@@ -737,7 +737,7 @@ export const ManageMediaPage = () => {
                   value={uploadAltText}
                   onChange={(e) => setUploadAltText(e.target.value)}
                   placeholder="e.g. WhatsApp Group Event Coordinator Architecture Diagram"
-                  className="border-border bg-background w-full rounded-xl border px-3.5 py-2 text-xs text-white focus:border-amber-500 focus:outline-none"
+                  className="border-border bg-background text-foreground w-full rounded-xl border px-3.5 py-2 text-xs focus:border-amber-500 focus:outline-none"
                 />
               </div>
 
@@ -787,14 +787,14 @@ export const ManageMediaPage = () => {
                   {uploading ? (
                     <>
                       <Loader2 className="h-10 w-10 animate-spin text-amber-400" />
-                      <span className="font-mono text-sm font-bold text-white">
+                      <span className="text-foreground font-mono text-sm font-bold">
                         Processing, compressing & uploading...
                       </span>
                     </>
                   ) : (
                     <>
                       <UploadCloud className="h-12 w-12 animate-bounce text-amber-400" />
-                      <span className="text-base font-bold text-white">
+                      <span className="text-foreground text-base font-bold">
                         Click or Drop Images/PDFs Here
                       </span>
                       <span className="font-mono text-xs text-amber-300/80">

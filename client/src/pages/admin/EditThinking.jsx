@@ -204,13 +204,13 @@ export const EditThinkingPage = () => {
         <div className="flex items-center gap-3">
           <Link
             to="/admin/thinking"
-            className="text-muted-foreground hover:bg-secondary rounded-xl p-2 transition-colors hover:text-white"
+            className="text-muted-foreground hover:bg-secondary hover:text-foreground rounded-xl p-2 transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-white">
+              <h1 className="text-foreground text-xl font-bold">
                 {isNew ? 'Write New Article' : formData.title || 'Edit Article'}
               </h1>
               {!isNew && <AutosaveIndicator status={autosaveStatus} lastSavedAt={lastSavedAt} />}
@@ -318,7 +318,7 @@ export const EditThinkingPage = () => {
                 placeholder="e.g. Improving WhatsApp Group Event Coordination"
                 value={formData.title}
                 onChange={handleTitleChange}
-                className="border-border bg-background w-full rounded-xl border px-4 py-2.5 text-base font-bold text-white focus:border-violet-500 focus:outline-none"
+                className="border-border bg-background text-foreground w-full rounded-xl border px-4 py-2.5 text-base font-bold focus:border-violet-500 focus:outline-none"
               />
             </div>
 
@@ -331,7 +331,7 @@ export const EditThinkingPage = () => {
                 placeholder="Summarize the core problem observed, target users, and proposed feature..."
                 value={formData.excerpt}
                 onChange={(e) => handleFieldChange('excerpt', e.target.value)}
-                className="border-border bg-background w-full rounded-xl border p-4 text-sm text-white focus:border-violet-500 focus:outline-none"
+                className="border-border bg-background text-foreground w-full rounded-xl border p-4 text-sm focus:border-violet-500 focus:outline-none"
               />
             </div>
 
@@ -352,7 +352,7 @@ export const EditThinkingPage = () => {
           {/* Related Work Strip */}
           <div className="border-border bg-card space-y-4 rounded-2xl border p-6">
             <div className="border-border flex items-center justify-between border-b pb-3">
-              <h3 className="font-mono text-sm uppercase tracking-wider text-white">
+              <h3 className="text-foreground font-mono text-sm uppercase tracking-wider">
                 Related Work & References
               </h3>
               <button
@@ -381,7 +381,7 @@ export const EditThinkingPage = () => {
                       placeholder="Title e.g. Flagship Project"
                       value={item.title || ''}
                       onChange={(e) => updateRelatedWork(idx, 'title', e.target.value)}
-                      className="border-border bg-card flex-1 rounded-lg border px-3 py-1.5 text-xs text-white"
+                      className="border-border bg-card text-foreground flex-1 rounded-lg border px-3 py-1.5 text-xs"
                     />
                     <input
                       type="text"
@@ -418,7 +418,7 @@ export const EditThinkingPage = () => {
               <select
                 value={formData.type}
                 onChange={(e) => handleFieldChange('type', e.target.value)}
-                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:border-violet-500 focus:outline-none"
+                className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2.5 text-sm font-medium focus:border-violet-500 focus:outline-none"
               >
                 <option value="teardown">Product Teardown</option>
                 <option value="feature_proposal">Feature Proposal</option>
@@ -432,7 +432,7 @@ export const EditThinkingPage = () => {
               </span>
               {/* Read-only: status changes only through the explicit Save Draft / Publish actions */}
               <div
-                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium capitalize text-white"
+                className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2.5 text-sm font-medium capitalize"
                 aria-live="polite"
               >
                 {formData.status}
@@ -459,7 +459,7 @@ export const EditThinkingPage = () => {
                 type="text"
                 value={formData.reading_time}
                 onChange={(e) => handleFieldChange('reading_time', e.target.value)}
-                className="border-border bg-background w-full rounded-xl border px-3 py-2 font-mono text-xs text-white focus:border-violet-500 focus:outline-none"
+                className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2 font-mono text-xs focus:border-violet-500 focus:outline-none"
               />
             </div>
 
@@ -475,7 +475,7 @@ export const EditThinkingPage = () => {
                   setTagsInput(e.target.value);
                   editorSave.markDirty();
                 }}
-                className="border-border bg-background w-full rounded-xl border px-3 py-2 text-xs text-white focus:border-violet-500 focus:outline-none"
+                className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2 text-xs focus:border-violet-500 focus:outline-none"
               />
               <p className="text-muted-foreground mt-1 text-[10px]">
                 Comma-separated tags for public index filters.
@@ -515,7 +515,7 @@ export const EditThinkingPage = () => {
                   placeholder="https://..."
                   value={formData.cover_image}
                   onChange={(e) => handleFieldChange('cover_image', e.target.value)}
-                  className="border-border bg-background flex-1 rounded-xl border px-3 py-1.5 font-mono text-xs text-white"
+                  className="border-border bg-background text-foreground flex-1 rounded-xl border px-3 py-1.5 font-mono text-xs"
                 />
                 <button
                   type="button"

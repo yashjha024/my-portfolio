@@ -163,7 +163,7 @@ export const AdminSettingsPage = () => {
           type="button"
           disabled={saving}
           onClick={handleSave}
-          className="bg-primary shadow-soft shadow-subtle hover:bg-primary/90 flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium text-white transition-all disabled:opacity-50"
+          className="bg-primary shadow-soft shadow-subtle hover:bg-primary/90 text-primary-foreground flex items-center justify-center gap-2 rounded-xl px-5 py-2.5 text-sm font-medium transition-all disabled:opacity-50"
         >
           {saving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
           <span>Save Changes</span>

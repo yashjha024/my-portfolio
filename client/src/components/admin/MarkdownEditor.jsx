@@ -250,7 +250,7 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => setShortcutsModalOpen(true)}
-              className="text-muted-foreground flex items-center gap-1 font-mono text-[11px] transition-colors hover:text-white"
+              className="text-muted-foreground hover:text-foreground flex items-center gap-1 font-mono text-[11px] transition-colors"
               title="View Keyboard Shortcuts"
             >
               <HelpCircle className="h-3.5 w-3.5" />
@@ -282,8 +282,8 @@ export const MarkdownEditor = ({
                 onClick={() => setViewMode('write')}
                 className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
                   viewMode === 'write'
-                    ? 'bg-primary text-white shadow-md'
-                    : 'text-muted-foreground hover:text-white'
+                    ? 'bg-primary text-primary-foreground shadow-md'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <Edit3 className="h-3.5 w-3.5" />
@@ -296,8 +296,8 @@ export const MarkdownEditor = ({
                 onClick={() => setViewMode('split')}
                 className={`hidden items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all md:flex ${
                   viewMode === 'split'
-                    ? 'bg-primary text-white shadow-md'
-                    : 'text-muted-foreground hover:text-white'
+                    ? 'bg-primary text-primary-foreground shadow-md'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <Columns className="h-3.5 w-3.5" />
@@ -310,8 +310,8 @@ export const MarkdownEditor = ({
                 onClick={() => setViewMode('preview')}
                 className={`flex items-center gap-1.5 rounded-lg px-2.5 py-1 text-xs font-medium transition-all ${
                   viewMode === 'preview'
-                    ? 'bg-primary text-white shadow-md'
-                    : 'text-muted-foreground hover:text-white'
+                    ? 'bg-primary text-primary-foreground shadow-md'
+                    : 'text-muted-foreground hover:text-foreground'
                 }`}
               >
                 <Eye className="h-3.5 w-3.5" />
@@ -325,7 +325,7 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => insertAtCursor('# ', '', 'Heading 1')}
-              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
+              className="text-foreground hover:bg-secondary hover:text-foreground rounded-lg p-1.5 transition-colors"
               title="Heading 1"
             >
               <Heading1 className="h-4 w-4" />
@@ -333,7 +333,7 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => insertAtCursor('## ', '', 'Heading 2')}
-              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
+              className="text-foreground hover:bg-secondary hover:text-foreground rounded-lg p-1.5 transition-colors"
               title="Heading 2"
             >
               <Heading2 className="h-4 w-4" />
@@ -341,7 +341,7 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => insertAtCursor('### ', '', 'Heading 3')}
-              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
+              className="text-foreground hover:bg-secondary hover:text-foreground rounded-lg p-1.5 transition-colors"
               title="Heading 3"
             >
               <Heading3 className="h-4 w-4" />
@@ -353,7 +353,7 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => insertAtCursor('**', '**', 'bold text')}
-              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
+              className="text-foreground hover:bg-secondary hover:text-foreground rounded-lg p-1.5 transition-colors"
               title="Bold (Ctrl+B)"
             >
               <Bold className="h-4 w-4" />
@@ -361,7 +361,7 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => insertAtCursor('*', '*', 'italic text')}
-              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
+              className="text-foreground hover:bg-secondary hover:text-foreground rounded-lg p-1.5 transition-colors"
               title="Italic (Ctrl+I)"
             >
               <Italic className="h-4 w-4" />
@@ -369,7 +369,7 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => insertAtCursor('`', '`', 'code')}
-              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
+              className="text-foreground hover:bg-secondary hover:text-foreground rounded-lg p-1.5 transition-colors"
               title="Inline Code"
             >
               <Code className="h-4 w-4" />
@@ -377,7 +377,7 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => insertAtCursor('\n> ', '', 'Quote text')}
-              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
+              className="text-foreground hover:bg-secondary hover:text-foreground rounded-lg p-1.5 transition-colors"
               title="Blockquote"
             >
               <Quote className="h-4 w-4" />
@@ -389,7 +389,7 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => insertAtCursor('\n- ', '', 'list item')}
-              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
+              className="text-foreground hover:bg-secondary hover:text-foreground rounded-lg p-1.5 transition-colors"
               title="Bullet List"
             >
               <List className="h-4 w-4" />
@@ -397,7 +397,7 @@ export const MarkdownEditor = ({
             <button
               type="button"
               onClick={() => insertAtCursor('\n1. ', '', 'numbered item')}
-              className="text-foreground hover:bg-secondary rounded-lg p-1.5 transition-colors hover:text-white"
+              className="text-foreground hover:bg-secondary hover:text-foreground rounded-lg p-1.5 transition-colors"
               title="Numbered List"
             >
               <ListOrdered className="h-4 w-4" />
@@ -478,7 +478,7 @@ export const MarkdownEditor = ({
                       key={item.type}
                       type="button"
                       onClick={() => insertCallout(item.type)}
-                      className="text-foreground hover:bg-primary w-full rounded-lg px-2.5 py-1.5 text-left transition-colors hover:text-white"
+                      className="text-foreground hover:bg-primary hover:text-primary-foreground w-full rounded-lg px-2.5 py-1.5 text-left transition-colors"
                     >
                       {item.label}
                     </button>
@@ -512,7 +512,7 @@ export const MarkdownEditor = ({
                       key={item.id}
                       type="button"
                       onClick={() => insertMermaid(item.id)}
-                      className="text-foreground hover:bg-primary w-full rounded-lg px-2.5 py-1.5 text-left transition-colors hover:text-white"
+                      className="text-foreground hover:bg-primary hover:text-primary-foreground w-full rounded-lg px-2.5 py-1.5 text-left transition-colors"
                     >
                       {item.label}
                     </button>
@@ -686,13 +686,13 @@ export const MarkdownEditor = ({
         <div className="animate-fadeIn bg-background fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="border-border bg-card shadow-soft relative w-full max-w-lg rounded-2xl border p-6">
             <div className="border-border mb-4 flex items-center justify-between border-b pb-4">
-              <div className="flex items-center gap-2 text-base font-bold text-white">
+              <div className="text-foreground flex items-center gap-2 text-base font-bold">
                 <HelpCircle className="text-primary h-5 w-5" />
                 <span>Editor Keyboard Shortcuts</span>
               </div>
               <button
                 onClick={() => setShortcutsModalOpen(false)}
-                className="text-muted-foreground hover:bg-secondary rounded-lg p-1.5 hover:text-white"
+                className="text-muted-foreground hover:bg-secondary hover:text-foreground rounded-lg p-1.5"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -728,7 +728,7 @@ export const MarkdownEditor = ({
             <div className="border-border mt-6 border-t pt-4 text-right">
               <button
                 onClick={() => setShortcutsModalOpen(false)}
-                className="bg-primary hover:bg-primary/90 rounded-xl px-5 py-2 text-xs font-medium text-white"
+                className="bg-primary hover:bg-primary/90 text-primary-foreground rounded-xl px-5 py-2 text-xs font-medium"
               >
                 Got It
               </button>

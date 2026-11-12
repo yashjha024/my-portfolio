@@ -43,7 +43,7 @@ const LIST_LABELS = {
 };
 
 const inputClass =
-  'border-border bg-background w-full rounded-xl border px-3.5 py-2 text-xs text-white focus:border-emerald-500 focus:outline-none';
+  'border-border bg-background w-full rounded-xl border px-3.5 py-2 text-xs text-foreground focus:border-emerald-500 focus:outline-none';
 
 export const EditPrdPage = () => {
   const { id } = useParams();
@@ -444,13 +444,13 @@ export const EditPrdPage = () => {
         <div className="flex items-center gap-3">
           <Link
             to="/admin/prds"
-            className="text-muted-foreground hover:bg-secondary rounded-xl p-2 transition-colors hover:text-white"
+            className="text-muted-foreground hover:bg-secondary hover:text-foreground rounded-xl p-2 transition-colors"
           >
             <ArrowLeft className="h-5 w-5" />
           </Link>
           <div>
             <div className="flex items-center gap-2">
-              <h1 className="text-xl font-bold text-white">
+              <h1 className="text-foreground text-xl font-bold">
                 {isNew ? 'Create PRD Spec' : formData.title || 'Edit PRD Spec'}
               </h1>
               {!isNew && <AutosaveIndicator status={autosaveStatus} lastSavedAt={lastSavedAt} />}
@@ -577,7 +577,7 @@ export const EditPrdPage = () => {
                 placeholder="e.g. WhatsApp Group Event Coordinator PRD v1.2"
                 value={formData.title}
                 onChange={handleTitleChange}
-                className="border-border bg-background w-full rounded-xl border px-4 py-2.5 text-base font-bold text-white focus:border-emerald-500 focus:outline-none"
+                className="border-border bg-background text-foreground w-full rounded-xl border px-4 py-2.5 text-base font-bold focus:border-emerald-500 focus:outline-none"
               />
             </div>
 
@@ -599,7 +599,7 @@ export const EditPrdPage = () => {
           <div className="space-y-4">
             <div className="border-border bg-card flex flex-col justify-between gap-4 rounded-2xl border p-4 sm:flex-row sm:items-center">
               <div>
-                <h3 className="font-mono text-sm uppercase tracking-wider text-white">
+                <h3 className="text-foreground font-mono text-sm uppercase tracking-wider">
                   Structured Specification Sections
                 </h3>
                 <p className="text-muted-foreground text-xs">
@@ -735,7 +735,7 @@ export const EditPrdPage = () => {
                             )
                           }
                           aria-label={`Custom section ${idx + 1} title`}
-                          className="border-border bg-background flex-1 rounded-xl border px-4 py-2 text-sm font-bold text-white focus:border-emerald-500 focus:outline-none"
+                          className="border-border bg-background text-foreground flex-1 rounded-xl border px-4 py-2 text-sm font-bold focus:border-emerald-500 focus:outline-none"
                         />
                         <button
                           type="button"
@@ -775,7 +775,7 @@ export const EditPrdPage = () => {
                   rows={18}
                   value={jsonText}
                   onChange={(event) => handleSectionsJsonChange(event.target.value)}
-                  className="border-border bg-background w-full rounded-2xl border p-4 font-mono text-xs leading-relaxed text-white focus:border-emerald-500 focus:outline-none"
+                  className="border-border bg-background text-foreground w-full rounded-2xl border p-4 font-mono text-xs leading-relaxed focus:border-emerald-500 focus:outline-none"
                   aria-label="Structured PRD sections as JSON"
                   aria-invalid={Boolean(jsonError)}
                 />
@@ -805,7 +805,7 @@ export const EditPrdPage = () => {
               <select
                 value={formData.stage}
                 onChange={(e) => handleFieldChange('stage', e.target.value)}
-                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:border-emerald-500 focus:outline-none"
+                className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2.5 text-sm font-medium focus:border-emerald-500 focus:outline-none"
               >
                 {stageOptions.map((stage) => (
                   <option
@@ -826,7 +826,7 @@ export const EditPrdPage = () => {
               <select
                 value={formData.visibility}
                 onChange={(e) => handleFieldChange('visibility', e.target.value)}
-                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:border-emerald-500 focus:outline-none"
+                className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2.5 text-sm font-medium focus:border-emerald-500 focus:outline-none"
               >
                 <option value="public" className="bg-slate-900 font-semibold text-white">
                   Public (Indexed &amp; Searchable)
@@ -853,7 +853,7 @@ export const EditPrdPage = () => {
               </span>
               {/* Read-only: status changes only through the explicit Save Draft / Publish actions */}
               <div
-                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium capitalize text-white"
+                className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2.5 text-sm font-medium capitalize"
                 aria-live="polite"
               >
                 {formData.status}
@@ -883,7 +883,7 @@ export const EditPrdPage = () => {
                 id="prd-related-case-study"
                 value={formData.related_case_study_id || ''}
                 onChange={(e) => handleFieldChange('related_case_study_id', e.target.value)}
-                className="border-border bg-background w-full rounded-xl border px-3 py-2.5 text-sm font-medium text-white focus:border-emerald-500 focus:outline-none"
+                className="border-border bg-background text-foreground w-full rounded-xl border px-3 py-2.5 text-sm font-medium focus:border-emerald-500 focus:outline-none"
               >
                 <option value="" className="bg-slate-900">
                   None
@@ -920,7 +920,7 @@ export const EditPrdPage = () => {
                 placeholder="https://..."
                 value={formData.pdf_url}
                 onChange={(e) => handleFieldChange('pdf_url', e.target.value)}
-                className="border-border bg-background flex-1 rounded-xl border px-3 py-2 font-mono text-xs text-white"
+                className="border-border bg-background text-foreground flex-1 rounded-xl border px-3 py-2 font-mono text-xs"
               />
               <button
                 type="button"

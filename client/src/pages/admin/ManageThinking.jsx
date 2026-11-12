@@ -321,7 +321,7 @@ export const ManageThinkingPage = () => {
                               );
                             }
                           }}
-                          className="text-muted-foreground hover:bg-secondary rounded-lg p-2 transition-colors hover:text-white"
+                          className="text-muted-foreground hover:bg-secondary hover:text-foreground rounded-lg p-2 transition-colors"
                           title={item.status === 'published' ? 'Preview Article' : 'Preview Draft'}
                         >
                           <Eye className="h-4 w-4" />

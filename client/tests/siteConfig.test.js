@@ -32,11 +32,13 @@ test('vercel.json: feed rewrites precede the API and SPA catch-alls and hit the 
     );
   }
 
-  const backend = new URL(config.rewrites[apiIndex].destination.replace('$1', '')).origin;
+  // The API, sitemap and RSS all run in the api/index.js Vercel function, which keeps the original
+  // path, so Express serves /sitemap.xml and /rss.xml (seo.routes.js mounted at the root in app.js)
   const byFeed = Object.fromEntries(config.rewrites.map((r) => [r.source, r.destination]));
-  // Verified backend routes (server/src/routes/seo.routes.js mounted at the root in app.js)
-  assert.strictEqual(byFeed['/sitemap.xml'], `${backend}/sitemap.xml`);
-  assert.strictEqual(byFeed['/rss.xml'], `${backend}/rss.xml`);
+  assert.strictEqual(byFeed['/api/(.*)'], '/api');
+  assert.strictEqual(byFeed['/sitemap.xml'], '/api');
+  assert.strictEqual(byFeed['/rss.xml'], '/api');
+  assert.ok(fs.existsSync(path.join(repoDir, 'api', 'index.js')), 'api/index.js function exists');
 });
 
 test('vercel.json: private areas send X-Robots-Tag noindex', () => {

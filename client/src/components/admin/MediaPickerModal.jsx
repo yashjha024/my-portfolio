@@ -193,7 +193,7 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
                 <ImageIcon className="h-5 w-5" />
               </div>
               <div>
-                <h3 className="text-lg font-bold text-white">Media Library & Picker</h3>
+                <h3 className="text-foreground text-lg font-bold">Media Library & Picker</h3>
                 <p className="text-muted-foreground text-xs">
                   Select existing assets or upload with compression & SEO alt text
                 </p>
@@ -216,7 +216,7 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
 
               <button
                 onClick={onClose}
-                className="text-muted-foreground hover:bg-secondary rounded-xl p-2 transition-colors hover:text-white"
+                className="text-muted-foreground hover:bg-secondary hover:text-foreground rounded-xl p-2 transition-colors"
               >
                 <X className="h-5 w-5" />
               </button>
@@ -234,7 +234,7 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
                     onClick={() => setFolderFilter(f.id)}
                     className={`shrink-0 rounded-lg px-3 py-1.5 font-bold transition-colors ${
                       folderFilter === f.id
-                        ? 'bg-primary text-white'
+                        ? 'bg-primary text-primary-foreground'
                         : 'bg-card text-muted-foreground hover:bg-secondary'
                     }`}
                   >
@@ -264,7 +264,7 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
                     value={search}
                     onChange={(e) => setSearch(e.target.value)}
                     placeholder="Search filename or alt text..."
-                    className="border-border bg-card focus:border-primary/40 w-full rounded-lg border py-1.5 pl-8 pr-3 font-sans text-xs text-white focus:outline-none"
+                    className="border-border bg-card focus:border-primary/40 text-foreground w-full rounded-lg border py-1.5 pl-8 pr-3 font-sans text-xs focus:outline-none"
                   />
                 </div>
               </div>
@@ -283,7 +283,7 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
             {showUploadTab ? (
               <div className="mx-auto max-w-xl space-y-5 py-8">
                 <div className="border-border bg-card space-y-4 rounded-2xl border p-6">
-                  <h4 className="font-mono text-sm font-bold uppercase tracking-wider text-white">
+                  <h4 className="text-foreground font-mono text-sm font-bold uppercase tracking-wider">
                     Upload & Compress Asset
                   </h4>
 
@@ -294,7 +294,7 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
                     <select
                       value={selectedFolder}
                       onChange={(e) => setSelectedFolder(e.target.value)}
-                      className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-3 py-2 text-xs text-white focus:outline-none"
+                      className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border px-3 py-2 text-xs focus:outline-none"
                     >
                       <option value="case-studies">Case Studies & Projects</option>
                       <option value="thinking">Thinking Articles</option>
@@ -313,7 +313,7 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
                       value={uploadAltText}
                       onChange={(e) => setUploadAltText(e.target.value)}
                       placeholder="e.g. System architecture overview diagram"
-                      className="border-border bg-background focus:border-primary/40 w-full rounded-xl border px-3 py-2 text-xs text-white focus:outline-none"
+                      className="border-border bg-background focus:border-primary/40 text-foreground w-full rounded-xl border px-3 py-2 text-xs focus:outline-none"
                     />
                   </div>
 
@@ -334,14 +334,14 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
                     {uploading ? (
                       <>
                         <Loader2 className="text-primary h-8 w-8 animate-spin" />
-                        <span className="font-mono text-xs font-bold text-white">
+                        <span className="text-foreground font-mono text-xs font-bold">
                           Compressing & Uploading...
                         </span>
                       </>
                     ) : (
                       <>
                         <UploadCloud className="text-primary h-10 w-10" />
-                        <span className="text-sm font-bold text-white">
+                        <span className="text-foreground text-sm font-bold">
                           Click or Drop File Here
                         </span>
                         <span className="text-muted-foreground font-mono text-[11px]">
@@ -370,14 +370,14 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
             ) : mediaList.length === 0 ? (
               <div className="border-border flex h-full flex-col items-center justify-center rounded-2xl border-2 border-dashed py-20 text-center">
                 <ImageIcon className="text-muted-foreground mb-2 h-10 w-10" />
-                <p className="text-sm font-bold text-white">No assets found</p>
+                <p className="text-foreground text-sm font-bold">No assets found</p>
                 <p className="text-muted-foreground mb-4 mt-1 text-xs">
                   No media items match this folder or search query.
                 </p>
                 <button
                   type="button"
                   onClick={() => setShowUploadTab(true)}
-                  className="bg-primary hover:bg-primary/90 inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium text-white shadow"
+                  className="bg-primary hover:bg-primary/90 text-primary-foreground inline-flex items-center gap-1.5 rounded-xl px-4 py-2 text-xs font-medium shadow"
                 >
                   <UploadCloud className="h-4 w-4" />
                   <span>Upload Asset</span>
@@ -424,7 +424,7 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
                         </div>
 
                         {isSelected && (
-                          <div className="animate-scaleUp bg-primary absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full text-white shadow-md">
+                          <div className="animate-scaleUp bg-primary text-primary-foreground absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full shadow-md">
                             <Check className="h-3.5 w-3.5" />
                           </div>
                         )}
@@ -433,7 +433,7 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
                       <div className="flex flex-1 flex-col justify-between p-2.5">
                         <div>
                           <p
-                            className="truncate text-xs font-bold text-white"
+                            className="text-foreground truncate text-xs font-bold"
                             title={item.original_name}
                           >
                             {item.original_name}
@@ -460,7 +460,7 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
                 <div className="border-border bg-background flex items-center justify-between gap-3 rounded-xl border p-2.5">
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
-                      <span className="truncate text-xs font-bold text-white">
+                      <span className="text-foreground truncate text-xs font-bold">
                         {selectedItem.original_name}
                       </span>
                       <span className="text-muted-foreground font-mono text-[10px]">
@@ -479,12 +479,12 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
                           value={altInput}
                           onChange={(e) => setAltInput(e.target.value)}
                           placeholder="Alt text / SEO..."
-                          className="border-border bg-card flex-1 rounded border px-2 py-0.5 text-xs text-white focus:outline-none"
+                          className="border-border bg-card text-foreground flex-1 rounded border px-2 py-0.5 text-xs focus:outline-none"
                         />
                         <button
                           type="button"
                           onClick={handleUpdateAltText}
-                          className="bg-primary hover:bg-primary/90 rounded p-1 text-white"
+                          className="bg-primary hover:bg-primary/90 text-primary-foreground rounded p-1"
                         >
                           <Save className="h-3 w-3" />
                         </button>
@@ -527,7 +527,7 @@ export const MediaPickerModal = ({ isOpen, onClose, onSelect, allowedTypes = 'al
                     onClose();
                   }
                 }}
-                className="bg-primary shadow-soft shadow-subtle hover:bg-primary/90 shrink-0 rounded-xl px-6 py-2.5 text-xs font-bold text-white transition-all disabled:cursor-not-allowed disabled:opacity-40"
+                className="bg-primary shadow-soft shadow-subtle hover:bg-primary/90 text-primary-foreground shrink-0 rounded-xl px-6 py-2.5 text-xs font-bold transition-all disabled:cursor-not-allowed disabled:opacity-40"
               >
                 Insert Selected Asset
               </button>

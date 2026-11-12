@@ -113,7 +113,7 @@ export const Dashboard = () => {
       {/* Executive Header */}
       <div className="flex flex-col justify-between gap-4 sm:flex-row sm:items-center">
         <div>
-          <h1 className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+          <h1 className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
             Executive Command Center
           </h1>
           <p className="text-muted-foreground mt-1 text-sm">
@@ -153,7 +153,7 @@ export const Dashboard = () => {
                 </div>
               </div>
               <div className="mt-4">
-                <span className="text-2xl font-bold tracking-tight text-white sm:text-3xl">
+                <span className="text-foreground text-2xl font-bold tracking-tight sm:text-3xl">
                   {card.value}
                 </span>
                 <p className="text-foreground mt-1 text-xs font-medium">{card.title}</p>
@@ -173,7 +173,7 @@ export const Dashboard = () => {
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-4">
           <Link
             to="/admin/work/new"
-            className="bg-primary shadow-soft shadow-subtle hover:bg-primary/90 group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium text-white transition-all"
+            className="bg-primary shadow-soft shadow-subtle hover:bg-primary/90 text-primary-foreground group flex items-center justify-between rounded-xl px-4 py-3 text-sm font-medium transition-all"
           >
             <div className="flex items-center gap-2.5">
               <Plus className="h-4 w-4 shrink-0" />
@@ -184,7 +184,7 @@ export const Dashboard = () => {
 
           <Link
             to="/admin/thinking/new"
-            className="border-border bg-secondary hover:bg-secondary group flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium text-white transition-all"
+            className="border-border bg-secondary hover:bg-secondary text-foreground group flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium transition-all"
           >
             <div className="flex items-center gap-2.5">
               <Plus className="h-4 w-4 shrink-0 text-violet-400" />
@@ -195,7 +195,7 @@ export const Dashboard = () => {
 
           <Link
             to="/admin/prds/new"
-            className="border-border bg-secondary hover:bg-secondary group flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium text-white transition-all"
+            className="border-border bg-secondary hover:bg-secondary text-foreground group flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium transition-all"
           >
             <div className="flex items-center gap-2.5">
               <Plus className="h-4 w-4 shrink-0 text-emerald-400" />
@@ -206,7 +206,7 @@ export const Dashboard = () => {
 
           <Link
             to="/admin/media"
-            className="border-border bg-secondary hover:bg-secondary group flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium text-white transition-all"
+            className="border-border bg-secondary hover:bg-secondary text-foreground group flex items-center justify-between rounded-xl border px-4 py-3 text-sm font-medium transition-all"
           >
             <div className="flex items-center gap-2.5">
               <Plus className="h-4 w-4 shrink-0 text-amber-400" />
@@ -222,7 +222,7 @@ export const Dashboard = () => {
         <div className="border-border flex items-center justify-between border-b p-5">
           <div className="flex items-center gap-2">
             <Clock className="text-primary h-4 w-4" />
-            <h2 className="text-base font-bold text-white">Recent Content Activity</h2>
+            <h2 className="text-foreground text-base font-bold">Recent Content Activity</h2>
           </div>
           <span className="text-muted-foreground font-mono text-xs">Last 10 updates</span>
         </div>
@@ -268,7 +268,7 @@ export const Dashboard = () => {
                   return (
                     <tr key={idx} className="hover:bg-secondary transition-colors">
                       <td
-                        className="max-w-xs truncate px-5 py-3.5 font-medium text-white"
+                        className="text-foreground max-w-xs truncate px-5 py-3.5 font-medium"
                         title={item.title}
                       >
                         {item.title}

@@ -144,7 +144,7 @@ export const ManageMessagesPage = () => {
               onClick={() => setActiveTab(tab)}
               className={`rounded-lg px-3 py-1.5 font-mono text-xs uppercase capitalize transition-colors ${
                 activeTab === tab
-                  ? 'bg-primary font-bold text-white shadow-sm'
+                  ? 'bg-primary text-primary-foreground font-bold shadow-sm'
                   : 'text-muted-foreground hover:bg-secondary hover:text-[#171717]'
               }`}
             >
@@ -263,7 +263,7 @@ export const ManageMessagesPage = () => {
                   <a
                     href={`mailto:${selectedMessage.email}?subject=Re: ${encodeURIComponent(selectedMessage.subject || 'Your Inquiry')}`}
                     onClick={() => updateStatus(selectedMessage.id, 'replied')}
-                    className="bg-primary hover:bg-primary/90 flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-medium text-white shadow-sm transition-colors"
+                    className="bg-primary hover:bg-primary/90 text-primary-foreground flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-medium shadow-sm transition-colors"
                   >
                     <Reply className="h-3.5 w-3.5" /> Reply via Email
                   </a>
