@@ -25,7 +25,7 @@ import seoRoutes from './routes/seo.routes.js';
 
 const app = express();
 
-// Trust exactly TRUST_PROXY_HOPS reverse proxies (expected chain: Vercel /api rewrite -> Railway edge).
+// Trust exactly TRUST_PROXY_HOPS reverse proxies (on Vercel functions the chain is just the Vercel edge, so 1).
 // Express then takes req.ip from that position in X-Forwarded-For, counting from the right, so
 // addresses a client prepends to the header are never used. 0 (default) ignores the header entirely.
 app.set('trust proxy', env.TRUST_PROXY_HOPS);
