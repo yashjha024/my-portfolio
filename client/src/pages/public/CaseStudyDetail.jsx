@@ -14,11 +14,63 @@ import { DetailPageSkeleton } from '../../components/ui/Skeleton.jsx';
 import { SEO } from '../../components/shared/SEO.jsx';
 import { BreadcrumbNav } from '../../components/shared/BreadcrumbNav.jsx';
 import { calculateReadingTime } from '../../utils/calculateReadingTime.js';
+import {
+  LENSES,
+  decisionsForLens,
+  hasInteractiveContent,
+  normalizeDetails,
+} from '../../utils/caseStudyDetails.js';
+import {
+  DecisionLog,
+  EvidenceIndex,
+  FeatureLedger,
+  InvestigationWalkthrough,
+  LensToggle,
+  PipelineDiagram,
+  PivotTimeline,
+  StatusPill,
+} from '../../components/caseStudy/InteractiveBlocks.jsx';
+
+const LENS_CAPTIONS = {
+  pm: 'Reading as a product manager: problem, decisions, trade-offs.',
+  builder: 'Reading as a builder: architecture, build status, debugging.',
+  all: 'Showing the full story.',
+};
+
+const hasText = (value) => typeof value === 'string' && value.trim() !== '';
+
+/** PRD snapshot list items may be plain strings or { name, desc } objects. */
+const toLines = (value) =>
+  (Array.isArray(value) ? value : [])
+    .map((item) => (typeof item === 'string' ? item : item?.name || item?.title || ''))
+    .map((line) => String(line).trim())
+    .filter(Boolean);
+
+const BlockFrame = ({ children }) => (
+  <div className="border-t border-border/60 pt-10">{children}</div>
+);
+
+const NarrativeBlock = ({ eyebrow, title, icon: Icon, children }) => (
+  <div className="space-y-4 border-t border-border/60 pt-10">
+    <div className="flex items-center gap-2 text-primary font-mono text-sm font-bold uppercase tracking-wider">
+      <Icon className="w-4 h-4" /> {eyebrow}
+    </div>
+    <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">{title}</h2>
+    {children}
+  </div>
+);
 
 export const CaseStudyDetailPage = () => {
   const { slug } = useParams();
-  const [searchParams] = useSearchParams();
+  const [searchParams, setSearchParams] = useSearchParams();
   const previewToken = searchParams.get('preview_token');
+  const lensParam = searchParams.get('lens');
+  const lensFromUrl = LENSES.includes(lensParam) ? lensParam : 'pm';
+  const setLens = (next) => {
+    const params = new URLSearchParams(searchParams);
+    params.set('lens', next);
+    setSearchParams(params, { replace: true, preventScrollReset: true });
+  };
   const { data: caseStudies, loading: listLoading } = usePortfolioData({ type: 'caseStudies', delayMs: 350 });
 
   const [previewItem, setPreviewItem] = useState(null);
@@ -82,6 +134,26 @@ export const CaseStudyDetailPage = () => {
 
   const computedReadingTime = cs.readingTime || calculateReadingTime((cs.problem || '') + ' ' + (cs.approach || '') + ' ' + (cs.outcome || '') + ' ' + (cs.summary || '')).text;
 
+  const details = normalizeDetails(cs.details);
+  const interactive = hasInteractiveContent(details);
+  // Without interactive blocks there is nothing to switch between, so show everything
+  const lens = interactive ? lensFromUrl : 'all';
+  const showPm = lens !== 'builder';
+  const showBuilder = lens !== 'pm';
+  const visibleDecisions = decisionsForLens(details.decisions, lens);
+  const prdRequirements = toLines(cs.prdSnapshot?.requirements);
+  const prdNonGoals = toLines(cs.prdSnapshot?.nonGoals);
+
+  const heroFacts = [
+    hasText(cs.role) && { label: 'Role', value: cs.role },
+    hasText(cs.timeline) && { label: 'Timeline', value: cs.timeline },
+    hasText(cs.team) && { label: 'Team & scope', value: cs.team },
+    details.status && {
+      label: 'Status',
+      node: <StatusPill stage={details.status.stage} label={details.status.label} className="text-[11px]" />,
+    },
+  ].filter(Boolean);
+
   const breadcrumbs = [
     { name: 'Home', url: '/' },
     { name: 'Work / Case Studies', url: '/work' },
@@ -137,35 +209,19 @@ export const CaseStudyDetailPage = () => {
               {cs.summary}
             </p>
 
-            {/* Hero Metadata Strip */}
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 pt-4 border-t border-border/60 text-xs sm:text-sm">
-              <div>
-                <span className="block font-semibold text-muted-foreground uppercase text-[11px] tracking-wider mb-0.5">
-                  Role
-                </span>
-                <span className="font-medium text-foreground">{cs.role || 'Lead Product Manager'}</span>
+            {/* Hero Metadata Strip: only fields that exist are shown; nothing is invented */}
+            {heroFacts.length > 0 && (
+              <div className="grid grid-cols-2 gap-4 border-t border-border/60 pt-4 text-xs sm:grid-cols-4 sm:text-sm">
+                {heroFacts.map((fact) => (
+                  <div key={fact.label}>
+                    <span className="mb-0.5 block text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+                      {fact.label}
+                    </span>
+                    {fact.node || <span className="font-medium text-foreground">{fact.value}</span>}
+                  </div>
+                ))}
               </div>
-              <div>
-                <span className="block font-semibold text-muted-foreground uppercase text-[11px] tracking-wider mb-0.5">
-                  Timeline
-                </span>
-                <span className="font-medium text-foreground">{cs.timeline || '6 Months'}</span>
-              </div>
-              <div>
-                <span className="block font-semibold text-muted-foreground uppercase text-[11px] tracking-wider mb-0.5">
-                  Team &amp; Scope
-                </span>
-                <span className="font-medium text-foreground">{cs.team || 'Cross-functional Squad'}</span>
-              </div>
-              <div>
-                <span className="block font-semibold text-muted-foreground uppercase text-[11px] tracking-wider mb-0.5">
-                  Status
-                </span>
-                <Badge variant="success" className="text-[10px] px-2 py-0">
-                  Shipped &amp; Verified
-                </Badge>
-              </div>
-            </div>
+            )}
 
             {/* External Links */}
             <div className="flex flex-wrap gap-3 pt-2">
@@ -180,6 +236,13 @@ export const CaseStudyDetailPage = () => {
                 <Button variant="outline" size="sm" asChild>
                   <a href={cs.repoUrl} target="_blank" rel="noopener noreferrer">
                     <Github className="mr-2 w-4 h-4" /> Source Code / Repo
+                  </a>
+                </Button>
+              )}
+              {cs.prototypeUrl && (
+                <Button variant="outline" size="sm" asChild>
+                  <a href={cs.prototypeUrl} target="_blank" rel="noopener noreferrer">
+                    <ExternalLink className="mr-2 w-4 h-4" /> Prototype
                   </a>
                 </Button>
               )}
@@ -227,154 +290,147 @@ export const CaseStudyDetailPage = () => {
         </Section>
       )}
 
-      {/* Main 10-Section Content Area */}
+      {/* Main content. Sections render only when they have real content. */}
       <Section className="pb-24">
         <Container>
           <div className="max-w-4xl mx-auto space-y-16">
-            {/* Section 2: The Opportunity */}
-            <div className="space-y-4">
-              <div className="flex items-center gap-2 text-primary font-mono text-sm font-bold uppercase tracking-wider">
-                <CheckCircle className="w-4 h-4" /> 02. The Opportunity &amp; Why It Mattered
+            {interactive && (
+              <div className="sticky top-[104px] z-20 -mx-2 flex flex-col gap-3 rounded-2xl bg-background/90 px-2 py-3 backdrop-blur sm:flex-row sm:items-center sm:justify-between">
+                <LensToggle lens={lens} onChange={setLens} />
+                <p className="hidden text-xs text-muted-foreground sm:block">{LENS_CAPTIONS[lens]}</p>
               </div>
-              <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
-                Framing the Customer &amp; Business Value
-              </h2>
-              <MarkdownProse>
-                {cs.opportunity || cs.problem}
-              </MarkdownProse>
-            </div>
+            )}
 
-            {/* Section 3: My Role & Constraints */}
-            <div className="space-y-4 border-t border-border/60 pt-10">
-              <div className="flex items-center gap-2 text-primary font-mono text-sm font-bold uppercase tracking-wider">
-                <ShieldAlert className="w-4 h-4" /> 03. My Role &amp; Technical Constraints
+            {showPm && details.lenses.pm && lens !== 'all' && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
+                <MarkdownProse>{details.lenses.pm}</MarkdownProse>
               </div>
-              <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
-                Ownership &amp; Boundary Conditions
-              </h2>
-              <MarkdownProse>
-                {cs.roleConstraints || 'I owned the end-to-end product strategy, technical architecture evaluation, and cross-functional rollout across all internal engineering squads.'}
-              </MarkdownProse>
-            </div>
+            )}
+            {showBuilder && details.lenses.builder && lens !== 'all' && (
+              <div className="rounded-xl border border-primary/20 bg-primary/5 p-5">
+                <MarkdownProse>{details.lenses.builder}</MarkdownProse>
+              </div>
+            )}
 
-            {/* Section 4: Research / Inputs */}
-            <div className="space-y-4 border-t border-border/60 pt-10">
-              <div className="flex items-center gap-2 text-primary font-mono text-sm font-bold uppercase tracking-wider">
-                <Users className="w-4 h-4" /> 04. Research &amp; Inputs
-              </div>
-              <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
-                Discovery, Telemetry &amp; Customer Interviews
-              </h2>
-              <MarkdownProse>
-                {cs.researchInputs || 'Conducted structured customer interviews and analyzed quantitative telemetry to isolate root causes of friction before designing solutions.'}
-              </MarkdownProse>
-            </div>
+            {showPm && hasText(cs.opportunity || cs.problem) && (
+              <NarrativeBlock eyebrow="The problem" title="Why this was worth working on" icon={CheckCircle}>
+                <MarkdownProse>{cs.opportunity || cs.problem}</MarkdownProse>
+              </NarrativeBlock>
+            )}
 
-            {/* Section 5: Problem Framing */}
-            <div className="space-y-4 border-t border-border/60 pt-10">
-              <div className="flex items-center gap-2 text-primary font-mono text-sm font-bold uppercase tracking-wider">
-                <Award className="w-4 h-4" /> 05. Problem Framing &amp; &ldquo;How Might We&rdquo;
-              </div>
-              <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
-                Synthesizing the Core Challenge
-              </h2>
-              <div className="p-6 rounded-xl bg-primary/5 border border-primary/20 text-foreground font-medium italic text-lg leading-relaxed">
-                {cs.problemFraming || `How might we solve ${cs.title.toLowerCase()} safely and autonomously without introducing engineering velocity drag or production outages?`}
-              </div>
-            </div>
+            {showPm && hasText(cs.roleConstraints) && (
+              <NarrativeBlock eyebrow="My role" title="What I owned and the constraints" icon={ShieldAlert}>
+                <MarkdownProse>{cs.roleConstraints}</MarkdownProse>
+              </NarrativeBlock>
+            )}
 
-            {/* Section 6: Options & Decision */}
-            <div className="space-y-4 border-t border-border/60 pt-10">
-              <div className="flex items-center gap-2 text-primary font-mono text-sm font-bold uppercase tracking-wider">
-                <Layers className="w-4 h-4" /> 06. Options &amp; Architectural Trade-Offs
-              </div>
-              <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
-                Evaluating Alternatives &amp; Selection Rationale
-              </h2>
-              <MarkdownProse>
-                {cs.optionsDecision || 'We evaluated off-the-shelf vendor solutions against custom internal tooling, explicitly weighing build-vs-buy tradeoffs, IP ownership, and developer experience.'}
-              </MarkdownProse>
-            </div>
+            {showPm && hasText(cs.researchInputs) && (
+              <NarrativeBlock eyebrow="Inputs" title="What informed the direction" icon={Users}>
+                <MarkdownProse>{cs.researchInputs}</MarkdownProse>
+              </NarrativeBlock>
+            )}
 
-            {/* Section 7: PRD Snapshot */}
-            <div className="space-y-6 border-t border-border/60 pt-10">
-              <div className="flex items-center gap-2 text-primary font-mono text-sm font-bold uppercase tracking-wider">
-                <FileText className="w-4 h-4" /> 07. PRD Snapshot
-              </div>
-              <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
-                Goals, Non-Goals &amp; Success Metrics
-              </h2>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div className="p-5 rounded-xl bg-card border border-border shadow-sm space-y-3">
-                  <h3 className="font-heading font-bold text-base text-foreground flex items-center gap-1.5">
-                    <CheckCircle className="w-4 h-4 text-success" /> Primary Goals &amp; Requirements
-                  </h3>
-                  <ul className="list-disc list-inside space-y-1.5 text-xs sm:text-sm text-muted-foreground">
-                    {cs.prdSnapshot?.requirements?.map((req, idx) => (
-                      <li key={idx}>{req}</li>
-                    )) || (
-                      <>
-                        <li>End-to-end telemetry and automated verification</li>
-                        <li>Self-service developer console inside existing git workflows</li>
-                        <li>Sub-5ms overhead across all internal service requests</li>
-                      </>
-                    )}
-                  </ul>
+            {showPm && hasText(cs.problemFraming) && (
+              <NarrativeBlock eyebrow="Problem framing" title="The question I was answering" icon={Award}>
+                <div className="p-6 rounded-xl bg-primary/5 border border-primary/20 text-foreground font-medium italic text-lg leading-relaxed">
+                  {cs.problemFraming}
                 </div>
+              </NarrativeBlock>
+            )}
 
-                <div className="p-5 rounded-xl bg-card border border-border shadow-sm space-y-3">
-                  <h3 className="font-heading font-bold text-base text-foreground flex items-center gap-1.5">
-                    <Clock className="w-4 h-4 text-destructive" /> Explicit Non-Goals
-                  </h3>
-                  <ul className="list-disc list-inside space-y-1.5 text-xs sm:text-sm text-muted-foreground">
-                    {cs.prdSnapshot?.nonGoals?.map((ng, idx) => (
-                      <li key={idx}>{ng}</li>
-                    )) || (
-                      <>
-                        <li>Replacing core multi-cloud provider infrastructure contracts</li>
-                        <li>Automating destructive stateful database migrations without human sign-off</li>
-                      </>
-                    )}
-                  </ul>
+            {showBuilder && details.pipeline && (
+              <BlockFrame>
+                <PipelineDiagram pipeline={details.pipeline} />
+              </BlockFrame>
+            )}
+
+            {showBuilder && details.features.length > 0 && (
+              <BlockFrame>
+                <FeatureLedger features={details.features} />
+              </BlockFrame>
+            )}
+
+            {visibleDecisions.length > 0 && (
+              <BlockFrame>
+                <DecisionLog key={lens} decisions={visibleDecisions} />
+              </BlockFrame>
+            )}
+
+            {showPm && details.decisions.length === 0 && hasText(cs.optionsDecision) && (
+              <NarrativeBlock eyebrow="Options" title="Alternatives and trade-offs" icon={Layers}>
+                <MarkdownProse>{cs.optionsDecision}</MarkdownProse>
+              </NarrativeBlock>
+            )}
+
+            {showPm && (prdRequirements.length > 0 || prdNonGoals.length > 0) && (
+              <NarrativeBlock eyebrow="PRD snapshot" title="Goals and explicit non-goals" icon={FileText}>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {prdRequirements.length > 0 && (
+                    <div className="p-5 rounded-xl bg-card border border-border shadow-sm space-y-3">
+                      <h3 className="font-heading font-bold text-base text-foreground flex items-center gap-1.5">
+                        <CheckCircle className="w-4 h-4 text-success" /> Goals &amp; requirements
+                      </h3>
+                      <ul className="list-disc list-inside space-y-1.5 text-xs sm:text-sm text-muted-foreground">
+                        {prdRequirements.map((req, idx) => (
+                          <li key={idx}>{req}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+                  {prdNonGoals.length > 0 && (
+                    <div className="p-5 rounded-xl bg-card border border-border shadow-sm space-y-3">
+                      <h3 className="font-heading font-bold text-base text-foreground flex items-center gap-1.5">
+                        <Clock className="w-4 h-4 text-destructive" /> Non-goals
+                      </h3>
+                      <ul className="list-disc list-inside space-y-1.5 text-xs sm:text-sm text-muted-foreground">
+                        {prdNonGoals.map((ng, idx) => (
+                          <li key={idx}>{ng}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
                 </div>
-              </div>
-            </div>
+              </NarrativeBlock>
+            )}
 
-            {/* Section 8: Delivery */}
-            <div className="space-y-4 border-t border-border/60 pt-10">
-              <div className="flex items-center gap-2 text-primary font-mono text-sm font-bold uppercase tracking-wider">
-                <Layers className="w-4 h-4" /> 08. Delivery &amp; Execution Roadmap
-              </div>
-              <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
-                Execution Milestones &amp; Risk Mitigation
-              </h2>
-              <MarkdownProse>
-                {cs.delivery || cs.approach}
-              </MarkdownProse>
-            </div>
+            {showBuilder && details.investigation && (
+              <BlockFrame>
+                <InvestigationWalkthrough investigation={details.investigation} />
+              </BlockFrame>
+            )}
 
-            {/* Section 9: Outcome & Learning */}
-            <div className="space-y-4 border-t border-border/60 pt-10">
-              <div className="flex items-center gap-2 text-primary font-mono text-sm font-bold uppercase tracking-wider">
-                <Award className="w-4 h-4" /> 09. Outcome &amp; Post-Launch Learning
-              </div>
-              <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
-                Verified Impact &amp; What I Would Do Differently
-              </h2>
-              <MarkdownProse>
-                {cs.outcomeLearning || cs.outcome}
-              </MarkdownProse>
-            </div>
+            {showBuilder && hasText(cs.delivery || cs.approach) && (
+              <NarrativeBlock eyebrow="Build" title="How it was built" icon={Layers}>
+                <MarkdownProse>{cs.delivery || cs.approach}</MarkdownProse>
+              </NarrativeBlock>
+            )}
+
+            {showPm && details.timeline.length > 0 && (
+              <BlockFrame>
+                <PivotTimeline timeline={details.timeline} />
+              </BlockFrame>
+            )}
+
+            {hasText(cs.outcomeLearning || cs.outcome) && (
+              <NarrativeBlock eyebrow="Outcome" title="Where it stands and what I learned" icon={Award}>
+                <MarkdownProse>{cs.outcomeLearning || cs.outcome}</MarkdownProse>
+              </NarrativeBlock>
+            )}
+
+            {details.evidence.length > 0 && (
+              <BlockFrame>
+                <EvidenceIndex evidence={details.evidence} />
+              </BlockFrame>
+            )}
 
             {/* Gallery with Captions */}
-            {cs.gallery && cs.gallery.length > 0 && (
+            {showBuilder && cs.gallery && cs.gallery.length > 0 && (
               <div className="space-y-6 border-t border-border/60 pt-10">
                 <div className="flex items-center gap-2 text-primary font-mono text-sm font-bold uppercase tracking-wider">
-                  <CheckCircle className="w-4 h-4" /> 10. Visual Evidence &amp; Artifact Gallery
+                  <CheckCircle className="w-4 h-4" /> Screens &amp; artifacts
                 </div>
                 <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
-                  Product Artifacts &amp; Diagrams
+                  What it looks like
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                   {cs.gallery.map((img, idx) => (
@@ -397,10 +453,10 @@ export const CaseStudyDetailPage = () => {
             {cs.relatedWork && cs.relatedWork.length > 0 && (
               <div className="space-y-4 border-t border-border/60 pt-10">
                 <div className="flex items-center gap-2 text-primary font-mono text-sm font-bold uppercase tracking-wider">
-                  <ExternalLink className="w-4 h-4" /> 11. Related Work &amp; Precursors
+                  <ExternalLink className="w-4 h-4" /> Related work
                 </div>
                 <h2 className="font-heading text-2xl sm:text-3xl font-bold text-foreground">
-                  Connected Explorations &amp; Case Studies
+                  Connected projects
                 </h2>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   {cs.relatedWork.map((rw, idx) => (
@@ -431,7 +487,7 @@ export const CaseStudyDetailPage = () => {
                   Interested in discussing this work?
                 </h3>
                 <p className="text-sm text-muted-foreground">
-                  Let&apos;s talk about how we can build high-impact product and platform architectures for your engineering organization.
+                  Happy to walk through the decisions, the code, or what I would change next.
                 </p>
               </div>
               <div className="flex flex-wrap gap-3">

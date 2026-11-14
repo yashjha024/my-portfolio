@@ -61,6 +61,11 @@ export const caseStudySchema = z
     year: emptyToNull(z.coerce.number().int().min(1900).max(2200)),
     skills: z.array(z.string().trim().min(1).max(80)).max(50).optional(),
     related_work: z.array(z.record(z.unknown())).max(50).optional(),
+    // Interactive case-study blocks; shape is normalized client-side (utils/caseStudyDetails.js)
+    details: z
+      .record(z.unknown())
+      .refine((value) => JSON.stringify(value).length <= 200000, 'Details document is too large')
+      .optional(),
   })
   .strict();
 

@@ -1,3 +1,5 @@
+import { sampleFileCraft } from './sampleFileCraft.js';
+
 export const profileData = {
   name: 'Yash Jha',
   role: 'Product Professional & AI/ML Engineer',
@@ -32,6 +34,7 @@ export const profileData = {
 };
 
 export const caseStudies = [
+  sampleFileCraft,
   {
     id: 'cs-1',
     slug: 'kubernetes-cost-governance-platform',

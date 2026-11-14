@@ -78,6 +78,16 @@ export const buildCaseStudyPayload = (form, inputs = {}, { status } = {}) => {
     return { error: 'Related Work must be a valid JSON array before saving.' };
   }
 
+  // `details` stays undefined until the record has the column (migration 000006) or the editor
+  // touches it, so case studies keep saving against a database that has not been migrated yet.
+  const details = form.details;
+  if (
+    details !== undefined &&
+    (typeof details !== 'object' || details === null || Array.isArray(details))
+  ) {
+    return { error: 'Interactive details must be a valid JSON object before saving.' };
+  }
+
   const optionsText = form.options_decision || form.options_tradeoffs || '';
 
   return {
@@ -111,6 +121,7 @@ export const buildCaseStudyPayload = (form, inputs = {}, { status } = {}) => {
         delivery: form.delivery ?? '',
         outcome_learning: form.outcome_learning ?? '',
         related_work: relatedWork,
+        ...(details !== undefined ? { details } : {}),
         cover_image: form.cover_image ?? '',
         gallery: Array.isArray(form.gallery) ? form.gallery : [],
         live_url: form.live_url ?? '',

@@ -45,6 +45,7 @@ export const toCaseStudyDto = (item) => ({
   outcomeLearning: item.outcome_learning ?? item.outcomeLearning ?? null,
   year: item.year ? Number(item.year) : null,
   relatedWork: array(item.related_work ?? item.relatedWork),
+  details: object(item.details),
 });
 
 export const toArticleDto = (item) => ({

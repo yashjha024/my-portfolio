@@ -175,6 +175,21 @@ test('Case study and article schema validation with structured teardown fields',
     'Case study with gallery and metrics must be valid'
   );
 
+  // Interactive details: objects are accepted, other shapes are rejected
+  assert.strictEqual(
+    caseStudySchema.safeParse({ ...validCaseStudy, details: { features: [{ name: 'Merge' }] } })
+      .success,
+    true,
+    'Case study details object must be valid'
+  );
+  for (const details of [[], 'text', null]) {
+    assert.strictEqual(
+      caseStudySchema.safeParse({ ...validCaseStudy, details }).success,
+      false,
+      `details=${JSON.stringify(details)} must be rejected`
+    );
+  }
+
   // 2. Thinking article validation (e.g. teardown article)
   const validArticle = {
     title: 'Product Teardown: Spotify Discovery',

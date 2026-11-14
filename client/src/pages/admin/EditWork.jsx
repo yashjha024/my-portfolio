@@ -7,6 +7,8 @@ import { MarkdownEditor } from '../../components/admin/MarkdownEditor.jsx';
 import { useEditorSave } from '../../hooks/useEditorSave.js';
 import { useUnsavedChangesGuard, useSaveShortcut } from '../../hooks/useUnsavedChangesGuard.js';
 import { buildCaseStudyPayload, describeSaveError } from '../../utils/editorPayload.js';
+import { CaseStudyDetailsEditor } from '../../components/admin/CaseStudyDetailsEditor.jsx';
+import { countVerifyMarkers } from '../../utils/caseStudyDetails.js';
 import {
   Save,
   Eye,
@@ -154,6 +156,11 @@ export const EditWorkPage = () => {
           prd_url: item.prd_url || '',
           seo_title: item.seo_title || '',
           seo_description: item.seo_description || '',
+          // undefined when the column does not exist yet, so saves never send it (see editorPayload)
+          details:
+            item.details && typeof item.details === 'object' && !Array.isArray(item.details)
+              ? item.details
+              : undefined,
         });
         setToolsInput((item.tools || []).join(', '));
         setTagsInput((item.tags || []).join(', '));
@@ -211,6 +218,17 @@ export const EditWorkPage = () => {
       )
     ) {
       return;
+    }
+    if (targetStatus === 'published') {
+      const markers = countVerifyMarkers(latestRef.current.formData);
+      if (
+        markers > 0 &&
+        !window.confirm(
+          `This case study still has ${markers} [VERIFY] marker${markers === 1 ? '' : 's'}. Publish anyway?`
+        )
+      ) {
+        return;
+      }
     }
     const status = targetStatus || (isNew ? 'draft' : undefined);
     const outcome = await editorSave.save(status ? { status } : {});
@@ -392,6 +410,7 @@ export const EditWorkPage = () => {
           { id: 'metrics', label: `3. Evidence & Metrics (${formData.metrics.length})` },
           { id: 'links', label: '4. Tools, Tags & Links' },
           { id: 'seo', label: '5. Media & SEO' },
+          { id: 'interactive', label: '6. Interactive Blocks' },
         ].map((tab) => (
           <button
             key={tab.id}
@@ -1060,6 +1079,14 @@ export const EditWorkPage = () => {
             </div>
           </div>
         </div>
+      )}
+
+      {/* Tab 6: Interactive blocks (case_studies.details) */}
+      {activeTab === 'interactive' && (
+        <CaseStudyDetailsEditor
+          value={formData.details}
+          onChange={(val) => handleFieldChange('details', val)}
+        />
       )}
 
       {/* Media Library Modal Picker */}

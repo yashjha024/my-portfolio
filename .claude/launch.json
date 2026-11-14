@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "client-demo",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev", "--prefix", "client"],
+      "env": { "VITE_ENABLE_DEMO_DATA": "true" },
+      "port": 5173
+    }
+  ]
+}
